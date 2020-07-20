@@ -7,6 +7,7 @@ inst_reqs = [
     "fastapi",
     "rio-tiler",
     "pydantic",
+    "jinja2",
 ]
 
 extra_reqs = {
