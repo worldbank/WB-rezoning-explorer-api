@@ -4,15 +4,33 @@ from setuptools import find_packages, setup
 
 # Runtime requirements.
 inst_reqs = [
-    "pytest",
-    "pytest-benchmark",
-    "pytest-asyncio",
-    "rasterio",
+    "fastapi",
+    "rio-tiler",
+    "pydantic",
 ]
+
+extra_reqs = {
+    "dev": ["pytest", "pytest-benchmark", "pytest-asyncio"],
+    "server": ["uvicorn"],
+    "deploy": [
+        "docker",
+        "attrs~=19.3.0",
+        "aws-cdk.core",
+        "aws-cdk.aws_lambda",
+        "aws-cdk.aws_apigatewayv2",
+        "aws-cdk.aws_ecs",
+        "aws-cdk.aws_ec2",
+        "aws-cdk.aws_autoscaling",
+        "aws-cdk.aws_ecs_patterns",
+        "aws-cdk.aws_iam",
+        "aws-cdk.aws_elasticache",
+    ],
+    "test": ["moto", "mock", "pytest", "pytest-cov", "pytest-asyncio", "requests"],
+}
 
 setup(
     name="rezoning-api",
-    version="0.0.1",
+    version="0.1.0",
     python_requires=">=3",
     description=u"""API for the REZoning project""",
     packages=find_packages(exclude=["tests"]),
