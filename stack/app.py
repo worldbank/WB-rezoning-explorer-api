@@ -14,7 +14,7 @@ from aws_cdk import (
     aws_apigatewayv2 as apigw,
     aws_elasticache as escache,
 )
-
+import docker
 import config
 
 iam_policy_statement = iam.PolicyStatement(
@@ -35,15 +35,126 @@ DEFAULT_ENV = dict(
 )
 
 
-class rezoningApiECSStack(core.Stack):
-    """Rezoning API ECS Fargate Stack."""
+class rezoningApiLambdaStack(core.Stack):
+    """
+    rezoning API Lambda Stack
+    This code is freely adapted from
+    - https://github.com/leothomas/titiler/blob/10df64fbbdd342a0762444eceebaac18d8867365/stack/app.py author: @leothomas
+    - https://github.com/ciaranevans/titiler/blob/3a4e04cec2bd9b90e6f80decc49dc3229b6ef569/stack/app.py author: @ciaranevans
+    """
 
     def __init__(
         self,
         scope: core.Construct,
         id: str,
-        cpu: Union[int, float] = 1024,
-        memory: Union[int, float] = 1024,
+        memory: int = 1024,
+        timeout: int = 30,
+        concurrent: int = 100,
+        env: dict = {},
+        code_dir: str = "./",
+        **kwargs: Any,
+    ) -> None:
+        """Define stack."""
+        super().__init__(scope, id, *kwargs)
+
+        # add cache
+        # vpc = ec2.Vpc(self, f"{id}-vpc")
+        # sb_group = escache.CfnSubnetGroup(
+        #     self,
+        #     f"{id}-subnet-group",
+        #     description=f"{id} subnet group",
+        #     subnet_ids=[sb.subnet_id for sb in vpc.private_subnets],
+        # )
+
+        # sg = ec2.SecurityGroup(self, f"{id}-cache-sg", vpc=vpc)
+        # cache = escache.CfnCacheCluster(
+        #     self,
+        #     f"{id}-cache",
+        #     cache_node_type=config.CACHE_NODE_TYPE,
+        #     engine=config.CACHE_ENGINE,
+        #     num_cache_nodes=config.CACHE_NODE_NUM,
+        #     vpc_security_group_ids=[sg.security_group_id],
+        #     cache_subnet_group_name=sb_group.ref,
+        # )
+
+        # vpc_access_policy_statement = iam.PolicyStatement(
+        #     actions=[
+        #         "logs:CreateLogGroup",
+        #         "logs:CreateLogStream",
+        #         "logs:PutLogEvents",
+        #         "ec2:CreateNetworkInterface",
+        #         "ec2:DescribeNetworkInterfaces",
+        #         "ec2:DeleteNetworkInterface",
+        #     ],
+        #     resources=["*"],
+        # )
+
+        lambda_env = DEFAULT_ENV.copy()
+        lambda_env.update(
+            dict(
+                MODULE_NAME="rezoning_api.main",
+                VARIABLE_NAME="app",
+                WORKERS_PER_CORE="1",
+                LOG_LEVEL="error",
+                # MEMCACHE_HOST=cache.attr_configuration_endpoint_address,
+                # MEMCACHE_PORT=cache.attr_configuration_endpoint_port,
+            )
+        )
+
+        lambda_function = aws_lambda.Function(
+            self,
+            f"{id}-lambda",
+            runtime=aws_lambda.Runtime.PYTHON_3_7,
+            code=self.create_package(code_dir),
+            handler="handler.handler",
+            memory_size=memory,
+            reserved_concurrent_executions=concurrent,
+            timeout=core.Duration.seconds(timeout),
+            environment=lambda_env,
+            # vpc=vpc,
+        )
+        lambda_function.add_to_role_policy(iam_policy_statement)
+        # lambda_function.add_to_role_policy(vpc_access_policy_statement)
+
+        # defines an API Gateway Http API resource backed by our "dynamoLambda" function.
+        apigw.HttpApi(
+            self,
+            f"{id}-endpoint",
+            default_integration=apigw.LambdaProxyIntegration(handler=lambda_function),
+        )
+
+    def create_package(self, code_dir: str) -> aws_lambda.Code:
+        """Build docker image and create package."""
+        # print('building lambda package via docker')
+        print(f'code dir: {code_dir}')
+        client = docker.from_env()
+        print('docker client up')
+        client.images.build(
+            path=code_dir,
+            dockerfile="Dockerfiles/lambda/Dockerfile",
+            tag="lambda:latest",
+        )
+        print('docker image built')
+        client.containers.run(
+            image="lambda:latest",
+            command="/bin/sh -c 'cp /tmp/package.zip /local/package.zip'",
+            remove=True,
+            volumes={os.path.abspath(code_dir): {"bind": "/local/", "mode": "rw"}},
+            user=0,
+        )
+
+        return aws_lambda.Code.asset(os.path.join(code_dir, "package.zip"))
+
+
+class rezoningApiECSStack(core.Stack):
+    """rezoning API ECS Fargate Stack."""
+
+    def __init__(
+        self,
+        scope: core.Construct,
+        id: str,
+        cpu: Union[int, float] = 256,
+        memory: Union[int, float] = 512,
         mincount: int = 1,
         maxcount: int = 50,
         env: dict = {},
@@ -139,5 +250,13 @@ rezoningApiECSStack(
 )
 
 lambda_stackname = f"{config.PROJECT_NAME}-lambda-{config.STAGE}"
+rezoningApiLambdaStack(
+    app,
+    lambda_stackname,
+    memory=config.MEMORY,
+    timeout=config.TIMEOUT,
+    concurrent=config.MAX_CONCURRENT,
+    env=config.ENV,
+)
 
 app.synth()

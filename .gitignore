@@ -100,5 +100,6 @@ ENV/
 # mypy
 .mypy_cache/
 
-cdk.out/package.zip
+cdk.out/
 *.tif
+package.zip

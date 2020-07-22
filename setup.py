@@ -5,7 +5,7 @@ from setuptools import find_packages, setup
 # Runtime requirements.
 inst_reqs = [
     "fastapi",
-    "rio-tiler",
+    "rio-tiler==2.0a11",
     "pydantic",
     "jinja2",
 ]
@@ -35,6 +35,9 @@ setup(
     python_requires=">=3",
     description=u"""API for the REZoning project""",
     packages=find_packages(exclude=["tests"]),
+    package_data={
+        "rezoning_api": ["templates/*.html"]
+    },
     zip_safe=False,
     install_requires=inst_reqs,
 )

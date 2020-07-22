@@ -33,7 +33,7 @@ def _filter(array, filters):
 def filter(country: str, z: int, x: int, y:int, filters: str):
     """Return dataset info."""
     arr, mask = cogeo.tile(
-        's3://gre-processed-data/multiband/mb.tif',
+        's3://wronk-kops-state-store/mb.tif',
         x,
         y,
         z,

@@ -6,7 +6,7 @@ PROJECT_NAME = "rezoning-api"
 STAGE = os.environ.get("STAGE", "dev")
 
 # primary bucket
-BUCKET = "gre-processed-data"
+BUCKET = "wronk-kops-state-store"
 
 # Additional environement variable to set in the task/lambda
 ENV: dict = dict()
