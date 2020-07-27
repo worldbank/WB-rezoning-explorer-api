@@ -11,9 +11,7 @@ def demo(request: Request):
     """demo"""
     return templates.TemplateResponse(
         "demo.html", {
-            "request": request
+            "request": request,
+             "filter_endpoint": request.url_for('filter', **dict(z="{z}", x="{x}", y="{y}", country="all")),
         }
-        # {
-        #     "filter_endpoint": request.url_for('filter'),
-        # }
     )
