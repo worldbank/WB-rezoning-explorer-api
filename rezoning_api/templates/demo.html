@@ -46,7 +46,7 @@
             top: 10px;
             left: 10px;
             padding: 10px;
-            height: 300px;
+            height: 400px;
             width: 300px;
         }
     </style>
@@ -59,12 +59,68 @@
     </div>
     <div id='select'>
         Distance to Airports
-        <div id='roads' class="ui range labeled ticked slider"></div>
+        <div id='airport' class="ui range labeled ticked slider"></div>
         Distance to Ports
-        <div id='ports' class="ui range labeled ticked slider"></div>
+        <div id='port' class="ui range labeled ticked slider"></div>
+        Distance to Anchorages
+        <div id='anchorage' class="ui range labeled ticked slider"></div>
+        Distance to Grids
+        <div id='grid' class="ui range labeled ticked slider"></div>
+        Distance to Roads
+        <div id='road' class="ui range labeled ticked slider"></div>
     </div>
     <script>
-        $('#roads.ui.range.slider')
+        $('#airport.ui.range.slider')
+        .slider({
+            min: 0,
+            max: 1000000,
+            start: 100000,
+            end: 1000000,
+            step: 50000,
+            onChange: (wid, min, max) => {
+                aiportFilters = `${min},${max}`
+                swap()
+            }
+        })
+
+        $('#port.ui.range.slider')
+        .slider({
+            min: 0,
+            max: 1000000,
+            start: 100000,
+            end: 1000000,
+            step: 50000,
+            onChange: (wid, min, max) => {
+                portFilters = `${min},${max}`
+                swap()
+            }
+        })
+        $('#anchorage.ui.range.slider')
+        .slider({
+            min: 0,
+            max: 1000000,
+            start: 100000,
+            end: 1000000,
+            step: 50000,
+            onChange: (wid, min, max) => {
+                anchorageFilters = `${min},${max}`
+                swap()
+            }
+        })
+
+        $('#grid.ui.range.slider')
+        .slider({
+            min: 0,
+            max: 1000000,
+            start: 100000,
+            end: 1000000,
+            step: 50000,
+            onChange: (wid, min, max) => {
+                gridFilters = `${min},${max}`
+                swap()
+            }
+        })
+        $('#road.ui.range.slider')
         .slider({
             min: 0,
             max: 1000000,
@@ -73,21 +129,6 @@
             step: 50000,
             onChange: (wid, min, max) => {
                 roadFilters = `${min},${max}`
-                swap()
-            }
-        })
-
-        $('#ports.ui.range.slider')
-        .slider({
-            min: 0,
-            max: 1000000,
-            start: 100000,
-            end: 1000000,
-            step: 50000,
-            onChange: (wid, min, max) => {
-                console.log(min, wid, max);
-                
-                portFilters = `${min},${max}`
                 swap()
             }
         })
@@ -107,15 +148,18 @@
             const z = (map.getZoom()).toString().slice(0, 6)
             document.getElementById('zoom').textContent = z
         })
-
-        let roadFilters = '100000,1000000'
+        // airports, ports, anchorages, grid, road
+        let airportFilters = '100000,1000000'
         let portFilters = '100000,1000000'
+        let anchorageFilter = '100000,1000000'
+        let gridFilters = '100000,1000000'
+        let roadFilters = '100000,1000000'
 
         function swap () {
             if (map.getLayer('raster')) map.removeLayer('raster')
             if (map.getSource('raster')) map.removeSource('raster')
             
-            let filters = `${roadFilters}|${portFilters}`
+            let filters = `${airportFilters}|${portFilters}|${anchorageFilter}|${gridFilters}|${roadFilters}`
 
             let url = `${filterEndpoint}?filters=${filters}`
             map.addSource(
