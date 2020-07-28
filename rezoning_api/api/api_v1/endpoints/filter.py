@@ -5,6 +5,7 @@ from rio_tiler.io import cogeo
 from rio_tiler.utils import render
 import numpy as np
 
+from rezoning_api.core.config import BUCKET
 from rezoning_api.models.filter import FilterResponse
 
 router = APIRouter()
@@ -31,7 +32,7 @@ def _filter(array, filters):
 def filter(country: str, z: int, x: int, y:int, filters: str):
     """Return dataset info."""
     arr, mask = cogeo.tile(
-        'mb_cog.tif',
+        f's3://{BUCKET}/multiband/distance.tif',
         x,
         y,
         z,
