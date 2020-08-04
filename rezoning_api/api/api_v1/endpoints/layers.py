@@ -22,5 +22,5 @@ def s3_get(bucket: str, key: str):
 )
 def get_layers(group: LayerGroups):
     """Return layers list for a given group"""
-    layers = s3_get(BUCKET, f'multiband/{group}.json')
+    layers = s3_get(BUCKET, f'multiband/{group.value}.json')
     return json.loads(layers).get("layers")
