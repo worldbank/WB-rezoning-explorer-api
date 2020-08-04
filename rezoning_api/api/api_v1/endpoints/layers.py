@@ -6,6 +6,7 @@ import boto3
 from fastapi import APIRouter, Request
 
 from rezoning_api.core.config import BUCKET
+from rezoning_api.models.layers import LayerGroups
 
 router = APIRouter()
 
@@ -19,7 +20,7 @@ def s3_get(bucket: str, key: str):
 @router.get(
     "/layers/{group}/"
 )
-def get_layers(group: str):
+def get_layers(group: LayerGroups):
     """Return layers list for a given group"""
     layers = s3_get(BUCKET, f'multiband/{group}.json')
     return json.loads(layers).get("layers")
