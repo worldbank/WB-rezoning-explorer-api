@@ -1,12 +1,11 @@
+from typing import Optional
 from pydantic import BaseModel
 from geojson_pydantic.geometries import Polygon
 from fastapi import Request
 
 class LCOERequest(BaseModel):
     """Levelized cost of energy request."""
-    turbine_type: str # Turbine Type or Solar Unit Type
-    lf: int = 30 # Landuse factor Land use factor [MW/km2] (LF)
-    ldf: float = 0.9 # Land use discount factor 
+    turbine_type: Optional[int] # Turbine Type or Solar Unit Type
     crf: float = 1 # capital recovery factor (CRF)
     cg: int = 2000 # Generation – capital [USD/kW] (Cg)
     omfg: int = 50000 # Generation – fixed O&M [USD/MW/y] (OMf,g)

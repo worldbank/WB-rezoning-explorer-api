@@ -12,13 +12,13 @@ def calc_crf(l: LCOERequest):
     return (l.i * (1 + l.i) ** l.n) / (((1 + l.i) ** l.n) - 1)
 
 def lcoe_generation(l: LCOERequest, cf):
-    numerator = l.lf * (1 - l.ldf) * (l.cg * calc_crf(l) + l.omfg)
-    denominator = l.lf * (1 - l.ldf) * cf * 8760
+    numerator = (l.cg * calc_crf(l) + l.omfg)
+    denominator = cf * 8760
     return (numerator / denominator) + l.omvg
 
 def lcoe_interconnection(l: LCOERequest, cf, ds):
-    numerator = l.lf * (1 - l.ldf) * (ds * (l.ct * calc_crf(l) + l.omft) + l.cs * calc_crf(l))
-    denominator = l.lf * (1 - l.ldf) * cf * 8760
+    numerator = (ds * (l.ct * calc_crf(l) + l.omft) + l.cs * calc_crf(l))
+    denominator = cf * 8760
     return numerator / denominator
 
 def lcoe_road(l: LCOERequest, cf, dr):
@@ -26,7 +26,7 @@ def lcoe_road(l: LCOERequest, cf, dr):
     denominator = cf * 50 * 8760
     return numerator / denominator
 
-def get_capacity_factor(cf_tif_loc: str, geom):
+def get_capacity_factor(cf_tif_loc: str, geom, turbine_type=None):
     with rasterio.open(f's3://{BUCKET}/multiband/{cf_tif_loc}') as cf_tif:
         # find the window of our aoi
         project = pyproj.Transformer.from_proj(
@@ -36,7 +36,11 @@ def get_capacity_factor(cf_tif_loc: str, geom):
         g2 = transform(project.transform, geom)
         window = from_bounds(*g2.bounds, cf_tif.transform) 
 
-        return cf_tif.read(1, window=window)
+        # capacity factor band for solar (1)
+        # for wind, use turbine_type
+        cfb = 1 if not turbine_type else turbine_type
+
+        return cf_tif.read(cfb, window=window)
 
 def get_distances(geom):
     with rasterio.open(f's3://{BUCKET}/multiband/distance.tif') as distance:

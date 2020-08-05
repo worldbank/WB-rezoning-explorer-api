@@ -21,14 +21,14 @@ router = APIRouter()
 def lcoe(query: LCOERequest):
     # decide which capacity factor tif to pull from
     cf_tif_loc = 'gsa.tif'
-    # if LCOERequest.turbine_type:
-    #     cf_tif_loc = 'gwa.tif'
+    if query.turbine_type:
+        cf_tif_loc = 'gwa.tif'
 
     # aoi geometry
     geom = shape(query.aoi)
 
     # spatial temporal inputs
-    cf = get_capacity_factor(cf_tif_loc, geom)
+    cf = get_capacity_factor(cf_tif_loc, geom, query.turbine_type)
     ds, dr = get_distances(geom)
 
     # lcoe component calculation + histogram
