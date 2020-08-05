@@ -8,6 +8,9 @@ inst_reqs = [
     "rio-tiler==2.0a11",
     "pydantic",
     "jinja2",
+    "geojson_pydantic",
+    "shapely",
+    "pyproj"
 ]
 
 extra_reqs = {
