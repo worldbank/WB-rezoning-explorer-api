@@ -7,26 +7,26 @@ import pyproj
 from rezoning_api.models.lcoe import LCOERequest
 from rezoning_api.core.config import BUCKET
 
-def crf(l: LCOERequest):
+def calc_crf(l: LCOERequest):
     # https://www.nrel.gov/analysis/tech-lcoe-documentation.html
     return (l.i * (1 + l.i) ** l.n) / (((1 + l.i) ** l.n) - 1)
 
-def lcoe_gen(l: LCOERequest, cf):
-    numerator = l.lf * (1 - l.ldf) * (l.cg * crf(l) + l.omfg)
+def lcoe_generation(l: LCOERequest, cf):
+    numerator = l.lf * (1 - l.ldf) * (l.cg * calc_crf(l) + l.omfg)
     denominator = l.lf * (1 - l.ldf) * cf * 8760
     return (numerator / denominator) + l.omvg
 
-def lcoe_inter(l: LCOERequest, cf, ds):
-    numerator = l.lf * (1 - l.ldf) * (ds * (l.ct * crf(l) + l.omft) + l.cs * crf(l))
+def lcoe_interconnection(l: LCOERequest, cf, ds):
+    numerator = l.lf * (1 - l.ldf) * (ds * (l.ct * calc_crf(l) + l.omft) + l.cs * calc_crf(l))
     denominator = l.lf * (1 - l.ldf) * cf * 8760
     return numerator / denominator
 
 def lcoe_road(l: LCOERequest, cf, dr):
-    numerator = dr * (l.cr * crf(l) + l.omfr)
+    numerator = dr * (l.cr * calc_crf(l) + l.omfr)
     denominator = cf * 50 * 8760
     return numerator / denominator
 
-def get_cf(cf_tif_loc, geom):
+def get_capacity_factor(cf_tif_loc: str, geom):
     with rasterio.open(f's3://{BUCKET}/multiband/{cf_tif_loc}') as cf_tif:
         # find the window of our aoi
         project = pyproj.Transformer.from_proj(
@@ -38,7 +38,7 @@ def get_cf(cf_tif_loc, geom):
 
         return cf_tif.read(1, window=window)
 
-def get_dist(geom):
+def get_distances(geom):
     with rasterio.open(f's3://{BUCKET}/multiband/distance.tif') as distance:
         # find the window of our aoi
         project = pyproj.Transformer.from_proj(
@@ -48,9 +48,9 @@ def get_dist(geom):
         g2 = transform(project.transform, geom)
         window = from_bounds(*g2.bounds, distance.transform)
         
-        # distance from grid
+        # distance from grid, TODO: remove hardcoded band number
         ds = np.nan_to_num(distance.read(4, window=window))  
-        # distance from road
+        # distance from road, TODO: remove hardcoded band number
         dr = np.nan_to_num(distance.read(5, window=window))
 
         return (ds, dr)

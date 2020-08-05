@@ -3,11 +3,13 @@
 from fastapi import APIRouter
 import numpy as np
 from shapely.geometry import shape
+import time
 
 
 from rezoning_api.core.config import BUCKET
 from rezoning_api.models.lcoe import LCOERequest
-from rezoning_api.api.utils import crf, lcoe_gen, lcoe_inter, lcoe_road, get_cf, get_dist
+from rezoning_api.api.utils import lcoe_generation, lcoe_interconnection, \
+    lcoe_road, get_capacity_factor, get_distances
 
 router = APIRouter()
 
@@ -26,15 +28,18 @@ def lcoe(query: LCOERequest):
     geom = shape(query.aoi)
 
     # spatial temporal inputs
-    cf = get_cf(cf_tif_loc, geom)
-    ds, dr = get_dist(geom)    
+    cf = get_capacity_factor(cf_tif_loc, geom)
+    ds, dr = get_distances(geom)
 
     # lcoe component calculation + histogram
-    lcoe = lcoe_gen(query, cf) + lcoe_inter(query, cf, ds) + lcoe_road(query, cf, dr)
+    lcoe = lcoe_generation(query, cf) + \
+        lcoe_interconnection(query, cf, ds) + \
+        lcoe_road(query, cf, dr)
+
     hist, bins = np.histogram(lcoe)
 
     return dict(
-        lcoe=lcoe.sum(),
+        lcoe=float(lcoe.sum()),
         hist=list(hist.astype(np.float)),
         bins=list(bins.astype(np.float))
     )
