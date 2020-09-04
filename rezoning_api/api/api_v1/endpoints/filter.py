@@ -21,7 +21,8 @@ def _filter(array, filters):
         )
         np_filters.append(tmp)
 
-    return np.prod(np.stack(np_filters), axis=0)
+    all_true = np.prod(np.stack(np_filters), axis=0).astype(np.uint8)
+    return (all_true, all_true != 0)
 
 @router.get(
     "/filter/{country}/{z}/{x}/{y}.png",
@@ -38,7 +39,16 @@ def filter(country: str, z: int, x: int, y:int, filters: str):
         z,
         tilesize=256
     )
+    # temporary handling of incorrect nodata value
+    arr[arr == 65535] = 500000
 
-    tile = _filter(arr, filters)
-    content = render(tile.astype(np.uint8) * 255)
+    tile, new_mask = _filter(arr, filters)
+    purple_tile = np.stack([
+        tile * 45,
+        tile * 39,
+        tile * 88,
+        (new_mask * 178).astype(np.uint8)
+    ])
+
+    content = render(purple_tile)
     return FilterResponse(content=content)
