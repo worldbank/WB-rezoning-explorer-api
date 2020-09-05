@@ -74,7 +74,7 @@
         .slider({
             min: 0,
             max: 1000000,
-            start: 100000,
+            start: 0,
             end: 1000000,
             step: 50000,
             onChange: (wid, min, max) => {
@@ -87,7 +87,7 @@
         .slider({
             min: 0,
             max: 1000000,
-            start: 100000,
+            start: 0,
             end: 1000000,
             step: 50000,
             onChange: (wid, min, max) => {
@@ -99,7 +99,7 @@
         .slider({
             min: 0,
             max: 1000000,
-            start: 100000,
+            start: 0,
             end: 1000000,
             step: 50000,
             onChange: (wid, min, max) => {
@@ -111,10 +111,10 @@
         $('#grid.ui.range.slider')
         .slider({
             min: 0,
-            max: 1000000,
-            start: 100000,
-            end: 1000000,
-            step: 50000,
+            max: 100000,
+            start: 0,
+            end: 100000,
+            step: 5000,
             onChange: (wid, min, max) => {
                 gridFilters = `${min},${max}`
                 swap()
@@ -123,10 +123,10 @@
         $('#road.ui.range.slider')
         .slider({
             min: 0,
-            max: 1000000,
-            start: 100000,
-            end: 1000000,
-            step: 50000,
+            max: 100000,
+            start: 0,
+            end: 100000,
+            step: 5000,
             onChange: (wid, min, max) => {
                 roadFilters = `${min},${max}`
                 swap()
@@ -149,11 +149,11 @@
             document.getElementById('zoom').textContent = z
         })
         // airports, ports, anchorages, grid, road
-        let airportFilters = '100000,1000000'
-        let portFilters = '100000,1000000'
-        let anchorageFilter = '100000,1000000'
-        let gridFilters = '100000,1000000'
-        let roadFilters = '100000,1000000'
+        let airportFilters = '0,1000000'
+        let portFilters = '0,1000000'
+        let anchorageFilter = '0,1000000'
+        let gridFilters = '0,100000'
+        let roadFilters = '0,100000'
 
         function swap () {
             if (map.getLayer('raster')) map.removeLayer('raster')
@@ -161,7 +161,7 @@
             
             let filters = `${airportFilters}|${portFilters}|${anchorageFilter}|${gridFilters}|${roadFilters}`
 
-            let url = `${filterEndpoint}?filters=${filters}`
+            let url = `${filterEndpoint}?filters=${filters}&color=45,39,88,178`
             map.addSource(
               'raster', { type: 'raster', tiles: [url], tileSize: 256 }
             )
