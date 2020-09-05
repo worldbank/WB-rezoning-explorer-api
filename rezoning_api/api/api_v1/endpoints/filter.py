@@ -8,7 +8,6 @@ import json
 
 from rezoning_api.core.config import BUCKET
 from rezoning_api.models.filter import FilterResponse
-from rezoning_api.models.layers import LayerGroups
 from rezoning_api.api.utils import _filter, s3_get
 
 router = APIRouter()
@@ -46,7 +45,7 @@ def filter(z: int, x: int, y: int, filters: str, color: str):
 
 
 @router.get("/filter/layers/")
-def get_layers(group: LayerGroups):
+def get_layers():
     """Return layers list for filters"""
     layers = s3_get(BUCKET, "multiband/distance.json")
     return json.loads(layers).get("layers")

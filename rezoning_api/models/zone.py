@@ -4,7 +4,19 @@ from pydantic import BaseModel
 from geojson_pydantic.geometries import Polygon
 
 
-class LCOERequest(BaseModel):
+class Weights(BaseModel):
+    lcoe_gen: float = 0.5
+    lcoe_transmission: float = 0.5
+    lcoe_road: float = 0.5
+    distance_load: float = 0.5
+    technology_colocation: float = 0.5
+    human_footprint: float = 0.5
+    pop_density: float = 0.5
+    slope: float = 0.5
+    land_use: float = 0.5
+    capacity_value: float = 0.5
+
+class LCOE(BaseModel):
     """Levelized cost of energy request."""
 
     turbine_type: Optional[int]  # Turbine Type or Solar Unit Type
@@ -20,4 +32,8 @@ class LCOERequest(BaseModel):
     decom: float = 0  # Decommission % rate (Decom)
     i: float = 0.1  # Economic discount rate (i)
     n: float = 25  # Lifetime [years] (N)
+
+class ZoneRequest(BaseModel):
     aoi: Polygon
+    lcoe: LCOE = LCOE()
+    weights: Weights = Weights()

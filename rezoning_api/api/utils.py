@@ -7,13 +7,13 @@ from rasterio import features
 from shapely.ops import transform
 import pyproj
 
-from rezoning_api.models.lcoe import LCOERequest
+from rezoning_api.models.zone import LCOE
 from rezoning_api.core.config import BUCKET
 
 s3 = boto3.client("s3")
 
 
-def calc_crf(lr: LCOERequest):
+def calc_crf(lr: LCOE):
     """
     Calculate Capital Recovery Factor (CRF)
     https://www.nrel.gov/analysis/tech-lcoe-documentation.html
@@ -21,21 +21,21 @@ def calc_crf(lr: LCOERequest):
     return (lr.i * (1 + lr.i) ** lr.n) / (((1 + lr.i) ** lr.n) - 1)
 
 
-def lcoe_generation(lr: LCOERequest, cf):
+def lcoe_generation(lr: LCOE, cf):
     """Calculate LCOE from Generation"""
     numerator = lr.cg * calc_crf(lr) + lr.omfg
     denominator = cf * 8760
     return (numerator / denominator) + lr.omvg
 
 
-def lcoe_interconnection(lr: LCOERequest, cf, ds):
+def lcoe_interconnection(lr: LCOE, cf, ds):
     """Calculate LCOE from Interconnection"""
     numerator = ds * (lr.ct * calc_crf(lr) + lr.omft) + lr.cs * calc_crf(lr)
     denominator = cf * 8760
     return numerator / denominator
 
 
-def lcoe_road(lr: LCOERequest, cf, dr):
+def lcoe_road(lr: LCOE, cf, dr):
     """Calculate LCOE from Roads"""
     numerator = dr * (lr.cr * calc_crf(lr) + lr.omfr)
     denominator = cf * 50 * 8760
