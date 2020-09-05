@@ -3,6 +3,7 @@ import boto3
 import numpy as np
 import rasterio
 from rasterio.windows import from_bounds
+from rasterio import features
 from shapely.ops import transform
 import pyproj
 
@@ -74,12 +75,18 @@ def get_distances(geom, filters: str):
         data = np.nan_to_num(distance.read(window=window))
         _, mask = _filter(data, filters)
 
+        # mask by geometry
+        geom_mask = _rasterize_geom(
+            g2, mask.shape, distance.window_transform(window), all_touched=True
+        )
+        final_mask = (mask & geom_mask).astype(np.bool)
+
         # distance from grid, TODO: remove hardcoded band number
         ds = data[3]
         # distance from road, TODO: remove hardcoded band number
         dr = data[4]
 
-        return (ds, dr, mask)
+        return (ds, dr, final_mask)
 
 
 def _filter(array, filters: str):
@@ -106,3 +113,11 @@ def s3_get(bucket: str, key: str):
     """Get AWS S3 Object."""
     response = s3.get_object(Bucket=bucket, Key=key)
     return response["Body"].read()
+
+
+def _rasterize_geom(geom, shape, affinetrans, all_touched):
+    indata = [(geom, 1)]
+    rv_array = features.rasterize(
+        indata, out_shape=shape, transform=affinetrans, fill=0, all_touched=all_touched
+    )
+    return rv_array

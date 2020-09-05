@@ -24,7 +24,7 @@ router = APIRouter()
 )
 def filter(z: int, x: int, y: int, filters: str, color: str):
     """Return dataset info."""
-    arr, mask = cogeo.tile(
+    arr, _mask = cogeo.tile(
         f"s3://{BUCKET}/multiband/distance.tif", x, y, z, tilesize=256
     )
 
