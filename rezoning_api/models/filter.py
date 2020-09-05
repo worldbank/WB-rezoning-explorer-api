@@ -1,13 +1,14 @@
 from pydantic import BaseModel
 from fastapi import Response
 
+
 class FilterResponse(Response):
     """Filters response."""
 
     def __init__(
         self,
         content: bytes,
-        media_type: str = 'image/png',
+        media_type: str = "image/png",
         status_code: int = 200,
         headers: dict = {},
     ) -> None:
