@@ -3,7 +3,6 @@
 from concurrent import futures
 import pytest
 import rasterio
-import numpy as np
 
 # the file to test on and the filter value are hardcoded
 tif = "testus-cog.tif"

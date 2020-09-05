@@ -1,12 +1,8 @@
 """LCOE endpoints."""
 
 from fastapi import APIRouter
-import numpy as np
 from shapely.geometry import shape
-import time
 
-
-from rezoning_api.core.config import BUCKET
 from rezoning_api.models.lcoe import LCOERequest
 from rezoning_api.api.utils import (
     lcoe_generation,
@@ -24,6 +20,7 @@ router = APIRouter()
     responses={200: dict(description="return an LCOE calculation for a given area")},
 )
 def lcoe(query: LCOERequest, filters: str):
+    """calculate LCOE for a given area"""
     # decide which capacity factor tif to pull from
     cf_tif_loc = "gsa.tif"
     if query.turbine_type:

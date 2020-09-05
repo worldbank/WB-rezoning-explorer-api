@@ -1,3 +1,4 @@
+"""API demo"""
 from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
 
@@ -13,7 +14,7 @@ def demo(request: Request):
         {
             "request": request,
             "filter_endpoint": request.url_for(
-                "filter", **dict(z="{z}", x="{x}", y="{y}", country="all")
+                "filter", **dict(z="{z}", x="{x}", y="{y}")
             ),
         },
     )

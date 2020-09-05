@@ -1,9 +1,5 @@
 """rezoning_api app."""
-from typing import Any, Dict
-
 from fastapi import FastAPI
-from fastapi.requests import Request
-from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 

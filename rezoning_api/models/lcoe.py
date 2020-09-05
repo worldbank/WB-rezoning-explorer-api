@@ -1,7 +1,7 @@
+"""LCOE models"""
 from typing import Optional
 from pydantic import BaseModel
 from geojson_pydantic.geometries import Polygon
-from fastapi import Request
 
 
 class LCOERequest(BaseModel):

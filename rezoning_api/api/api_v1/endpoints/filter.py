@@ -1,13 +1,15 @@
 """Filter endpoints."""
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter
 from rio_tiler.io import cogeo
 from rio_tiler.utils import render
 import numpy as np
+import json
 
 from rezoning_api.core.config import BUCKET
 from rezoning_api.models.filter import FilterResponse
-from rezoning_api.api.utils import _filter
+from rezoning_api.models.layers import LayerGroups
+from rezoning_api.api.utils import _filter, s3_get
 
 router = APIRouter()
 
@@ -41,3 +43,10 @@ def filter(z: int, x: int, y: int, filters: str, color: str):
 
     content = render(color_tile)
     return FilterResponse(content=content)
+
+
+@router.get("/filter/layers/")
+def get_layers(group: LayerGroups):
+    """Return layers list for filters"""
+    layers = s3_get(BUCKET, "multiband/distance.json")
+    return json.loads(layers).get("layers")

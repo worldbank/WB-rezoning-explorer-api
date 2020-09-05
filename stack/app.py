@@ -12,7 +12,7 @@ from aws_cdk import (
     aws_ecs_patterns as ecs_patterns,
     aws_lambda,
     aws_apigatewayv2 as apigw,
-    aws_elasticache as escache,
+    # aws_elasticache as escache,
 )
 import docker
 import config
