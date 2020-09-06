@@ -53,7 +53,7 @@ def zone(query: ZoneRequest, filters: str):
     )
 
     return dict(
-        lcoe=float(lcoe.sum()) / 1000, # GWh 
-        zone_score=zone_score,
-        lcoe_density=float(lcoe.mean()) / (500 ** 2) # kWh / sq. meter
+        lcoe=float(lcoe.sum()) / 1000, # GWh
+        lcoe_density=float(lcoe.mean()) / (500 ** 2), # kWh / sq. meter
+        zone_score=zone_score
     ) 

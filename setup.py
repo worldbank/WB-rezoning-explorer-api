@@ -41,4 +41,5 @@ setup(
     package_data={"rezoning_api": ["templates/*.html"]},
     zip_safe=False,
     install_requires=inst_reqs,
+    extras_require=extra_reqs,
 )
