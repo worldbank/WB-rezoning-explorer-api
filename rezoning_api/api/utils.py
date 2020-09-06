@@ -101,7 +101,8 @@ def _filter(array, filters: str):
     np_filters = []
     for i, af in enumerate(arr_filters):
         tmp = np.logical_and(
-            array[i] >= int(af.split(",")[0]), array[i] <= int(af.split(",")[1]),
+            array[i] >= int(af.split(",")[0]),
+            array[i] <= int(af.split(",")[1]),
         )
         np_filters.append(tmp)
 
