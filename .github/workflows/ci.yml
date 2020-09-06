@@ -43,12 +43,15 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: "3.7" 
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '12'
      
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install tox
           pip install -e '.[deploy]'
+          npm install -g aws-cdk
       
       - name: Set tag version
         id: tag
@@ -60,25 +63,10 @@ jobs:
         # https://stackoverflow.com/questions/58177786/get-the-current-pushed-tag-in-github-actions
         run: echo ::set-output name=version::$(python setup.py --version)
       
-      - name: cdk diff
-        uses: youyo/aws-cdk-github-actions@v1
-        if: steps.tag.outputs.tag == steps.module.outputs.version
-        with:
-          cdk_subcommand: 'diff'
-          actions_comment: true
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: 'us-east-2'
-
       - name: cdk deploy
-        uses: youyo/aws-cdk-github-actions@v1
-        if: steps.tag.outputs.tag == steps.module.outputs.version
-        with:
-          cdk_subcommand: 'deploy'
-          actions_comment: false
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: 'us-east-2'
+        run: cdk deploy rezoning-api-lambda-dev
 
