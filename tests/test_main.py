@@ -6,4 +6,3 @@ def test_health(app):
     response = app.get("/ping")
     assert response.status_code == 200
     assert response.json() == {"ping": "pong!"}
-

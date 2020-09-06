@@ -3,12 +3,21 @@ from typing import Optional
 from pydantic import BaseModel, Field
 from geojson_pydantic.geometries import Polygon
 
+
 def WeightField(title=None):
-    return Field(0.5, gt=0, lt=1, description=f'weight assigned to {title} parameter', title=title)
+    """weight field defaults"""
+    return Field(
+        0.5,
+        gt=0,
+        lt=1,
+        description=f"weight assigned to {title} parameter",
+        title=title,
+    )
 
 
 class Weights(BaseModel):
-    Field()
+    """User provided weights"""
+
     lcoe_gen: float = WeightField(title="LCOE Generation")
     lcoe_transmission: float = WeightField(title="LCOE Transmission")
     lcoe_road: float = WeightField(title="LCOE Road")
@@ -20,8 +29,9 @@ class Weights(BaseModel):
     land_use: float = WeightField(title="Land Use Score")
     capacity_value: float = WeightField(title="Capacity Value")
 
+
 class LCOE(BaseModel):
-    """Levelized cost of energy request."""
+    """User provided Levelized cost of energy inputs."""
 
     turbine_type: Optional[int] = Field(None, title="Turbine Type or Solar Unit Type")
     crf: float = Field(1, title="Capital Recovery Factor (CRF)")
@@ -30,14 +40,20 @@ class LCOE(BaseModel):
     omvg: float = Field(4, title="Generation – variable O&M [USD/MWh] (OMv,g)")
     ct: int = Field(990, title="Transmission (land cabling) – capital [USD/MW/km] (Ct)")
     omft: int = Field(0, title="Transmission – fixed O&M [USD/km] (OMf,t)")
-    cs: float = Field(71000, title="Substation – capital [USD / two substations (per new transmission connection) ] (Cs)")
+    cs: float = Field(
+        71000,
+        title="Substation – capital [USD / two substations (per new transmission connection) ] (Cs)",
+    )
     cr: float = Field(407000, title="Road – capital [USD/km] (Cr)")
     omfr: float = Field(0, title="Road – fixed O&M [USD/km] (OMf,r)")
     decom: float = Field(0, title="Decommission % rate (Decom)")
     i: float = Field(0.1, title="Economic discount rate (i)")
     n: float = Field(25, title="Lifetime [years] (N)")
 
+
 class ZoneRequest(BaseModel):
+    """Zone POST request"""
+
     aoi: Polygon
     lcoe: LCOE = LCOE()
     weights: Weights = Weights()

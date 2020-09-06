@@ -14,6 +14,7 @@ from rezoning_api.api.utils import (
 
 router = APIRouter()
 
+
 @router.post(
     "/zone/",
     responses={200: dict(description="return an LCOE calculation for a given area")},
@@ -40,20 +41,20 @@ def zone(query: ZoneRequest, filters: str):
 
     # zone score
     zone_score = (
-        query.weights.lcoe_gen * lg.sum() +
-        query.weights.lcoe_transmission * li.sum() +
-        query.weights.lcoe_road * lr.sum() +
-        query.weights.distance_load * ds.sum() +
+        query.weights.lcoe_gen * lg.sum()
+        + query.weights.lcoe_transmission * li.sum()
+        + query.weights.lcoe_road * lr.sum()
+        + query.weights.distance_load * ds.sum()
         # technology_colocation: float = 0.5
         # human_footprint: float = 0.5
         # pop_density: float = 0.5
         # slope: float = 0.5
         # land_use: float = 0.5
-        query.weights.capacity_value * cf.sum()
+        + query.weights.capacity_value * cf.sum()
     )
 
     return dict(
-        lcoe=float(lcoe.sum()) / 1000, # GWh
-        lcoe_density=float(lcoe.mean()) / (500 ** 2), # kWh / sq. meter
-        zone_score=zone_score
-    ) 
+        lcoe=float(lcoe.sum()) / 1000,  # GWh
+        lcoe_density=float(lcoe.mean()) / (500 ** 2),  # kWh / sq. meter
+        zone_score=zone_score,
+    )
