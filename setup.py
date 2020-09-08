@@ -10,7 +10,6 @@ inst_reqs = [
     "jinja2",
     "geojson_pydantic",
     "shapely",
-    "pyproj",
 ]
 
 extra_reqs = {

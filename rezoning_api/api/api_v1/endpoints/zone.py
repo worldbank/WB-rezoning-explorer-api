@@ -1,7 +1,6 @@
 """LCOE endpoints."""
 
 from fastapi import APIRouter
-from shapely.geometry import shape
 
 from rezoning_api.models.zone import ZoneRequest
 from rezoning_api.api.utils import (
@@ -26,12 +25,9 @@ def zone(query: ZoneRequest, filters: str):
     if query.lcoe.turbine_type:
         cf_tif_loc = "gwa.tif"
 
-    # aoi geometry
-    geom = shape(query.aoi)
-
     # spatial temporal inputs
-    ds, dr, mask = get_distances(geom, filters)
-    cf = get_capacity_factor(cf_tif_loc, geom, query.lcoe.turbine_type)
+    ds, dr, mask = get_distances(query.aoi, filters)
+    cf = get_capacity_factor(cf_tif_loc, query.aoi, query.lcoe.turbine_type)
 
     # lcoe component calculation
     lg = lcoe_generation(query.lcoe, cf)

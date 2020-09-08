@@ -1,16 +1,18 @@
 """api utility functions"""
 import boto3
 import numpy as np
+from shapely.geometry import shape
 import rasterio
 from rasterio.windows import from_bounds
+from rasterio.warp import transform_geom
+from rasterio.crs import CRS
 from rasterio import features
-from shapely.ops import transform
-import pyproj
 
 from rezoning_api.models.zone import LCOE
 from rezoning_api.core.config import BUCKET
 
 s3 = boto3.client("s3")
+pc = CRS.from_epsg(4326)
 
 
 def calc_crf(lr: LCOE):
@@ -42,16 +44,13 @@ def lcoe_road(lr: LCOE, cf, dr):
     return numerator / denominator
 
 
-def get_capacity_factor(cf_tif_loc: str, geom, turbine_type=None):
+def get_capacity_factor(cf_tif_loc: str, aoi, turbine_type=None):
     """Calculate Capacity Factor"""
     with rasterio.open(f"s3://{BUCKET}/multiband/{cf_tif_loc}") as cf_tif:
         # find the window of our aoi
-        project = pyproj.Transformer.from_proj(
-            pyproj.Proj("epsg:4326"),  # source coordinate system
-            pyproj.Proj(cf_tif.crs),  # destination coordinate system
-        )
-        g2 = transform(project.transform, geom)
-        window = from_bounds(*g2.bounds, cf_tif.transform)
+        g2 = transform_geom(pc, cf_tif.crs, aoi.dict())
+        bounds = shape(g2).bounds
+        window = from_bounds(*bounds, cf_tif.transform)
 
         # capacity factor band for solar (1)
         # for wind, use turbine_type
@@ -60,16 +59,13 @@ def get_capacity_factor(cf_tif_loc: str, geom, turbine_type=None):
         return cf_tif.read(cfb, window=window)
 
 
-def get_distances(geom, filters: str):
+def get_distances(aoi, filters: str):
     """Get filtered masks and distance arrays"""
     with rasterio.open(f"s3://{BUCKET}/multiband/distance.tif") as distance:
         # find the window of our aoi
-        project = pyproj.Transformer.from_proj(
-            pyproj.Proj("epsg:4326"),  # source coordinate system
-            pyproj.Proj(distance.crs),  # destination coordinate system
-        )
-        g2 = transform(project.transform, geom)
-        window = from_bounds(*g2.bounds, distance.transform)
+        g2 = transform_geom(pc, distance.crs, aoi.dict())
+        bounds = shape(g2).bounds
+        window = from_bounds(*bounds, distance.transform)
 
         # read all bands and filter
         data = np.nan_to_num(distance.read(window=window))
