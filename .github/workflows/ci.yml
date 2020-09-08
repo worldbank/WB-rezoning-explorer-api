@@ -53,16 +53,6 @@ jobs:
           pip install -e '.[deploy]'
           npm install -g aws-cdk
       
-      - name: Set tag version
-        id: tag
-        # https://stackoverflow.com/questions/58177786/get-the-current-pushed-tag-in-github-actions
-        run: echo ::set-output name=tag::${GITHUB_REF#refs/*/}
-
-      - name: Set module version
-        id: module
-        # https://stackoverflow.com/questions/58177786/get-the-current-pushed-tag-in-github-actions
-        run: echo ::set-output name=version::$(python setup.py --version)
-      
       - name: cdk deploy
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
