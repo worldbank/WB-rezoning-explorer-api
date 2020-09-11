@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter
 
-from rezoning_api.models.zone import ZoneRequest
+from rezoning_api.models.zone import ZoneRequest, ZoneResponse
 from rezoning_api.api.utils import (
     lcoe_generation,
     lcoe_interconnection,
@@ -17,6 +17,7 @@ router = APIRouter()
 @router.post(
     "/zone/",
     responses={200: dict(description="return an LCOE calculation for a given area")},
+    response_model=ZoneResponse,
 )
 def zone(query: ZoneRequest, filters: str):
     """calculate LCOE, then weight for zone score"""
@@ -50,7 +51,8 @@ def zone(query: ZoneRequest, filters: str):
     )
 
     return dict(
-        lcoe=float(lcoe.sum()) / 1000,  # GWh
-        lcoe_density=float(lcoe.mean()) / (500 ** 2),  # kWh / sq. meter
+        lcoe=lcoe.sum() / 1000,
         zone_score=zone_score,
+        zone_output=cf.sum(),
+        zone_output_density=cf.sum() / (500 ** 2),
     )
