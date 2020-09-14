@@ -1,6 +1,7 @@
 """api utility functions"""
 import boto3
 import numpy as np
+import numpy.ma as ma
 from shapely.geometry import shape
 import rasterio
 from rasterio.windows import from_bounds
@@ -12,7 +13,9 @@ from rezoning_api.models.zone import LCOE
 from rezoning_api.core.config import BUCKET
 
 s3 = boto3.client("s3")
-pc = CRS.from_epsg(4326)
+PLATE_CARREE = CRS.from_epsg(4326)
+
+MAX_DIST = 1000000  # meters
 
 
 def calc_crf(lr: LCOE):
@@ -48,7 +51,7 @@ def get_capacity_factor(cf_tif_loc: str, aoi, turbine_type=None):
     """Calculate Capacity Factor"""
     with rasterio.open(f"s3://{BUCKET}/multiband/{cf_tif_loc}") as cf_tif:
         # find the window of our aoi
-        g2 = transform_geom(pc, cf_tif.crs, aoi.dict())
+        g2 = transform_geom(PLATE_CARREE, cf_tif.crs, aoi.dict())
         bounds = shape(g2).bounds
         window = from_bounds(*bounds, cf_tif.transform)
 
@@ -56,19 +59,24 @@ def get_capacity_factor(cf_tif_loc: str, aoi, turbine_type=None):
         # for wind, use turbine_type
         cfb = 1 if not turbine_type else turbine_type
 
-        return cf_tif.read(cfb, window=window)
+        data = cf_tif.read(cfb, window=window)
+        return ma.array(data, mask=np.isnan(data))
 
 
 def get_distances(aoi, filters: str):
     """Get filtered masks and distance arrays"""
     with rasterio.open(f"s3://{BUCKET}/multiband/distance.tif") as distance:
         # find the window of our aoi
-        g2 = transform_geom(pc, distance.crs, aoi.dict())
+        g2 = transform_geom(PLATE_CARREE, distance.crs, aoi.dict())
         bounds = shape(g2).bounds
         window = from_bounds(*bounds, distance.transform)
 
         # read all bands and filter
-        data = np.nan_to_num(distance.read(window=window))
+        data = np.nan_to_num(
+            distance.read(window=window),
+            nan=MAX_DIST,
+        )
+
         _, mask = _filter(data, filters)
 
         # mask by geometry
@@ -91,7 +99,7 @@ def _filter(array, filters: str):
     filters look like ?filters=0,10000|0,10000...
     """
     # temporary handling of incorrect nodata value
-    array[array == 65535] = 500000
+    array[array == 65535] = MAX_DIST
 
     arr_filters = filters.split("|")
     np_filters = []
