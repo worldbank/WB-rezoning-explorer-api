@@ -48,4 +48,5 @@ def filter(z: int, x: int, y: int, filters: str, color: str):
 def get_layers():
     """Return layers list for filters"""
     layers = s3_get(BUCKET, "multiband/distance.json")
-    return json.loads(layers).get("layers")
+    calc_layers = s3_get(BUCKET, "multiband/calc.json")
+    return json.loads(layers).get("layers") + json.loads(calc_layers).get("layers")

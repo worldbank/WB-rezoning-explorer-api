@@ -27,7 +27,7 @@ def zone(query: ZoneRequest, filters: str):
         cf_tif_loc = "gwa.tif"
 
     # spatial temporal inputs
-    ds, dr, mask = get_distances(query.aoi, filters)
+    ds, dr, calc, mask = get_distances(query.aoi, filters)
     cf = get_capacity_factor(cf_tif_loc, query.aoi, query.lcoe.turbine_type)
 
     # lcoe component calculation
@@ -44,9 +44,9 @@ def zone(query: ZoneRequest, filters: str):
         + query.weights.distance_load * ds.sum()
         # technology_colocation: float = 0.5
         # human_footprint: float = 0.5
-        # pop_density: float = 0.5
-        # slope: float = 0.5
-        # land_use: float = 0.5
+        + query.weights.pop_density * calc[0].sum()
+        + query.weights.slope * calc[1].sum()
+        + query.weights.land_use * calc[2].sum()
         + query.weights.capacity_value * cf.sum()
     )
 

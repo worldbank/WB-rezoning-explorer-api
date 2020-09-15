@@ -66,31 +66,42 @@ def get_capacity_factor(cf_tif_loc: str, aoi, turbine_type=None):
 def get_distances(aoi, filters: str):
     """Get filtered masks and distance arrays"""
     with rasterio.open(f"s3://{BUCKET}/multiband/distance.tif") as distance:
-        # find the window of our aoi
-        g2 = transform_geom(PLATE_CARREE, distance.crs, aoi.dict())
-        bounds = shape(g2).bounds
-        window = from_bounds(*bounds, distance.transform)
+        with rasterio.open(f"s3://{BUCKET}/multiband/calc.tif") as calc:
+            # find the window of our aoi
+            g2 = transform_geom(PLATE_CARREE, distance.crs, aoi.dict())
+            bounds = shape(g2).bounds
+            window = from_bounds(*bounds, distance.transform)
 
-        # read all bands and filter
-        data = np.nan_to_num(
-            distance.read(window=window),
-            nan=MAX_DIST,
-        )
+            # TODO: eventually this should be one TIF for fewer reads
+            calc_portion = np.nan_to_num(calc.read(window=window), nan=0)
+            filter_portion = np.nan_to_num(distance.read(window=window), nan=MAX_DIST)
 
-        _, mask = _filter(data, filters)
+            # read all bands and filter
+            data = np.concatenate(
+                [
+                    filter_portion,
+                    calc_portion,
+                ],
+                axis=0,
+            )
 
-        # mask by geometry
-        geom_mask = _rasterize_geom(
-            g2, mask.shape, distance.window_transform(window), all_touched=True
-        )
-        final_mask = (mask & geom_mask).astype(np.bool)
+            _, mask = _filter(data, filters)
 
-        # distance from grid, TODO: remove hardcoded band number
-        ds = data[3]
-        # distance from road, TODO: remove hardcoded band number
-        dr = data[4]
+            # mask by geometry
+            geom_mask = _rasterize_geom(
+                g2, mask.shape, distance.window_transform(window), all_touched=True
+            )
+            final_mask = (mask & geom_mask).astype(np.bool)
 
-        return (ds, dr, final_mask)
+            # distance from grid, TODO: remove hardcoded band number
+            ds = data[3]
+            # distance from road, TODO: remove hardcoded band number
+            dr = data[4]
+
+            # additional variables for zone weights
+            calc_masked = calc_portion[:, final_mask]
+
+            return (ds, dr, calc_masked, final_mask)
 
 
 def _filter(array, filters: str):

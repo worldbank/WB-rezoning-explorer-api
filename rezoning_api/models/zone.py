@@ -8,8 +8,8 @@ def WeightField(title=None):
     """weight field defaults"""
     return Field(
         0.5,
-        gt=0,
-        lt=1,
+        gte=0,
+        lte=1,
         description=f"weight assigned to {title} parameter",
         title=title,
     )
