@@ -23,14 +23,18 @@ router = APIRouter()
 )
 def filter(z: int, x: int, y: int, filters: str, color: str):
     """Return dataset info."""
-    arr, _mask = cogeo.tile(
+    filter_arr, _mask = cogeo.tile(
         f"s3://{BUCKET}/multiband/distance.tif", x, y, z, tilesize=256
     )
+    # calc_arr, _mask2 = cogeo.tile(
+    #     f"s3://{BUCKET}/multiband/calc.tif", x, y, z, tilesize=256
+    # )
+    # arr = np.concatenate([filter_arr, calc_arr], axis=0)
 
     # color like 45,39,88,178 (RGBA)
     color_list = list(map(lambda x: int(x), color.split(",")))
 
-    tile, new_mask = _filter(arr, filters)
+    tile, new_mask = _filter(filter_arr, filters)
     color_tile = np.stack(
         [
             tile * color_list[0],

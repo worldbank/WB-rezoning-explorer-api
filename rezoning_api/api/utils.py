@@ -115,11 +115,15 @@ def _filter(array, filters: str):
     arr_filters = filters.split("|")
     np_filters = []
     for i, af in enumerate(arr_filters):
-        tmp = np.logical_and(
-            array[i] >= int(af.split(",")[0]),
-            array[i] <= int(af.split(",")[1]),
-        )
-        np_filters.append(tmp)
+        try:
+            tmp = np.logical_and(
+                array[i] >= int(af.split(",")[0]),
+                array[i] <= int(af.split(",")[1]),
+            )
+            np_filters.append(tmp)
+        except IndexError:
+            # ignore excess filters
+            pass
 
     all_true = np.prod(np.stack(np_filters), axis=0).astype(np.uint8)
     return (all_true, all_true != 0)
