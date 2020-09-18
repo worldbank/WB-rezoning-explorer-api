@@ -7,7 +7,7 @@ import numpy as np
 import json
 
 from rezoning_api.core.config import BUCKET
-from rezoning_api.models.filter import FilterResponse
+from rezoning_api.models.tiles import TileResponse
 from rezoning_api.api.utils import _filter, s3_get
 
 router = APIRouter()
@@ -18,11 +18,11 @@ router = APIRouter()
     responses={
         200: dict(description="return a filtered tile given certain parameters")
     },
-    response_class=FilterResponse,
+    response_class=TileResponse,
     name="filter",
 )
 def filter(z: int, x: int, y: int, filters: str, color: str):
-    """Return dataset info."""
+    """Return filtered tile."""
     filter_arr, _mask = cogeo.tile(
         f"s3://{BUCKET}/multiband/distance.tif", x, y, z, tilesize=256
     )
@@ -45,7 +45,7 @@ def filter(z: int, x: int, y: int, filters: str, color: str):
     )
 
     content = render(color_tile)
-    return FilterResponse(content=content)
+    return TileResponse(content=content)
 
 
 @router.get("/filter/layers/")
