@@ -47,8 +47,14 @@ def lcoe_road(lr: LCOE, cf, dr):
     return numerator / denominator
 
 
-def get_capacity_factor(cf_tif_loc: str, aoi, turbine_type=None):
+def get_capacity_factor(aoi, turbine_type=None):
     """Calculate Capacity Factor"""
+
+    # decide which capacity factor tif to pull from
+    cf_tif_loc = "gsa.tif"
+    if turbine_type:
+        cf_tif_loc = "gwa.tif"
+
     with rasterio.open(f"s3://{BUCKET}/multiband/{cf_tif_loc}") as cf_tif:
         # find the window of our aoi
         g2 = transform_geom(PLATE_CARREE, cf_tif.crs, aoi.dict())

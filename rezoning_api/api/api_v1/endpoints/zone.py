@@ -21,14 +21,9 @@ router = APIRouter()
 )
 def zone(query: ZoneRequest, filters: str):
     """calculate LCOE, then weight for zone score"""
-    # decide which capacity factor tif to pull from
-    cf_tif_loc = "gsa.tif"
-    if query.lcoe.turbine_type:
-        cf_tif_loc = "gwa.tif"
-
     # spatial temporal inputs
     ds, dr, calc, mask = get_distances(query.aoi, filters)
-    cf = get_capacity_factor(cf_tif_loc, query.aoi, query.lcoe.turbine_type)
+    cf = get_capacity_factor(query.aoi, query.lcoe.turbine_type)
 
     # lcoe component calculation
     lg = lcoe_generation(query.lcoe, cf)
