@@ -1,5 +1,6 @@
 """api utility functions"""
 from typing import Union
+import xml.etree.ElementTree as ET
 
 import boto3
 import numpy as np
@@ -123,6 +124,23 @@ def get_distances(aoi: Union[Polygon, MultiPolygon], filters: str, tilesize=None
             calc_masked = calc_portion[:, final_mask]
 
             return (ds, dr, calc_masked, final_mask)
+
+
+def get_stat(root, attrib_key):
+    """get from XML"""
+    return [
+        float(elem.text)
+        for elem in root.iterfind(".//MDI")
+        if elem.attrib.get("key") == attrib_key
+    ]
+
+
+def get_min_max(xml):
+    """get minimum and maximum values from VRT"""
+    root = ET.fromstring(xml)
+    mins = get_stat(root, "STATISTICS_MINIMUM")
+    maxs = get_stat(root, "STATISTICS_MAXIMUM")
+    return (mins, maxs)
 
 
 def _filter(array, filters: str):

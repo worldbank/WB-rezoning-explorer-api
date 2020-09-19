@@ -8,7 +8,7 @@ import json
 
 from rezoning_api.core.config import BUCKET
 from rezoning_api.models.tiles import TileResponse
-from rezoning_api.api.utils import _filter, s3_get
+from rezoning_api.api.utils import _filter, s3_get, get_min_max
 
 router = APIRouter()
 
@@ -51,6 +51,22 @@ def filter(z: int, x: int, y: int, filters: str, color: str):
 @router.get("/filter/layers/")
 def get_layers():
     """Return layers list for filters"""
-    layers = s3_get(BUCKET, "multiband/distance.json")
+    distance_layers = s3_get(BUCKET, "multiband/distance.json")
     calc_layers = s3_get(BUCKET, "multiband/calc.json")
-    return json.loads(layers).get("layers") + json.loads(calc_layers).get("layers")
+
+    distance_min, distance_max = get_min_max(s3_get(BUCKET, "multiband/distance.vrt"))
+    calc_min, calc_max = get_min_max(s3_get(BUCKET, "multiband/calc.vrt"))
+
+    # combine distance and calc
+    layers = json.loads(distance_layers).get("layers") + json.loads(calc_layers).get(
+        "layers"
+    )
+    minmaxes = zip(
+        distance_min + calc_min,
+        distance_max + calc_max,
+    )
+
+    return {
+        layer: dict(min=minmax[0], max=minmax[1])
+        for layer, minmax in zip(layers, minmaxes)
+    }
