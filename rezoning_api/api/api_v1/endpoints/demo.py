@@ -16,5 +16,6 @@ def demo(request: Request):
             "filter_endpoint": request.url_for(
                 "filter", **dict(z="{z}", x="{x}", y="{y}")
             ),
+            "lcoe_endpoint": request.url_for("lcoe", **dict(z="{z}", x="{x}", y="{y}")),
         },
     )

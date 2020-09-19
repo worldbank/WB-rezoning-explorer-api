@@ -5,6 +5,7 @@ from mercantile import feature, Tile
 from rio_tiler.colormap import cmap
 from rio_tiler.utils import render, linear_rescale
 import numpy as np
+from geojson_pydantic.geometries import Polygon
 
 from rezoning_api.models.tiles import TileResponse
 from rezoning_api.models.zone import LCOE
@@ -25,26 +26,26 @@ router = APIRouter()
         200: dict(description="return a filtered tile given certain parameters")
     },
     response_class=TileResponse,
-    name="filter",
+    name="lcoe",
 )
 def lcoe(z: int, x: int, y: int, filters: str, colormap: str, lcoe: LCOE = Depends()):
     """Return LCOE tile."""
     # get AOI from tile
-    aoi = feature(Tile(x, y, z))["geometry"]
+    aoi = Polygon(**feature(Tile(x, y, z))["geometry"])
 
     # calculate LCOE (from zone.py, TODO: DRY)
     # spatial temporal inputs
-    ds, dr, _calc, mask = get_distances(aoi, filters)
-    cf = get_capacity_factor(aoi, lcoe.turbine_type)
+    ds, dr, _calc, mask = get_distances(aoi, filters, tilesize=256)
+    cf = get_capacity_factor(aoi, lcoe.turbine_type, tilesize=256)
 
     # lcoe component calculation
     lg = lcoe_generation(lcoe, cf)
     li = lcoe_interconnection(lcoe, cf, ds)
     lr = lcoe_road(lcoe, cf, dr)
-    lcoe = (lg + li + lr)[mask]
+    lcoe = lg + li + lr
 
-    tile = linear_rescale(lcoe, out_range=[0, 255]).astype(np.uint8)
-
+    tile = linear_rescale(lcoe, in_range=[0, 500], out_range=[0, 255]).astype(np.uint8)
+    print(lg.shape, tile.shape, colormap)
     colormap = cmap.get(colormap)
-    content = render(tile, mask=mask, colormap=colormap)
+    content = render(tile, colormap=colormap)
     return TileResponse(content=content)
