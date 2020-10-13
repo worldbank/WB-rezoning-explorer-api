@@ -10,7 +10,7 @@ from rezoning_api.api.api_v1.api import api_router
 app = FastAPI(
     title=config.PROJECT_NAME,
     openapi_url="/api/v1/openapi.json",
-    description="Server for filtering and statistics on Renewable Energy Data",
+    description="Server for filtering and statistics on Renewable Energy Data (test)",
     version=version,
 )
 
