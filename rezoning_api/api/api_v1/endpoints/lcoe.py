@@ -42,10 +42,12 @@ def lcoe(z: int, x: int, y: int, filters: str, colormap: str, lcoe: LCOE = Depen
     lg = lcoe_generation(lcoe, cf)
     li = lcoe_interconnection(lcoe, cf, ds)
     lr = lcoe_road(lcoe, cf, dr)
-    lcoe = lg + li + lr
+    lcoe_total = lg + li + lr
 
-    tile = linear_rescale(lcoe, in_range=[0, 500], out_range=[0, 255]).astype(np.uint8)
-    print(lg.shape, tile.shape, colormap)
+    tile = linear_rescale(
+        lcoe_total, in_range=[lcoe_total.min(), lcoe_total.max()], out_range=[0, 255]
+    ).astype(np.uint8)
+
     colormap = cmap.get(colormap)
     content = render(tile, colormap=colormap)
     return TileResponse(content=content)
