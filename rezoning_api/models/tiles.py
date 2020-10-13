@@ -1,9 +1,9 @@
-"""filter models"""
+"""Models for tiles"""
 from fastapi import Response
 
 
-class FilterResponse(Response):
-    """Filters response."""
+class TileResponse(Response):
+    """Tile response."""
 
     def __init__(
         self,
@@ -12,7 +12,7 @@ class FilterResponse(Response):
         status_code: int = 200,
         headers: dict = {},
     ) -> None:
-        """Init filter response."""
+        """Init tile response."""
         headers.update({"Content-Type": media_type})
         self.body = self.render(content)
         self.status_code = 200
