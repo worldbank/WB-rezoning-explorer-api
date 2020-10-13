@@ -1,4 +1,7 @@
 """api utility functions"""
+from typing import Union
+import xml.etree.ElementTree as ET
+
 import boto3
 import numpy as np
 import numpy.ma as ma
@@ -8,6 +11,7 @@ from rasterio.windows import from_bounds
 from rasterio.warp import transform_geom
 from rasterio.crs import CRS
 from rasterio import features
+from geojson_pydantic.geometries import Polygon, MultiPolygon
 
 from rezoning_api.models.zone import LCOE
 from rezoning_api.core.config import BUCKET
@@ -47,8 +51,16 @@ def lcoe_road(lr: LCOE, cf, dr):
     return numerator / denominator
 
 
-def get_capacity_factor(cf_tif_loc: str, aoi, turbine_type=None):
+def get_capacity_factor(
+    aoi: Union[Polygon, MultiPolygon], turbine_type=None, tilesize=None
+):
     """Calculate Capacity Factor"""
+
+    # decide which capacity factor tif to pull from
+    cf_tif_loc = "gsa.tif"
+    if turbine_type:
+        cf_tif_loc = "gwa.tif"
+
     with rasterio.open(f"s3://{BUCKET}/multiband/{cf_tif_loc}") as cf_tif:
         # find the window of our aoi
         g2 = transform_geom(PLATE_CARREE, cf_tif.crs, aoi.dict())
@@ -59,11 +71,13 @@ def get_capacity_factor(cf_tif_loc: str, aoi, turbine_type=None):
         # for wind, use turbine_type
         cfb = 1 if not turbine_type else turbine_type
 
-        data = cf_tif.read(cfb, window=window)
+        # read overviews if specified
+        out_shape = (1, tilesize, tilesize) if tilesize else None
+        data = cf_tif.read(cfb, window=window, out_shape=out_shape)
         return ma.array(data, mask=np.isnan(data))
 
 
-def get_distances(aoi, filters: str):
+def get_distances(aoi: Union[Polygon, MultiPolygon], filters: str, tilesize=None):
     """Get filtered masks and distance arrays"""
     with rasterio.open(f"s3://{BUCKET}/multiband/distance.tif") as distance:
         with rasterio.open(f"s3://{BUCKET}/multiband/calc.tif") as calc:
@@ -72,9 +86,17 @@ def get_distances(aoi, filters: str):
             bounds = shape(g2).bounds
             window = from_bounds(*bounds, distance.transform)
 
+            # read overviews if specified
+            calc_out_shape = (distance.count, tilesize, tilesize) if tilesize else None
+            filter_out_shape = (calc.count, tilesize, tilesize) if tilesize else None
+
             # TODO: eventually this should be one TIF for fewer reads
-            calc_portion = np.nan_to_num(calc.read(window=window), nan=0)
-            filter_portion = np.nan_to_num(distance.read(window=window), nan=MAX_DIST)
+            calc_portion = np.nan_to_num(
+                calc.read(window=window, out_shape=calc_out_shape), nan=0
+            )
+            filter_portion = np.nan_to_num(
+                distance.read(window=window, out_shape=filter_out_shape), nan=MAX_DIST
+            )
 
             # read all bands and filter
             data = np.concatenate(
@@ -102,6 +124,23 @@ def get_distances(aoi, filters: str):
             calc_masked = calc_portion[:, final_mask]
 
             return (ds, dr, calc_masked, final_mask)
+
+
+def get_stat(root, attrib_key):
+    """get from XML"""
+    return [
+        float(elem.text)
+        for elem in root.iterfind(".//MDI")
+        if elem.attrib.get("key") == attrib_key
+    ]
+
+
+def get_min_max(xml):
+    """get minimum and maximum values from VRT"""
+    root = ET.fromstring(xml)
+    mins = get_stat(root, "STATISTICS_MINIMUM")
+    maxs = get_stat(root, "STATISTICS_MAXIMUM")
+    return (mins, maxs)
 
 
 def _filter(array, filters: str):
