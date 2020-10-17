@@ -37,22 +37,22 @@ def refresh_country_extrema(partial=False):
             print(f"skipping {fname} already exists")
             continue
         print(f"reading values for {feature['properties']['NAME_0']}")
-        try:
-            extrema = dict()
-            for dataset in datasets:
-                print(f"read {dataset}")
-                ds = read_dataset(
-                    f"s3://{BUCKET}/multiband/{dataset}.tif",
-                    layers[dataset],
-                    feature,
+        # try:
+        extrema = dict()
+        for dataset in datasets:
+            print(f"read {dataset}")
+            ds = read_dataset(
+                f"s3://{BUCKET}/multiband/{dataset}.tif",
+                layers[dataset],
+                feature["geometry"],
+            )
+            for layer in layers[dataset]:
+                extrema[layer] = dict(
+                    min=float(ds.sel(layer=layer).min()),
+                    max=float(ds.sel(layer=layer).max()),
                 )
-                for layer in layers[dataset]:
-                    extrema[layer] = dict(
-                        min=float(ds.sel(layer=layer).min()),
-                        max=float(ds.sel(layer=layer).max()),
-                    )
-            with open(fname, "w") as out:
-                json.dump(extrema, out)
-        except Exception:
-            print("error, skipping")
+        with open(fname, "w") as out:
+            json.dump(extrema, out)
+        # except Exception:
+        #     print("error, skipping")
         print(f"elapsed: {time() - t1} seconds")
