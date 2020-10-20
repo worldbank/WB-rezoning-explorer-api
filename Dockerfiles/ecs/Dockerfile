@@ -1,12 +1,10 @@
-FROM laurents/uvicorn-gunicorn-fastapi:python3.7-slim
-# Ref https://github.com/tiangolo/uvicorn-gunicorn-fastapi-docker/issues/15
-# Cuts image size by 50%
-# FROM tiangolo/uvicorn-gunicorn-fastapi:python3.7
+FROM tiangolo/uvicorn-gunicorn-fastapi:python3.8-slim
 
 ENV CURL_CA_BUNDLE /etc/ssl/certs/ca-certificates.crt
 
 COPY README.md /app/README.md
-COPY covid_api/ /app/covid_api/
+COPY rezoning_api/ /app/rezoning_api/
 COPY setup.py /app/setup.py
+COPY layers.json /app/layers.json
 
 RUN pip install -e /app/. --no-cache-dir

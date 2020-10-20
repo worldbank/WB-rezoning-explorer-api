@@ -10,6 +10,7 @@ inst_reqs = [
     "jinja2",
     "geojson_pydantic",
     "shapely",
+    "xarray",
 ]
 
 extra_reqs = {
