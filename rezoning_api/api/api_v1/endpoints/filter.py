@@ -8,7 +8,8 @@ import json
 
 from rezoning_api.core.config import BUCKET
 from rezoning_api.models.tiles import TileResponse
-from rezoning_api.api.utils import _filter, s3_get, get_min_max
+from rezoning_api.api.utils import _filter, get_min_max
+from rezoning_api.utils import s3_get
 
 router = APIRouter()
 

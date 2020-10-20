@@ -27,7 +27,6 @@ def read_dataset(
     dataset: str,
     layers: List,
     aoi: Union[Polygon, MultiPolygon],
-    band=None,
     tilesize=None,
     nan=0,
 ):
@@ -40,26 +39,31 @@ def read_dataset(
 
         # be careful with the window
         window = window.round_shape().round_offsets()
-
+        print(window, src.shape)
         # read overviews if specified
         out_shape = (tilesize, tilesize) if tilesize else None
 
         # read data
-        data = src.read(band, window=window, out_shape=out_shape, masked=True)
+        data = src.read(window=window, out_shape=out_shape, masked=True)
 
-        # mask with geometry
-        mask = features.geometry_mask(
-            [g2],
-            out_shape=data.shape[1:],
-            transform=src.window_transform(window),
-            all_touched=True,
-        )
+        # for non-tiles, mask with geometry
+        mask = data.mask
+        if not out_shape:
+            mask = np.logical_or(
+                features.geometry_mask(
+                    [g2],
+                    out_shape=data.shape[1:],
+                    transform=src.window_transform(window),
+                    all_touched=True,
+                ),
+                mask,
+            )
 
         # return as xarray
         return xr.DataArray(
             ma.array(
                 data.data,
-                mask=np.broadcast_to(np.logical_or(data.mask, mask), data.shape),
+                mask=np.broadcast_to(mask, data.shape),
                 fill_value=data.fill_value,
             ),
             dims=("layer", "x", "y"),
