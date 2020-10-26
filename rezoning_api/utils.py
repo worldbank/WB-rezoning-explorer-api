@@ -39,7 +39,7 @@ def read_dataset(
 
         # be careful with the window
         window = window.round_shape().round_offsets()
-        print(window, src.shape)
+
         # read overviews if specified
         out_shape = (tilesize, tilesize) if tilesize else None
 
@@ -59,13 +59,16 @@ def read_dataset(
                 mask,
             )
 
-        # return as xarray
-        return xr.DataArray(
-            ma.array(
-                data.data,
-                mask=np.broadcast_to(mask, data.shape),
-                fill_value=data.fill_value,
+        # return as xarray + mask
+        return (
+            xr.DataArray(
+                ma.array(
+                    data.data,
+                    mask=np.broadcast_to(mask, data.shape),
+                    fill_value=data.fill_value,
+                ),
+                dims=("layer", "x", "y"),
+                coords=dict(layer=layers),
             ),
-            dims=("layer", "x", "y"),
-            coords=dict(layer=layers),
+            mask,
         )

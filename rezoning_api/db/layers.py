@@ -41,7 +41,7 @@ def refresh_country_extrema(partial=False):
         extrema = dict()
         for dataset in datasets:
             print(f"read {dataset}")
-            ds = read_dataset(
+            ds, _ = read_dataset(
                 f"s3://{BUCKET}/multiband/{dataset}.tif",
                 layers[dataset],
                 feature["geometry"],

@@ -54,20 +54,20 @@ def get_capacity_factor(
     if turbine_type:
         cf_tif_loc = "gwa"
 
-    return read_dataset(
+    cf, _ = read_dataset(
         f"s3://{BUCKET}/multiband/{cf_tif_loc}.tif",
         layers=LAYERS[cf_tif_loc],
         aoi=aoi.dict(),
         tilesize=tilesize,
-    ).sel(
-        layer=LAYERS[cf_tif_loc][0]
-    )  # TODO: which layer to read from
+    )
+
+    return cf.sel(layer=LAYERS[cf_tif_loc][0])  # TODO: which layer to read from
 
 
 def get_distances(aoi: Union[Polygon, MultiPolygon], filters: str, tilesize=None):
     """Get filtered masks and distance arrays"""
 
-    distance = read_dataset(
+    distance, mask = read_dataset(
         f"s3://{BUCKET}/multiband/distance.tif",
         layers=LAYERS["distance"],
         aoi=aoi.dict(),
@@ -75,7 +75,7 @@ def get_distances(aoi: Union[Polygon, MultiPolygon], filters: str, tilesize=None
         nan=MAX_DIST,
     )
 
-    calc = read_dataset(
+    calc, _ = read_dataset(
         f"s3://{BUCKET}/multiband/calc.tif",
         layers=LAYERS["calc"],
         aoi=aoi.dict(),
@@ -90,13 +90,15 @@ def get_distances(aoi: Union[Polygon, MultiPolygon], filters: str, tilesize=None
         axis=0,
     )
 
-    _, mask = _filter(data, filters)
+    _, filter_mask = _filter(data, filters)
 
     return (
         distance.sel(layer="grid"),
         distance.sel(layer="roads"),
         calc,
-        mask,
+        np.logical_or(
+            ~mask, filter_mask
+        ),  # NOTE: we flip to a "true mask" here (True is valid)
     )
 
 

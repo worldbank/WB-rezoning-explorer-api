@@ -33,7 +33,7 @@ def lcoe(z: int, x: int, y: int, filters: str, colormap: str, lcoe: LCOE = Depen
 
     # calculate LCOE (from zone.py, TODO: DRY)
     # spatial temporal inputs
-    ds, dr, _calc, filter_mask = get_distances(aoi, filters, tilesize=256)
+    ds, dr, _calc, mask = get_distances(aoi, filters, tilesize=256)
     cf = get_capacity_factor(aoi, lcoe.turbine_type, tilesize=256)
 
     # lcoe component calculation
@@ -49,5 +49,5 @@ def lcoe(z: int, x: int, y: int, filters: str, colormap: str, lcoe: LCOE = Depen
     ).astype(np.uint8)
 
     colormap = cmap.get(colormap)
-    content = render(tile, np.logical_or(cf.mask, filter_mask), colormap=colormap)
+    content = render(tile, mask=mask * 255, colormap=colormap)
     return TileResponse(content=content)
