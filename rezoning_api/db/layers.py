@@ -23,7 +23,12 @@ def refresh_layers():
 
 def get_layers():
     """get saved layer json"""
-    return json.loads(s3_get(BUCKET, "api/layers.json"))
+    try:
+        layers = json.loads(s3_get(BUCKET, "api/layers.json"))
+    except Exception:
+        print("no available layers file")
+        layers = dict()
+    return layers
 
 
 def refresh_country_extrema(partial=False):
