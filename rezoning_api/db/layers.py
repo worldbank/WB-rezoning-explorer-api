@@ -23,8 +23,7 @@ def refresh_layers():
 
 def get_layers():
     """get saved layer json"""
-    return json.load(open("layers.json"))
-    # return json.loads(s3_get(BUCKET, 'api/layers.json'))
+    return json.loads(s3_get(BUCKET, "api/layers.json"))
 
 
 def refresh_country_extrema(partial=False):

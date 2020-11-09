@@ -21,13 +21,11 @@ class Weights(BaseModel):
     lcoe_gen: float = WeightField(title="LCOE Generation")
     lcoe_transmission: float = WeightField(title="LCOE Transmission")
     lcoe_road: float = WeightField(title="LCOE Road")
-    distance_load: float = WeightField(title="Distance to Load")
-    technology_colocation: float = WeightField(title="Technology Colocation")
-    human_footprint: float = WeightField(title="Human Footprint")
-    pop_density: float = WeightField(title="Population Density")
+    grid: float = WeightField(title="Distance to Grid")
+    worldpop: float = WeightField(title="Population Density")
     slope: float = WeightField(title="Slope")
-    land_use: float = WeightField(title="Land Use Score")
     capacity_value: float = WeightField(title="Capacity Value")
+    aipports: float = WeightField(title="Distanct to Airports")
 
 
 class LCOE(BaseModel):
