@@ -1,14 +1,15 @@
 """Filter endpoints."""
 
 from fastapi import APIRouter
-from rio_tiler.io import cogeo
+from rio_tiler.io import COGReader
 from rio_tiler.utils import render
 import numpy as np
 import json
 
 from rezoning_api.core.config import BUCKET
 from rezoning_api.models.tiles import TileResponse
-from rezoning_api.api.utils import _filter, s3_get, get_min_max
+from rezoning_api.api.utils import _filter, get_min_max
+from rezoning_api.utils import s3_get
 
 router = APIRouter()
 
@@ -23,12 +24,10 @@ router = APIRouter()
 )
 def filter(z: int, x: int, y: int, filters: str, color: str):
     """Return filtered tile."""
-    filter_arr, _mask = cogeo.tile(
-        f"s3://{BUCKET}/multiband/distance.tif", x, y, z, tilesize=256
-    )
-    calc_arr, _mask2 = cogeo.tile(
-        f"s3://{BUCKET}/multiband/calc.tif", x, y, z, tilesize=256
-    )
+    with COGReader(f"s3://{BUCKET}/multiband/distance.tif") as cog:
+        filter_arr, _mask = cog.tile(x, y, z, tilesize=256)
+    with COGReader(f"s3://{BUCKET}/multiband/calc.tif") as cog:
+        calc_arr, _mask2 = cog.tile(x, y, z, tilesize=256)
     arr = np.concatenate([filter_arr, calc_arr], axis=0)
 
     # color like 45,39,88,178 (RGBA)
@@ -43,6 +42,7 @@ def filter(z: int, x: int, y: int, filters: str, color: str):
             (new_mask * color_list[3]).astype(np.uint8),
         ]
     )
+    print(tile.shape)
 
     content = render(color_tile)
     return TileResponse(content=content)

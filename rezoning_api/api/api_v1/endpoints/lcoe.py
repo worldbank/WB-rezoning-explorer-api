@@ -22,9 +22,7 @@ router = APIRouter()
 
 @router.get(
     "/lcoe/{z}/{x}/{y}.png",
-    responses={
-        200: dict(description="return a filtered tile given certain parameters")
-    },
+    responses={200: dict(description="return an LCOE tile given certain parameters")},
     response_class=TileResponse,
     name="lcoe",
 )
@@ -45,9 +43,11 @@ def lcoe(z: int, x: int, y: int, filters: str, colormap: str, lcoe: LCOE = Depen
     lcoe_total = lg + li + lr
 
     tile = linear_rescale(
-        lcoe_total, in_range=[lcoe_total.min(), lcoe_total.max()], out_range=[0, 255]
+        np.nan_to_num(lcoe_total.values, lcoe_total.min()),
+        in_range=[float(lcoe_total.min()), float(lcoe_total.max())],
+        out_range=[0, 255],
     ).astype(np.uint8)
 
     colormap = cmap.get(colormap)
-    content = render(tile, colormap=colormap)
+    content = render(tile, mask=mask * 255, colormap=colormap)
     return TileResponse(content=content)

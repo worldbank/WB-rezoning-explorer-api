@@ -2,22 +2,17 @@
 from typing import Union
 import xml.etree.ElementTree as ET
 
-import boto3
 import numpy as np
-import numpy.ma as ma
-from shapely.geometry import shape
-import rasterio
-from rasterio.windows import from_bounds
-from rasterio.warp import transform_geom
-from rasterio.crs import CRS
 from rasterio import features
 from geojson_pydantic.geometries import Polygon, MultiPolygon
 
 from rezoning_api.models.zone import LCOE
 from rezoning_api.core.config import BUCKET
+from rezoning_api.utils import read_dataset
+from rezoning_api.db.layers import get_layers
+from rezoning_api.db.country import get_country_min_max
 
-s3 = boto3.client("s3")
-PLATE_CARREE = CRS.from_epsg(4326)
+LAYERS = get_layers()
 
 MAX_DIST = 1000000  # meters
 
@@ -55,75 +50,57 @@ def get_capacity_factor(
     aoi: Union[Polygon, MultiPolygon], turbine_type=None, tilesize=None
 ):
     """Calculate Capacity Factor"""
-
     # decide which capacity factor tif to pull from
-    cf_tif_loc = "gsa.tif"
+    cf_tif_loc = "gsa"
     if turbine_type:
-        cf_tif_loc = "gwa.tif"
+        cf_tif_loc = "gwa"
 
-    with rasterio.open(f"s3://{BUCKET}/multiband/{cf_tif_loc}") as cf_tif:
-        # find the window of our aoi
-        g2 = transform_geom(PLATE_CARREE, cf_tif.crs, aoi.dict())
-        bounds = shape(g2).bounds
-        window = from_bounds(*bounds, cf_tif.transform)
+    cf, _ = read_dataset(
+        f"s3://{BUCKET}/multiband/{cf_tif_loc}.tif",
+        layers=LAYERS[cf_tif_loc],
+        aoi=aoi.dict(),
+        tilesize=tilesize,
+    )
 
-        # capacity factor band for solar (1)
-        # for wind, use turbine_type
-        cfb = 1 if not turbine_type else turbine_type
-
-        # read overviews if specified
-        out_shape = (1, tilesize, tilesize) if tilesize else None
-        data = cf_tif.read(cfb, window=window, out_shape=out_shape)
-        return ma.array(data, mask=np.isnan(data))
+    return cf.sel(layer=LAYERS[cf_tif_loc][0])  # TODO: which layer to read from
 
 
 def get_distances(aoi: Union[Polygon, MultiPolygon], filters: str, tilesize=None):
     """Get filtered masks and distance arrays"""
-    with rasterio.open(f"s3://{BUCKET}/multiband/distance.tif") as distance:
-        with rasterio.open(f"s3://{BUCKET}/multiband/calc.tif") as calc:
-            # find the window of our aoi
-            g2 = transform_geom(PLATE_CARREE, distance.crs, aoi.dict())
-            bounds = shape(g2).bounds
-            window = from_bounds(*bounds, distance.transform)
 
-            # read overviews if specified
-            calc_out_shape = (distance.count, tilesize, tilesize) if tilesize else None
-            filter_out_shape = (calc.count, tilesize, tilesize) if tilesize else None
+    distance, mask = read_dataset(
+        f"s3://{BUCKET}/multiband/distance.tif",
+        layers=LAYERS["distance"],
+        aoi=aoi.dict(),
+        tilesize=tilesize,
+        nan=MAX_DIST,
+    )
 
-            # TODO: eventually this should be one TIF for fewer reads
-            calc_portion = np.nan_to_num(
-                calc.read(window=window, out_shape=calc_out_shape), nan=0
-            )
-            filter_portion = np.nan_to_num(
-                distance.read(window=window, out_shape=filter_out_shape), nan=MAX_DIST
-            )
+    calc, _ = read_dataset(
+        f"s3://{BUCKET}/multiband/calc.tif",
+        layers=LAYERS["calc"],
+        aoi=aoi.dict(),
+        tilesize=tilesize,
+    )
 
-            # read all bands and filter
-            data = np.concatenate(
-                [
-                    filter_portion,
-                    calc_portion,
-                ],
-                axis=0,
-            )
+    data = np.concatenate(
+        [
+            distance.values,
+            calc.values,
+        ],
+        axis=0,
+    )
 
-            _, mask = _filter(data, filters)
+    _, filter_mask = _filter(data, filters)
 
-            # mask by geometry
-            geom_mask = _rasterize_geom(
-                g2, mask.shape, distance.window_transform(window), all_touched=True
-            )
-            final_mask = (mask & geom_mask).astype(np.bool)
-
-            # distance from grid, TODO: remove hardcoded band number
-            ds = data[3]
-            # distance from road, TODO: remove hardcoded band number
-            dr = data[4]
-
-            # additional variables for zone weights
-            calc_masked = calc_portion[:, final_mask]
-
-            return (ds, dr, calc_masked, final_mask)
+    return (
+        distance.sel(layer="grid"),
+        distance.sel(layer="roads"),
+        calc,
+        np.logical_or(
+            ~mask, filter_mask
+        ),  # NOTE: we flip to a "true mask" here (True is valid)
+    )
 
 
 def get_stat(root, attrib_key):
@@ -168,15 +145,71 @@ def _filter(array, filters: str):
     return (all_true, all_true != 0)
 
 
-def s3_get(bucket: str, key: str):
-    """Get AWS S3 Object."""
-    response = s3.get_object(Bucket=bucket, Key=key)
-    return response["Body"].read()
-
-
 def _rasterize_geom(geom, shape, affinetrans, all_touched):
     indata = [(geom, 1)]
     rv_array = features.rasterize(
         indata, out_shape=shape, transform=affinetrans, fill=0, all_touched=all_touched
     )
     return rv_array
+
+
+def min_max_scale(arr, scale_min=None, scale_max=None):
+    """returns a normalized ~0.0-1.0 array from optional min/maxes"""
+    if not scale_min:
+        scale_min = arr.min()
+    if not scale_max:
+        scale_max = arr.max()
+
+    return (arr - scale_min) / (scale_max - scale_min)
+
+
+def calc_score(id, aoi, lcoe, weights, filters, tilesize=None):
+    """
+    calculate a "zone score" from the provided LCOE, weight, and filter inputs
+    the function returns a pixel array of scored values which can later be
+    aggregated into zones so here we refer to the function as a "score" calculation
+    """
+    # spatial temporal inputs
+    # ds, dr, calc, mask = get_distances(aoi, filters, tilesize=tilesize)
+    # cf = get_capacity_factor(aoi, lcoe.turbine_type, tilesize=tilesize)
+
+    # lcoe component calculation
+    # lg = lcoe_generation(lcoe, cf)
+    # li = lcoe_interconnection(lcoe, cf, ds)
+    # lr = lcoe_road(lcoe, cf, dr)
+
+    # get regional min/max
+    cmm = get_country_min_max(id)
+
+    # zone score
+    score_array = np.zeros((tilesize, tilesize))
+    for dataset, layers in LAYERS.items():
+        data, _ = read_dataset(
+            f"s3://{BUCKET}/multiband/{dataset}.tif",
+            layers,
+            aoi.dict(),
+            tilesize=tilesize,
+        )
+        for layer in layers:
+            ll = layer.replace("-", "_")
+            try:
+                if weights.dict()[ll] > 0:
+                    scaled_array = min_max_scale(
+                        data.sel(layer=layer).values,
+                        cmm[layer]["min"],
+                        cmm[layer]["max"],
+                    )
+                    score_array += weights.dict()[ll] * scaled_array
+            except KeyError as e:
+                print(e)
+                print("Drew: add this key to the weights model")
+
+    # non-layer zone score additions
+    # TODO: need scaling
+    # score_array += weights.lcoe_gen * lg
+    # score_array += weights.lcoe_transmission * li
+    # score_array += weights.lcoe_road * lr
+
+    # TODO: uncomment things, add bask mask
+    # return (min_max_scale(score_array), mask)
+    return min_max_scale(score_array)
