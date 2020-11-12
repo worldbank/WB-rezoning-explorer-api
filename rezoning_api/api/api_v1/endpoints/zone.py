@@ -29,19 +29,18 @@ def zone(query: ZoneRequest, filters: str):
     lg = lcoe_generation(query.lcoe, cf)
     li = lcoe_interconnection(query.lcoe, cf, ds)
     lr = lcoe_road(query.lcoe, cf, dr)
-    lcoe = (lg + li + lr)[mask]
+    # TODO: restore mask
+    lcoe = lg + li + lr
 
     # zone score
     zone_score = (
         query.weights.lcoe_gen * lg.sum()
         + query.weights.lcoe_transmission * li.sum()
         + query.weights.lcoe_road * lr.sum()
-        + query.weights.distance_load * ds.sum()
         # technology_colocation: float = 0.5
         # human_footprint: float = 0.5
-        + query.weights.pop_density * calc[0].sum()
+        + query.weights.worldpop * calc[0].sum()
         + query.weights.slope * calc[1].sum()
-        + query.weights.land_use * calc[2].sum()
         + query.weights.capacity_value * cf.sum()
     )
 
