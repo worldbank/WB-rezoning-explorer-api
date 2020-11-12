@@ -25,7 +25,7 @@ class Weights(BaseModel):
     worldpop: float = WeightField(title="Population Density")
     slope: float = WeightField(title="Slope")
     capacity_value: float = WeightField(title="Capacity Value")
-    aipports: float = WeightField(title="Distanct to Airports")
+    airports: float = WeightField(title="Distanct to Airports")
 
 
 class LCOE(BaseModel):
