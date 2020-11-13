@@ -3,6 +3,7 @@ from typing import Union
 import xml.etree.ElementTree as ET
 
 import numpy as np
+from pydantic import create_model
 from rasterio import features
 from geojson_pydantic.geometries import Polygon, MultiPolygon
 
@@ -213,3 +214,20 @@ def calc_score(id, aoi, lcoe, weights, filters, tilesize=None):
     # TODO: uncomment things, add bask mask
     # return (min_max_scale(score_array), mask)
     return min_max_scale(score_array)
+
+
+def flat_layers():
+    """flatten layer list"""
+    return [flat for layer in LAYERS.values() for flat in layer]
+
+
+def get_layer_location(id):
+    """get layer location and dataset index"""
+    loc = [(k, int(v.index(id))) for k, v in LAYERS.items() if id in v]
+    if loc:
+        return (f"s3://{BUCKET}/multiband/{loc[0][0]}.tif", loc[0][1])
+    else:
+        return (None, None)
+
+
+LayerNames = create_model("LayerNames", **dict(zip(flat_layers(), flat_layers())))

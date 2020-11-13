@@ -20,5 +20,8 @@ def demo(request: Request):
             "score_endpoint": request.url_for(
                 "score", **dict(country="AFG", z="{z}", x="{x}", y="{y}")
             ),
+            "layers_endpoint": request.url_for(
+                "layers", **dict(id="roads", z="{z}", x="{x}", y="{y}")
+            ),
         },
     )

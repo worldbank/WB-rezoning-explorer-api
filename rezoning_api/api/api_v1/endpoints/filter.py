@@ -4,12 +4,11 @@ from fastapi import APIRouter
 from rio_tiler.io import COGReader
 from rio_tiler.utils import render
 import numpy as np
-import json
 
 from rezoning_api.core.config import BUCKET
 from rezoning_api.models.tiles import TileResponse
-from rezoning_api.api.utils import _filter, get_min_max
-from rezoning_api.utils import s3_get
+from rezoning_api.api.utils import _filter, flat_layers
+from rezoning_api.db.country import get_country_min_max
 
 router = APIRouter()
 
@@ -42,7 +41,6 @@ def filter(z: int, x: int, y: int, filters: str, color: str):
             (new_mask * color_list[3]).astype(np.uint8),
         ]
     )
-    print(tile.shape)
 
     content = render(color_tile)
     return TileResponse(content=content)
@@ -51,22 +49,13 @@ def filter(z: int, x: int, y: int, filters: str, color: str):
 @router.get("/filter/layers/")
 def get_layers():
     """Return layers list for filters"""
-    distance_layers = s3_get(BUCKET, "multiband/distance.json")
-    calc_layers = s3_get(BUCKET, "multiband/calc.json")
+    return [layer for layer in flat_layers() if not layer.startswith(("gwa", "gsa"))]
 
-    distance_min, distance_max = get_min_max(s3_get(BUCKET, "multiband/distance.vrt"))
-    calc_min, calc_max = get_min_max(s3_get(BUCKET, "multiband/calc.vrt"))
 
-    # combine distance and calc
-    layers = json.loads(distance_layers).get("layers") + json.loads(calc_layers).get(
-        "layers"
-    )
-    minmaxes = zip(
-        distance_min + calc_min,
-        distance_max + calc_max,
-    )
-
-    return {
-        layer: dict(min=minmax[0], max=minmax[1])
-        for layer, minmax in zip(layers, minmaxes)
-    }
+@router.get("/filter/{country_id}/layers")
+def get_country_layers(country_id: str):
+    """Return min/max for country layers"""
+    minmax = get_country_min_max(country_id)
+    keys = list(minmax.keys())
+    [minmax.pop(key) for key in keys if key.startswith(("gwa", "gsa"))]
+    return minmax
