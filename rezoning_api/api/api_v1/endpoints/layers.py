@@ -18,7 +18,7 @@ router = APIRouter()
     response_class=TileResponse,
     name="layers",
 )
-def filter(id: str, z: int, x: int, y: int, colormap: str):
+def layers(id: str, z: int, x: int, y: int, colormap: str):
     """Return a tile from a layer."""
     loc, idx = get_layer_location(id)
     with COGReader(loc) as cog:

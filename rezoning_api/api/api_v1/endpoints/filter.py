@@ -49,10 +49,13 @@ def filter(z: int, x: int, y: int, filters: str, color: str):
 @router.get("/filter/layers/")
 def get_layers():
     """Return layers list for filters"""
-    return flat_layers()
+    return [layer for layer in flat_layers() if not layer.startswith(("gwa", "gsa"))]
 
 
-@router.get("/filter/{id}/layers")
-def get_country_layers(id: str):
+@router.get("/filter/{country_id}/layers")
+def get_country_layers(country_id: str):
     """Return min/max for country layers"""
-    return get_country_min_max(id)
+    minmax = get_country_min_max(country_id)
+    keys = list(minmax.keys())
+    [minmax.pop(key) for key in keys if key.startswith(("gwa", "gsa"))]
+    return minmax

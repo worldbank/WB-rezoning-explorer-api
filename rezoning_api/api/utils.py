@@ -218,7 +218,7 @@ def calc_score(id, aoi, lcoe, weights, filters, tilesize=None):
 
 def flat_layers():
     """flatten layer list"""
-    return [flat for layer in LAYERS for flat in layer]
+    return [flat for layer in LAYERS.values() for flat in layer]
 
 
 def get_layer_location(id):
