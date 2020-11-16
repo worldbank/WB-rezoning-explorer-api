@@ -47,6 +47,9 @@ class LCOE(BaseModel):
     decom: float = Field(0, title="Decommission % rate (Decom)")
     i: float = Field(0.1, title="Economic discount rate (i)")
     n: float = Field(25, title="Lifetime [years] (N)")
+    landuse: float = Field(0, title="Land use score")
+    tlf: float = Field(0, title="Technical Loss Factor")
+    af: float = Field(1, title="Availability Factor")
 
 
 class ZoneRequest(BaseModel):
