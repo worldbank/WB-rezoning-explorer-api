@@ -135,7 +135,7 @@
 
         var scope = { url: "", metadata: {}, config: {} }
 
-        const filterEndpoint = '{{ filter_endpoint }}'
+        const filterEndpoint = '{{ lcoe_endpoint }}'
 
         var map = new mapboxgl.Map({
             container: 'map',
@@ -161,7 +161,8 @@
             
             let filters = `f_airports=${airportFilters}&f_roads=${roadFilters}`
             console.log(filters)
-            let url = `${filterEndpoint}?${filters}&color=45,39,88,178 `
+            // let url = `${filterEndpoint}?${filters}&color=45,39,88,178 `
+            let url = `${filterEndpoint}?${filters}&colormap=viridis`
             map.addSource(
               'raster', { type: 'raster', tiles: [url], tileSize: 256 }
             )

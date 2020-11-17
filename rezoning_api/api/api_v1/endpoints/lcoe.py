@@ -8,7 +8,7 @@ import numpy as np
 from geojson_pydantic.geometries import Polygon
 
 from rezoning_api.models.tiles import TileResponse
-from rezoning_api.models.zone import LCOE
+from rezoning_api.models.zone import LCOE, Filters
 from rezoning_api.api.utils import (
     lcoe_generation,
     lcoe_interconnection,
@@ -26,7 +26,14 @@ router = APIRouter()
     response_class=TileResponse,
     name="lcoe",
 )
-def lcoe(z: int, x: int, y: int, filters: str, colormap: str, lcoe: LCOE = Depends()):
+def lcoe(
+    z: int,
+    x: int,
+    y: int,
+    colormap: str,
+    filters: Filters = Depends(),
+    lcoe: LCOE = Depends(),
+):
     """Return LCOE tile."""
     # get AOI from tile
     aoi = Polygon(**feature(Tile(x, y, z))["geometry"])

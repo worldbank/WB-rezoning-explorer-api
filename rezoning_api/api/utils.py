@@ -3,6 +3,7 @@ from typing import Union
 import xml.etree.ElementTree as ET
 
 import numpy as np
+import xarray as xr
 from pydantic import create_model
 from rasterio import features
 from geojson_pydantic.geometries import Polygon, MultiPolygon
@@ -66,7 +67,7 @@ def get_capacity_factor(
     return cf.sel(layer=LAYERS[cf_tif_loc][0])  # TODO: which layer to read from
 
 
-def get_distances(aoi: Union[Polygon, MultiPolygon], filters: str, tilesize=None):
+def get_distances(aoi: Union[Polygon, MultiPolygon], filters, tilesize=None):
     """Get filtered masks and distance arrays"""
 
     distance, mask = read_dataset(
@@ -84,13 +85,7 @@ def get_distances(aoi: Union[Polygon, MultiPolygon], filters: str, tilesize=None
         tilesize=tilesize,
     )
 
-    data = np.concatenate(
-        [
-            distance.values,
-            calc.values,
-        ],
-        axis=0,
-    )
+    data = xr.concat([distance, calc], dim="layer")
 
     _, filter_mask = _filter(data, filters)
 
