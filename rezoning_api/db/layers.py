@@ -23,7 +23,7 @@ def refresh_layers():
 
 def get_layers():
     """get saved layer json"""
-    with open("layers.json") as lf:
+    with open("rezoning_api/db/layers.json") as lf:
         layers = json.load(lf)
     return layers
 
