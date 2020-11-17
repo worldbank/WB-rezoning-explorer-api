@@ -23,11 +23,8 @@ def refresh_layers():
 
 def get_layers():
     """get saved layer json"""
-    try:
-        layers = json.loads(s3_get(BUCKET, "api/layers.json"))
-    except Exception:
-        print("no available layers file")
-        layers = dict()
+    with open("rezoning_api/db/layers.json") as lf:
+        layers = json.load(lf)
     return layers
 
 

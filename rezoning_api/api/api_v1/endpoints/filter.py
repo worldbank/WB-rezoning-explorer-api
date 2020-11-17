@@ -1,13 +1,17 @@
 """Filter endpoints."""
 
-from fastapi import APIRouter
-from rio_tiler.io import COGReader
+from rezoning_api.utils import read_dataset
+from fastapi import APIRouter, Depends
 from rio_tiler.utils import render
 import numpy as np
+from mercantile import feature, Tile
+from geojson_pydantic.geometries import Polygon
+import xarray as xr
 
 from rezoning_api.core.config import BUCKET
 from rezoning_api.models.tiles import TileResponse
-from rezoning_api.api.utils import _filter, flat_layers
+from rezoning_api.models.zone import Filters
+from rezoning_api.api.utils import _filter, flat_layers, LAYERS, filter_to_layer_name
 from rezoning_api.db.country import get_country_min_max
 
 router = APIRouter()
@@ -21,18 +25,40 @@ router = APIRouter()
     response_class=TileResponse,
     name="filter",
 )
-def filter(z: int, x: int, y: int, filters: str, color: str):
+def filter(
+    z: int,
+    x: int,
+    y: int,
+    color: str,
+    filters: Filters = Depends(),
+):
     """Return filtered tile."""
-    with COGReader(f"s3://{BUCKET}/multiband/distance.tif") as cog:
-        filter_arr, _mask = cog.tile(x, y, z, tilesize=256)
-    with COGReader(f"s3://{BUCKET}/multiband/calc.tif") as cog:
-        calc_arr, _mask2 = cog.tile(x, y, z, tilesize=256)
-    arr = np.concatenate([filter_arr, calc_arr], axis=0)
+    # find the required datasets to open
+    sent_filters = [filter_to_layer_name(k) for k, v in filters.dict().items() if v]
+    datasets = [
+        k for k, v in LAYERS.items() if any([layer in sent_filters for layer in v])
+    ]
 
+    # find the tile
+    aoi = Polygon(**feature(Tile(x, y, z))["geometry"]).dict()
+
+    arrays = []
+    for dataset in datasets:
+        data, _ = read_dataset(
+            f"s3://{BUCKET}/multiband/distance.tif",
+            LAYERS[dataset],
+            aoi=aoi,
+            tilesize=256,
+        )
+        arrays.append(data)
+
+    arr = xr.concat(arrays, dim="layers").sel(layer=sent_filters)
     # color like 45,39,88,178 (RGBA)
     color_list = list(map(lambda x: int(x), color.split(",")))
 
     tile, new_mask = _filter(arr, filters)
+    print(tile.shape, new_mask.shape)
+
     color_tile = np.stack(
         [
             tile * color_list[0],

@@ -15,6 +15,11 @@ def WeightField(title=None):
     )
 
 
+def FilterField(title=None):
+    """filter field defaults"""
+    return Field(None, description=f"filter on the {title} parameter", title=title)
+
+
 class Weights(BaseModel):
     """User provided weights"""
 
@@ -47,6 +52,39 @@ class LCOE(BaseModel):
     decom: float = Field(0, title="Decommission % rate (Decom)")
     i: float = Field(0.1, title="Economic discount rate (i)")
     n: float = Field(25, title="Lifetime [years] (N)")
+    landuse: float = Field(0, title="Land use score")
+    tlf: float = Field(0, title="Technical Loss Factor")
+    af: float = Field(1, title="Availability Factor")
+
+
+class Filters(BaseModel):
+    """filter properties"""
+
+    f_worldpop: Optional[str] = FilterField(title="Population Density")
+    f_slope: Optional[str] = FilterField(title="Slope")
+
+    f_grid: Optional[str] = FilterField(title="Distance to Grid")
+    f_airports: Optional[str] = FilterField(title="Distanct to Airports")
+    f_ports: Optional[str] = FilterField(title="")
+    f_anchorages: Optional[str] = FilterField(title="")
+    f_roads: Optional[str] = FilterField(title="Distance to Roads")
+
+    f_pp_whs: Optional[str] = FilterField(title="")
+    f_unep_coral: Optional[str] = FilterField(title="")
+    f_unesco: Optional[str] = FilterField(title="")
+    f_unesco_ramsar: Optional[str] = FilterField(title="")
+    f_wwf_glw_1: Optional[str] = FilterField(title="")
+    f_wwf_glw_2: Optional[str] = FilterField(title="")
+
+    f_jrc_gsw: Optional[str] = FilterField(title="")
+    f_pp_marine_protected: Optional[str] = FilterField(title="")
+    f_unep_tidal: Optional[str] = FilterField(title="")
+    f_wwf_glw_3: Optional[str] = FilterField(title="")
+
+    f_capacity_value: Optional[str] = FilterField(title="Capacity Value")
+    f_lcoe_gen: Optional[str] = FilterField(title="LCOE Generation")
+    f_lcoe_transmission: Optional[str] = FilterField(title="LCOE Transmission")
+    f_lcoe_road: Optional[str] = FilterField(title="LCOE Road")
 
 
 class ZoneRequest(BaseModel):

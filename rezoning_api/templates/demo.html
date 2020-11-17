@@ -135,7 +135,7 @@
 
         var scope = { url: "", metadata: {}, config: {} }
 
-        const filterEndpoint = '{{ layers_endpoint }}'
+        const filterEndpoint = '{{ lcoe_endpoint }}'
 
         var map = new mapboxgl.Map({
             container: 'map',
@@ -159,9 +159,10 @@
             if (map.getLayer('raster')) map.removeLayer('raster')
             if (map.getSource('raster')) map.removeSource('raster')
             
-            let filters = `${airportFilters}|${portFilters}|${anchorageFilter}|${gridFilters}|${roadFilters}`
-
-            let url = `${filterEndpoint}?colormap=viridis`
+            let filters = `f_airports=${airportFilters}&f_roads=${roadFilters}`
+            console.log(filters)
+            // let url = `${filterEndpoint}?${filters}&color=45,39,88,178 `
+            let url = `${filterEndpoint}?${filters}&colormap=viridis`
             map.addSource(
               'raster', { type: 'raster', tiles: [url], tileSize: 256 }
             )
