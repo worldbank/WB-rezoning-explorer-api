@@ -121,26 +121,33 @@ def get_min_max(xml):
     return (mins, maxs)
 
 
-def _filter(array, filters: str):
+def filter_to_layer_name(flt):
+    """filter name helper"""
+    return flt[2:].replace("_", "-")
+
+
+def _filter(array, filters):
     """
-    filter array based on per-band ranges, supplied as path parameter
-    filters look like ?filters=0,10000|0,10000...
+    filter xarray based on per-band ranges, supplied as path parameter
+    filters look like ?f_roads=0,10000&f_grid=0,10000...
     """
     # temporary handling of incorrect nodata value
-    array[array == 65535] = MAX_DIST
+    # array[array == 65535] = MAX_DIST
 
-    arr_filters = filters.split("|")
     np_filters = []
-    for i, af in enumerate(arr_filters):
-        try:
-            tmp = np.logical_and(
-                array[i] >= int(af.split(",")[0]),
-                array[i] <= int(af.split(",")[1]),
-            )
-            np_filters.append(tmp)
-        except IndexError:
-            # ignore excess filters
-            pass
+    for f_layer, filt in filters.dict().items():
+        if filt:
+            layer_name = filter_to_layer_name(f_layer)
+            single_layer = array.sel(layer=layer_name).values.squeeze()
+            try:
+                tmp = np.logical_and(
+                    single_layer >= int(filt.split(",")[0]),
+                    single_layer <= int(filt.split(",")[1]),
+                )
+                np_filters.append(tmp)
+            except IndexError:
+                # ignore excess filters
+                pass
 
     all_true = np.prod(np.stack(np_filters), axis=0).astype(np.uint8)
     return (all_true, all_true != 0)
