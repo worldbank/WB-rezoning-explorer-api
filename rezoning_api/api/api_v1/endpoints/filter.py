@@ -45,14 +45,14 @@ def filter(
     arrays = []
     for dataset in datasets:
         data, _ = read_dataset(
-            f"s3://{BUCKET}/multiband/distance.tif",
+            f"s3://{BUCKET}/multiband/{dataset}.tif",
             LAYERS[dataset],
             aoi=aoi,
             tilesize=256,
         )
         arrays.append(data)
 
-    arr = xr.concat(arrays, dim="layers").sel(layer=sent_filters)
+    arr = xr.concat(arrays, dim="layer")
     # color like 45,39,88,178 (RGBA)
     color_list = list(map(lambda x: int(x), color.split(",")))
 
@@ -85,3 +85,9 @@ def get_country_layers(country_id: str):
     keys = list(minmax.keys())
     [minmax.pop(key) for key in keys if key.startswith(("gwa", "gsa"))]
     return minmax
+
+
+@router.get("/filter/schema")
+def get_filter_schema():
+    """Return filter schema"""
+    return Filters.schema()["properties"]
