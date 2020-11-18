@@ -132,17 +132,23 @@ def _filter(array, filters):
     np_filters = []
     for f_layer, filt in filters.dict().items():
         if filt:
+            filter_type = filters.schema()["properties"][f_layer].get("pattern")
             layer_name = filter_to_layer_name(f_layer)
             single_layer = array.sel(layer=layer_name).values.squeeze()
-            try:
+            if filter_type == "range_filter":
                 tmp = np.logical_and(
                     single_layer >= int(filt.split(",")[0]),
                     single_layer <= int(filt.split(",")[1]),
                 )
-                np_filters.append(tmp)
-            except IndexError:
-                # ignore excess filters
-                pass
+            elif filter_type == "categorical_filter":
+                tmp = np.isin(
+                    single_layer, list(map(lambda x: int(x), filt.split(",")))
+                )
+            else:
+                # filter types without a pattern are boolean
+                tmp = single_layer == int(filt)
+            print(layer_name, tmp.shape, array.sel(layer=layer_name).shape)
+            np_filters.append(tmp)
 
     all_true = np.prod(np.stack(np_filters), axis=0).astype(np.uint8)
     return (all_true, all_true != 0)

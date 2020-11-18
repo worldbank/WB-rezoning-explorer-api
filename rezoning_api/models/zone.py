@@ -1,7 +1,73 @@
 """LCOE models"""
+import re
 from typing import Optional, Union
 from pydantic import BaseModel, Field
 from geojson_pydantic.geometries import Polygon, MultiPolygon
+
+range_filter_regex = re.compile(r"\d+,\d+")
+categorical_filter_regex = re.compile(r"(\w+,)*\w+")
+
+
+class RangeFilter(str):
+    """custom validator for range filters"""
+
+    @classmethod
+    def __get_validators__(cls):
+        """validator"""
+        yield cls.validate
+
+    @classmethod
+    def __modify_schema__(cls, field_schema):
+        """update schema"""
+        field_schema.update(
+            pattern="range_filter",
+            examples=["0,1000", "5,1000", "0,100"],
+        )
+
+    @classmethod
+    def validate(cls, v):
+        """validate inputs"""
+        if not isinstance(v, str):
+            raise TypeError("string required")
+        m = range_filter_regex.fullmatch(v)
+        if not m:
+            raise ValueError("invalid range filter format")
+        return cls(v)
+
+    def __repr__(self):
+        """string representation"""
+        return f"RangeFilter({super().__repr__()})"
+
+
+class CategorialFilter(str):
+    """custom validator for range filters"""
+
+    @classmethod
+    def __get_validators__(cls):
+        """validator"""
+        yield cls.validate
+
+    @classmethod
+    def __modify_schema__(cls, field_schema):
+        """update schema"""
+        field_schema.update(
+            pattern="categorical_filter",
+            examples=["0,1,2,3,4", "1,3,5,7,8"],
+        )
+
+    @classmethod
+    def validate(cls, v):
+        """validate inputs"""
+        if not isinstance(v, str):
+            raise TypeError("string required")
+        m = range_filter_regex.fullmatch(v)
+        if not m:
+            raise ValueError("invalid categorical filter format")
+        return cls(v)
+
+    def __repr__(self):
+        """string representation"""
+        return f"CategoricalFilter({super().__repr__()})"
 
 
 def WeightField(title=None):
@@ -15,9 +81,9 @@ def WeightField(title=None):
     )
 
 
-def FilterField(title=None):
+def FilterField(default=None, title=None):
     """filter field defaults"""
-    return Field(None, description=f"filter on the {title} parameter", title=title)
+    return Field(default, description=f"filter on the {title} parameter", title=title)
 
 
 class Weights(BaseModel):
@@ -60,31 +126,38 @@ class LCOE(BaseModel):
 class Filters(BaseModel):
     """filter properties"""
 
-    f_worldpop: Optional[str] = FilterField(title="Population Density")
-    f_slope: Optional[str] = FilterField(title="Slope")
+    f_worldpop: Optional[RangeFilter] = FilterField(title="Population Density")
+    f_slope: Optional[RangeFilter] = FilterField(title="Slope")
+    f_land_cover: Optional[CategorialFilter] = FilterField(title="Land Cover")
 
-    f_grid: Optional[str] = FilterField(title="Distance to Grid")
-    f_airports: Optional[str] = FilterField(title="Distanct to Airports")
-    f_ports: Optional[str] = FilterField(title="")
-    f_anchorages: Optional[str] = FilterField(title="")
-    f_roads: Optional[str] = FilterField(title="Distance to Roads")
+    f_grid: Optional[RangeFilter] = FilterField(title="Distance to Grid")
+    f_airports: Optional[RangeFilter] = FilterField(title="Distanct to Airports")
+    f_ports: Optional[RangeFilter] = FilterField(title="Distance to Ports")
+    f_anchorages: Optional[RangeFilter] = FilterField(title="Distance to Anchorages")
+    f_roads: Optional[RangeFilter] = FilterField(title="Distance to Roads")
 
-    f_pp_whs: Optional[str] = FilterField(title="")
-    f_unep_coral: Optional[str] = FilterField(title="")
-    f_unesco: Optional[str] = FilterField(title="")
-    f_unesco_ramsar: Optional[str] = FilterField(title="")
-    f_wwf_glw_1: Optional[str] = FilterField(title="")
-    f_wwf_glw_2: Optional[str] = FilterField(title="")
+    f_pp_whs: Optional[RangeFilter] = FilterField(
+        title="Distance to World Heritage Sites"
+    )
+    f_unep_coral: Optional[RangeFilter] = FilterField(title="Distance to Coral")
+    f_unesco: Optional[RangeFilter] = FilterField(title="Distance to Cultural Sites")
+    f_unesco_ramsar: Optional[RangeFilter] = FilterField(
+        title="Distance to Ramsar Wetlands"
+    )
+    f_wwf_glw_1: Optional[RangeFilter] = FilterField(title="Distance to WWF GLW 1")
+    f_wwf_glw_2: Optional[RangeFilter] = FilterField(title="Distance to WWF GLW 2")
 
-    f_jrc_gsw: Optional[str] = FilterField(title="")
-    f_pp_marine_protected: Optional[str] = FilterField(title="")
-    f_unep_tidal: Optional[str] = FilterField(title="")
-    f_wwf_glw_3: Optional[str] = FilterField(title="")
+    f_jrc_gsw: Optional[RangeFilter] = FilterField(title="Unknown Filter (JRC GSW")
+    f_pp_marine_protected: Optional[bool] = FilterField(
+        False, title="Marine Protected Zone"
+    )
+    f_unep_tidal: Optional[bool] = FilterField(False, title="Tidal Zone")
+    f_wwf_glw_3: Optional[RangeFilter] = FilterField(title="Distance to WWF GLW 3")
 
-    f_capacity_value: Optional[str] = FilterField(title="Capacity Value")
-    f_lcoe_gen: Optional[str] = FilterField(title="LCOE Generation")
-    f_lcoe_transmission: Optional[str] = FilterField(title="LCOE Transmission")
-    f_lcoe_road: Optional[str] = FilterField(title="LCOE Road")
+    f_capacity_value: Optional[RangeFilter] = FilterField(title="Capacity Value")
+    f_lcoe_gen: Optional[RangeFilter] = FilterField(title="LCOE Generation")
+    f_lcoe_transmission: Optional[RangeFilter] = FilterField(title="LCOE Transmission")
+    f_lcoe_road: Optional[RangeFilter] = FilterField(title="LCOE Road")
 
 
 class ZoneRequest(BaseModel):
