@@ -1,8 +1,8 @@
 """LCOE endpoints."""
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
-from rezoning_api.models.zone import ZoneRequest, ZoneResponse
+from rezoning_api.models.zone import ZoneRequest, ZoneResponse, Filters
 from rezoning_api.api.utils import (
     lcoe_generation,
     lcoe_interconnection,
@@ -19,7 +19,7 @@ router = APIRouter()
     responses={200: dict(description="return an LCOE calculation for a given area")},
     response_model=ZoneResponse,
 )
-def zone(query: ZoneRequest, filters: str):
+def zone(query: ZoneRequest, filters: Filters = Depends()):
     """calculate LCOE, then weight for zone score"""
     # spatial temporal inputs
     ds, dr, calc, mask = get_distances(query.aoi, filters)

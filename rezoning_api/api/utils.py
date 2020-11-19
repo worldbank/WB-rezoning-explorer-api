@@ -19,6 +19,11 @@ LAYERS = get_layers()
 MAX_DIST = 1000000  # meters
 
 
+def filter_to_layer_name(flt):
+    """filter name helper"""
+    return flt[2:].replace("_", "-")
+
+
 def calc_crf(lr: LCOE):
     """
     Calculate Capital Recovery Factor (CRF)
@@ -69,33 +74,38 @@ def get_capacity_factor(
 
 def get_distances(aoi: Union[Polygon, MultiPolygon], filters, tilesize=None):
     """Get filtered masks and distance arrays"""
+    # find the required datasets to open
+    sent_filters = [filter_to_layer_name(k) for k, v in filters.dict().items() if v]
+    # we require grid and roads for calculations
+    sent_filters += ["grid", "roads"]
 
-    distance, mask = read_dataset(
-        f"s3://{BUCKET}/multiband/distance.tif",
-        layers=LAYERS["distance"],
-        aoi=aoi.dict(),
-        tilesize=tilesize,
-        nan=MAX_DIST,
-    )
+    datasets = [
+        k for k, v in LAYERS.items() if any([layer in sent_filters for layer in v])
+    ]
 
-    calc, _ = read_dataset(
-        f"s3://{BUCKET}/multiband/calc.tif",
-        layers=LAYERS["calc"],
-        aoi=aoi.dict(),
-        tilesize=tilesize,
-    )
+    arrays = []
+    for dataset in datasets:
+        data, _ = read_dataset(
+            f"s3://{BUCKET}/multiband/{dataset}.tif",
+            LAYERS[dataset],
+            aoi=aoi.dict(),
+            tilesize=tilesize,
+        )
+        arrays.append(data)
 
-    data = xr.concat([distance, calc], dim="layer")
+    data = xr.concat(arrays, dim="layer")
 
     _, filter_mask = _filter(data, filters)
 
     return (
-        distance.sel(layer="grid"),
-        distance.sel(layer="roads"),
-        calc,
-        np.logical_or(
-            ~mask, filter_mask
-        ),  # NOTE: we flip to a "true mask" here (True is valid)
+        data.sel(layer="grid"),
+        data.sel(layer="roads"),
+        data,
+        filter_mask,
+        # TODO: restore data mask
+        # np.logical_or(
+        #     ~mask, filter_mask
+        # ),  # NOTE: we flip to a "true mask" here (True is valid)
     )
 
 
@@ -114,11 +124,6 @@ def get_min_max(xml):
     mins = get_stat(root, "STATISTICS_MINIMUM")
     maxs = get_stat(root, "STATISTICS_MAXIMUM")
     return (mins, maxs)
-
-
-def filter_to_layer_name(flt):
-    """filter name helper"""
-    return flt[2:].replace("_", "-")
 
 
 def _filter(array, filters):
