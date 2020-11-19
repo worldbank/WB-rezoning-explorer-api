@@ -4,7 +4,7 @@ from typing import Optional, Union
 from pydantic import BaseModel, Field
 from geojson_pydantic.geometries import Polygon, MultiPolygon
 
-range_filter_regex = re.compile(r"\d+,\d+")
+range_filter_regex = re.compile(r"[\d\.]+,[\d\.]+")
 categorical_filter_regex = re.compile(r"(\w+,)*\w+")
 
 
