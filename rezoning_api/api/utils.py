@@ -146,8 +146,8 @@ def _filter(array, filters):
                     single_layer <= int(filt.split(",")[1]),
                 )
             elif filter_type == "categorical_filter":
-                options = filters.schema()["properties"][f_layer].get("options")
-                indices = [10 * options.index(option) for option in filt.split(",")]
+                # multiply by ten to get land cover class
+                indices = [10 * int(option) for option in filt.split(",")]
                 tmp = np.isin(single_layer, indices)
             else:
                 # filter types without a pattern are boolean

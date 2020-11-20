@@ -141,7 +141,7 @@
             container: 'map',
             style: { version: 8, sources: {}, layers: [] },
             center: [10, 10],
-            zoom: 9
+            zoom: 5
         })
 
         map.on('zoom', function (e) {
@@ -153,13 +153,13 @@
         let portFilters = '0,1000000'
         let anchorageFilter = '0,1000000'
         let gridFilters = '0,100000'
-        let roadFilters = '0,100000'
+        let roadFilters = '0,5000'
 
         function swap () {
             if (map.getLayer('raster')) map.removeLayer('raster')
             if (map.getSource('raster')) map.removeSource('raster')
             
-            let filters = `f_airports=${airportFilters}&f_roads=${roadFilters}&f_pp_marine_protected=False`
+            let filters = `f_roads=${roadFilters}&f_land_cover=12,13`
             console.log(filters)
             let url = `${filterEndpoint}?${filters}&color=45,39,88,178 `
             // let url = `${filterEndpoint}?${filters}&colormap=viridis`
