@@ -146,9 +146,9 @@ def _filter(array, filters):
                     single_layer <= int(filt.split(",")[1]),
                 )
             elif filter_type == "categorical_filter":
-                tmp = np.isin(
-                    single_layer, list(map(lambda x: int(x), filt.split(",")))
-                )
+                options = filters.schema()["properties"][f_layer].get("options")
+                indices = [10 * options.index(option) for option in filt.split(",")]
+                tmp = np.isin(single_layer, indices)
             else:
                 # filter types without a pattern are boolean
                 # rasters are stored as binary so we convert input to integers

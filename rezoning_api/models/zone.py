@@ -8,6 +8,32 @@ from geojson_pydantic.geometries import Polygon, MultiPolygon
 range_filter_regex = re.compile(r"[\d\.]+,[\d\.]+")
 categorical_filter_regex = re.compile(r"(\w+,)*\w+")
 
+LAND_COVER_OPTIONS = [
+    "No Data",
+    "Cropland",
+    "Cropland, irrigated",
+    "Mosaic cropland (>50%) / natural vegetation (<50%)",
+    "Mosaic natural vegetation (>50%) / cropland (<50%)",
+    "Tree cover, broadleaved, evergreen, closed to open (>15%)"
+    "Tree cover, broadleaved, deciduous, closed to open (>15%)",
+    "Tree cover, needleleaved, evergreen, closed to open (>15%)",
+    "Tree cover, needleleaved, deciduous, closed to open (>15%)",
+    "Tree cover, mixed leaf type (broadleaved and needleleaved)",
+    "Mosaic tree and shrub (>50%) / herbaceous cover (<50%)",
+    "Mosaic herbaceous cover (>50%) / tree and shrub (<50%)",
+    "Shrubland",
+    "Grassland",
+    "Lichens and mosses",
+    "Sparse vegetation (tree, shrub, herbaceous cover) (<15%)",
+    "Tree cover, flooded, fresh or brackish water",
+    "Tree cover, flooded, saline water",
+    "Shrub or herbaceous cover, flooded, fresh/saline/brackish water",
+    "Urban areas",
+    "Bare areas",
+    "Water bodies",
+    "Permanent snow and ice",
+]
+
 
 class Category(Enum):
     """options for category"""
@@ -98,6 +124,7 @@ def FilterField(
     unit=None,
     energy_type: List = ["solar", "wind", "offshore"],
     category=None,
+    options=None,
 ):
     """filter field defaults"""
     return Field(
@@ -107,6 +134,7 @@ def FilterField(
         unit=unit,
         energy_type=energy_type,
         category=category,
+        options=options,
     )
 
 
@@ -157,9 +185,8 @@ class Filters(BaseModel):
         title="Slope", unit="degress", category=Category.NATURAL
     )
     f_land_cover: Optional[CategorialFilter] = FilterField(
-        title="Land Cover", category=Category.NATURAL
+        title="Land Cover", category=Category.NATURAL, options=LAND_COVER_OPTIONS
     )
-
     f_grid: Optional[RangeFilter] = FilterField(
         title="Distance to Grid", unit="meters", category=Category.INFRASTRUCTURE
     )
@@ -181,7 +208,6 @@ class Filters(BaseModel):
     f_roads: Optional[RangeFilter] = FilterField(
         title="Distance to Roads", unit="meters", category=Category.INFRASTRUCTURE
     )
-
     f_pp_whs: Optional[RangeFilter] = FilterField(
         title="Distance to World Heritage Sites",
         unit="meters",
@@ -201,14 +227,12 @@ class Filters(BaseModel):
     f_wwf_glw_3: Optional[bool] = FilterField(
         title="Wetlands", category=Category.ENVIRONMENT
     )
-
     f_pp_marine_protected: Optional[bool] = FilterField(
         False, title="Marine Protected Zone", category=Category.ENVIRONMENT
     )
     f_unep_tidal: Optional[bool] = FilterField(
         False, title="Tidal Zone", category=Category.ENVIRONMENT
     )
-
     f_capacity_value: Optional[RangeFilter] = FilterField(
         title="Capacity Value", category=Category.ZONE_PARAMETERS
     )
@@ -221,7 +245,6 @@ class Filters(BaseModel):
     f_lcoe_road: Optional[RangeFilter] = FilterField(
         title="LCOE Road", unit="$/MWh", category=Category.ZONE_PARAMETERS
     )
-
     f_gsa_gti: Optional[RangeFilter] = FilterField(
         title="Solar Radiation",
         unit="kWh/m²",
