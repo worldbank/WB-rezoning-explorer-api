@@ -151,7 +151,13 @@ def _filter(array, filters):
                 )
             else:
                 # filter types without a pattern are boolean
-                tmp = single_layer == int(filt)
+                # rasters are stored as binary so we convert input to integers
+                # for wwf-glw-3 (wetlands), we have special handling
+                # https://www.worldwildlife.org/publications/global-lakes-and-wetlands-database-lakes-and-wetlands-grid-level-3
+                if layer_name == "wwf-glw-3":
+                    tmp = single_layer > 4 & single_layer < 10
+                else:
+                    tmp = single_layer == int(filt)
             print(layer_name, tmp.shape, array.sel(layer=layer_name).shape)
             np_filters.append(tmp)
 
