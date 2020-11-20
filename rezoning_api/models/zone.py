@@ -1,11 +1,22 @@
 """LCOE models"""
+from enum import Enum
 import re
-from typing import Optional, Union
+from typing import Optional, Union, List
 from pydantic import BaseModel, Field
 from geojson_pydantic.geometries import Polygon, MultiPolygon
 
 range_filter_regex = re.compile(r"[\d\.]+,[\d\.]+")
 categorical_filter_regex = re.compile(r"(\w+,)*\w+")
+
+
+class Category(Enum):
+    """options for category"""
+
+    NATURAL = "natural"
+    INFRASTRUCTURE = "infrastructure"
+    ENVIRONMENT = "environment"
+    CULTURAL = "cultural"
+    ZONE_PARAMETERS = "zone parameters"
 
 
 class RangeFilter(str):
@@ -81,9 +92,22 @@ def WeightField(title=None):
     )
 
 
-def FilterField(default=None, title=None):
+def FilterField(
+    default=None,
+    title=None,
+    unit=None,
+    energy_type: List = ["solar", "wind", "offshore"],
+    category=None,
+):
     """filter field defaults"""
-    return Field(default, description=f"filter on the {title} parameter", title=title)
+    return Field(
+        default,
+        description=f"filter on the {title} parameter",
+        title=title,
+        unit=unit,
+        energy_type=energy_type,
+        category=category,
+    )
 
 
 class Weights(BaseModel):
@@ -126,38 +150,105 @@ class LCOE(BaseModel):
 class Filters(BaseModel):
     """filter properties"""
 
-    f_worldpop: Optional[RangeFilter] = FilterField(title="Population Density")
-    f_slope: Optional[RangeFilter] = FilterField(title="Slope")
-    f_land_cover: Optional[CategorialFilter] = FilterField(title="Land Cover")
+    f_worldpop: Optional[RangeFilter] = FilterField(
+        title="Population Density", unit="ppl/km²", category=Category.NATURAL
+    )
+    f_slope: Optional[RangeFilter] = FilterField(
+        title="Slope", unit="degress", category=Category.NATURAL
+    )
+    f_land_cover: Optional[CategorialFilter] = FilterField(
+        title="Land Cover", category=Category.NATURAL
+    )
 
-    f_grid: Optional[RangeFilter] = FilterField(title="Distance to Grid")
-    f_airports: Optional[RangeFilter] = FilterField(title="Distanct to Airports")
-    f_ports: Optional[RangeFilter] = FilterField(title="Distance to Ports")
-    f_anchorages: Optional[RangeFilter] = FilterField(title="Distance to Anchorages")
-    f_roads: Optional[RangeFilter] = FilterField(title="Distance to Roads")
+    f_grid: Optional[RangeFilter] = FilterField(
+        title="Distance to Grid", unit="meters", category=Category.INFRASTRUCTURE
+    )
+    f_airports: Optional[RangeFilter] = FilterField(
+        title="Distanct to Airports", unit="meters", category=Category.INFRASTRUCTURE
+    )
+    f_ports: Optional[RangeFilter] = FilterField(
+        title="Distance to Ports",
+        unit="meters",
+        category=Category.INFRASTRUCTURE,
+        energy_type=["offshore"],
+    )
+    f_anchorages: Optional[RangeFilter] = FilterField(
+        title="Distance to Anchorages",
+        unit="meters",
+        category=Category.INFRASTRUCTURE,
+        energy_type=["offshore"],
+    )
+    f_roads: Optional[RangeFilter] = FilterField(
+        title="Distance to Roads", unit="meters", category=Category.INFRASTRUCTURE
+    )
 
     f_pp_whs: Optional[RangeFilter] = FilterField(
-        title="Distance to World Heritage Sites"
+        title="Distance to World Heritage Sites",
+        unit="meters",
+        category=Category.ENVIRONMENT,
     )
-    f_unep_coral: Optional[RangeFilter] = FilterField(title="Distance to Coral")
-    f_unesco: Optional[RangeFilter] = FilterField(title="Distance to Cultural Sites")
+    f_unep_coral: Optional[RangeFilter] = FilterField(
+        title="Distance to Coral", unit="meters", category=Category.ENVIRONMENT
+    )
+    f_unesco: Optional[RangeFilter] = FilterField(
+        title="Distance to Cultural Sites", unit="meters", category=Category.CULTURAL
+    )
     f_unesco_ramsar: Optional[RangeFilter] = FilterField(
-        title="Distance to Ramsar Wetlands"
+        title="Distance to Ramsar Wetlands",
+        unit="meters",
+        category=Category.ENVIRONMENT,
     )
-    f_wwf_glw_1: Optional[RangeFilter] = FilterField(title="Distance to WWF GLW 1")
-    f_wwf_glw_2: Optional[RangeFilter] = FilterField(title="Distance to WWF GLW 2")
+    f_wwf_glw_3: Optional[bool] = FilterField(
+        title="Wetlands", category=Category.ENVIRONMENT
+    )
 
-    f_jrc_gsw: Optional[RangeFilter] = FilterField(title="Unknown Filter (JRC GSW")
     f_pp_marine_protected: Optional[bool] = FilterField(
-        False, title="Marine Protected Zone"
+        False, title="Marine Protected Zone", category=Category.ENVIRONMENT
     )
-    f_unep_tidal: Optional[bool] = FilterField(False, title="Tidal Zone")
-    f_wwf_glw_3: Optional[RangeFilter] = FilterField(title="Distance to WWF GLW 3")
+    f_unep_tidal: Optional[bool] = FilterField(
+        False, title="Tidal Zone", category=Category.ENVIRONMENT
+    )
 
-    f_capacity_value: Optional[RangeFilter] = FilterField(title="Capacity Value")
-    f_lcoe_gen: Optional[RangeFilter] = FilterField(title="LCOE Generation")
-    f_lcoe_transmission: Optional[RangeFilter] = FilterField(title="LCOE Transmission")
-    f_lcoe_road: Optional[RangeFilter] = FilterField(title="LCOE Road")
+    f_capacity_value: Optional[RangeFilter] = FilterField(
+        title="Capacity Value", category=Category.ZONE_PARAMETERS
+    )
+    f_lcoe_gen: Optional[RangeFilter] = FilterField(
+        title="LCOE Generation", unit="$/MWh", category=Category.ZONE_PARAMETERS
+    )
+    f_lcoe_transmission: Optional[RangeFilter] = FilterField(
+        title="LCOE Transmission", unit="$/MWh", category=Category.ZONE_PARAMETERS
+    )
+    f_lcoe_road: Optional[RangeFilter] = FilterField(
+        title="LCOE Road", unit="$/MWh", category=Category.ZONE_PARAMETERS
+    )
+
+    f_gsa_gti: Optional[RangeFilter] = FilterField(
+        title="Solar Radiation",
+        unit="kWh/m²",
+        category=Category.NATURAL,
+        energy_type=["solar"],
+    )
+    f_gsa_pvout: Optional[RangeFilter] = FilterField(
+        title="Solar PVOut",
+        unit="kWh/kWp",
+        category=Category.NATURAL,
+        energy_type=["solar"],
+    )
+    f_srtm90: Optional[RangeFilter] = FilterField(
+        title="Elevation",
+        unit="meters",
+        category=Category.NATURAL,
+        energy_type=["solar", "wind"],
+    )
+    f_gebco: Optional[RangeFilter] = FilterField(
+        title="Bathymetry",
+        unit="meters",
+        category=Category.NATURAL,
+        energy_type=["offshore"],
+    )
+    f_waterbodies: Optional[bool] = FilterField(
+        title="Water Bodies", category=Category.NATURAL
+    )
 
 
 class ZoneRequest(BaseModel):
