@@ -58,3 +58,9 @@ def lcoe(
     colormap = cmap.get(colormap)
     content = render(tile, mask=mask * 255, colormap=colormap)
     return TileResponse(content=content)
+
+
+@router.get("/lcoe/schema", name="lcoe_schema")
+def get_filter_schema():
+    """Return lcoe schema"""
+    return LCOE.schema()["properties"]
