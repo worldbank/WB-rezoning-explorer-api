@@ -11,7 +11,7 @@ import xarray as xr
 from rezoning_api.core.config import BUCKET
 from rezoning_api.models.tiles import TileResponse
 from rezoning_api.models.zone import Filters
-from rezoning_api.api.utils import _filter, flat_layers, LAYERS, filter_to_layer_name
+from rezoning_api.api.utils import _filter, LAYERS, filter_to_layer_name
 from rezoning_api.db.country import get_country_min_max
 
 router = APIRouter()
@@ -45,7 +45,7 @@ def filter(
     arrays = []
     for dataset in datasets:
         data, _ = read_dataset(
-            f"s3://{BUCKET}/multiband/{dataset}.tif",
+            f"s3://{BUCKET}/{dataset}.tif",
             LAYERS[dataset],
             aoi=aoi,
             tilesize=256,
@@ -72,12 +72,6 @@ def filter(
     return TileResponse(content=content)
 
 
-@router.get("/filter/layers/")
-def get_layers():
-    """Return layers list for filters"""
-    return [layer for layer in flat_layers() if not layer.startswith(("gwa", "gsa"))]
-
-
 @router.get("/filter/{country_id}/layers")
 def get_country_layers(country_id: str):
     """Return min/max for country layers"""
@@ -87,7 +81,7 @@ def get_country_layers(country_id: str):
     return minmax
 
 
-@router.get("/filter/schema")
+@router.get("/filter/schema", name="filter_schema")
 def get_filter_schema():
     """Return filter schema"""
     return Filters.schema()["properties"]

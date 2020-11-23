@@ -244,7 +244,7 @@ def get_layer_location(id):
     """get layer location and dataset index"""
     loc = [(k, int(v.index(id))) for k, v in LAYERS.items() if id in v]
     if loc:
-        return (f"s3://{BUCKET}/multiband/{loc[0][0]}.tif", loc[0][1])
+        return (f"s3://{BUCKET}/{loc[0][0]}.tif", loc[0][1])
     else:
         return (None, None)
 
