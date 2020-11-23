@@ -5,7 +5,7 @@
     "multiband/filter-byte": ["jrc-gsw", "pp-marine-protected", "unep-tidal", "wwf-glw-3"],
     "multiband/gsa": ["gsa-pvout", "gsa-ghi", "gsa-gti", "gsa-temp"],
     "multiband/gwa": ["gwa-iec1", "gwa-iec2", "gwa-iec3", "gwa-power-10", "gwa-speed-10", "gwa-power-50", "gwa-speed-50", "gwa-power-100", "gwa-speed-100", "gwa-power-150", "gwa-speed-150", "gwa-power-200", "gwa-speed-200"], 
-    "raster/gebco": ["gebco"],
-    "raster/srtm90": ["strm90"],
-    "raster/waterbodies": ["waterbodies"]
+    "raster/gebco/gebco": ["gebco"],
+    "raster/srtm90/srtm90": ["srtm90"],
+    "raster/waterbodies/waterbodies": ["waterbodies"]
 }

@@ -44,8 +44,12 @@ def filter(
 
     arrays = []
     for dataset in datasets:
+        if "raster" in dataset:
+            ext = "vrt"
+        else:
+            ext = "tif"
         data, _ = read_dataset(
-            f"s3://{BUCKET}/{dataset}.tif",
+            f"s3://{BUCKET}/{dataset}.{ext}",
             LAYERS[dataset],
             aoi=aoi,
             tilesize=256,

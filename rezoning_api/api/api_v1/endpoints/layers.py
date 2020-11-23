@@ -27,9 +27,13 @@ def layers(id: str, z: int, x: int, y: int, colormap: str):
     with COGReader(loc) as cog:
         data, mask = cog.tile(x, y, z, tilesize=256, indexes=[idx + 1])
 
-    layer_min_arr, layer_max_arr = get_min_max(s3_get(BUCKET, key))
-    layer_min = layer_min_arr[idx]
-    layer_max = layer_max_arr[idx]
+    try:
+        layer_min_arr, layer_max_arr = get_min_max(s3_get(BUCKET, key))
+        layer_min = layer_min_arr[idx]
+        layer_max = layer_max_arr[idx]
+    except Exception:
+        layer_min = data.min()
+        layer_max = data.max()
 
     if id != "land-cover":
         data = linear_rescale(
