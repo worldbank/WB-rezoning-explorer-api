@@ -64,12 +64,14 @@ def get_capacity_factor(
 
     cf, _ = read_dataset(
         f"s3://{BUCKET}/multiband/{cf_tif_loc}.tif",
-        layers=LAYERS[cf_tif_loc],
+        layers=LAYERS[f"multiband/{cf_tif_loc}"],
         aoi=aoi.dict(),
         tilesize=tilesize,
     )
 
-    return cf.sel(layer=LAYERS[cf_tif_loc][0])  # TODO: which layer to read from
+    return cf.sel(
+        layer=LAYERS[f"multiband/{cf_tif_loc}"][0]
+    )  # TODO: which layer to read from
 
 
 def get_distances(aoi: Union[Polygon, MultiPolygon], filters, tilesize=None):
@@ -86,7 +88,7 @@ def get_distances(aoi: Union[Polygon, MultiPolygon], filters, tilesize=None):
     arrays = []
     for dataset in datasets:
         data, _ = read_dataset(
-            f"s3://{BUCKET}/multiband/{dataset}.tif",
+            f"s3://{BUCKET}/{dataset}.tif",
             LAYERS[dataset],
             aoi=aoi.dict(),
             tilesize=tilesize,
@@ -158,7 +160,6 @@ def _filter(array, filters):
                     tmp = single_layer > 4 & single_layer < 10
                 else:
                     tmp = single_layer == int(filt)
-            print(layer_name, tmp.shape, array.sel(layer=layer_name).shape)
             np_filters.append(tmp)
 
     all_true = np.prod(np.stack(np_filters), axis=0).astype(np.uint8)
