@@ -41,7 +41,7 @@ def zone(query: ZoneRequest, filters: Filters = Depends()):
         # human_footprint: float = 0.5
         + query.weights.worldpop * calc[0].sum()
         + query.weights.slope * calc[1].sum()
-        + query.weights.capacity_value * cf.sum()
+        # + query.weights.capacity_value * cf.sum()
     )
 
     return dict(

@@ -144,8 +144,8 @@ def _filter(array, filters):
             single_layer = array.sel(layer=layer_name).values.squeeze()
             if filter_type == "range_filter":
                 tmp = np.logical_and(
-                    single_layer >= int(filt.split(",")[0]),
-                    single_layer <= int(filt.split(",")[1]),
+                    single_layer >= float(filt.split(",")[0]),
+                    single_layer <= float(filt.split(",")[1]),
                 )
             elif filter_type == "categorical_filter":
                 # multiply by ten to get land cover class
