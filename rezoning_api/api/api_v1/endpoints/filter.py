@@ -7,12 +7,13 @@ import numpy as np
 from mercantile import feature, Tile
 from geojson_pydantic.geometries import Polygon
 import xarray as xr
+from typing import Optional
 
 from rezoning_api.core.config import BUCKET
 from rezoning_api.models.tiles import TileResponse
 from rezoning_api.models.zone import Filters
-from rezoning_api.api.utils import _filter, flat_layers, LAYERS, filter_to_layer_name
-from rezoning_api.db.country import get_country_min_max
+from rezoning_api.api.utils import _filter, LAYERS, filter_to_layer_name
+from rezoning_api.db.country import get_country_min_max, get_country_geojson
 
 router = APIRouter()
 
@@ -25,11 +26,22 @@ router = APIRouter()
     response_class=TileResponse,
     name="filter",
 )
+@router.get(
+    "/filter/{country_id}/{z}/{x}/{y}.png",
+    responses={
+        200: dict(
+            description="return a filtered tile given certain parameters and country code"
+        )
+    },
+    response_class=TileResponse,
+    name="filter_country",
+)
 def filter(
     z: int,
     x: int,
     y: int,
     color: str,
+    country_id: Optional[str] = None,
     filters: Filters = Depends(),
 ):
     """Return filtered tile."""
@@ -42,13 +54,25 @@ def filter(
     # find the tile
     aoi = Polygon(**feature(Tile(x, y, z))["geometry"]).dict()
 
+    # potentiall mask by country
+    extra_mask_geometry = None
+    if country_id:
+        # TODO: early return for tiles outside country bounds
+        feat = get_country_geojson(country_id)
+        extra_mask_geometry = feat.geometry.dict()
+
     arrays = []
     for dataset in datasets:
+        if "raster" in dataset:
+            ext = "vrt"
+        else:
+            ext = "tif"
         data, _ = read_dataset(
-            f"s3://{BUCKET}/multiband/{dataset}.tif",
+            f"s3://{BUCKET}/{dataset}.{ext}",
             LAYERS[dataset],
             aoi=aoi,
             tilesize=256,
+            extra_mask_geometry=extra_mask_geometry,
         )
         arrays.append(data)
 
@@ -57,7 +81,6 @@ def filter(
     color_list = list(map(lambda x: int(x), color.split(",")))
 
     tile, new_mask = _filter(arr, filters)
-    print(tile.shape, new_mask.shape)
 
     color_tile = np.stack(
         [
@@ -72,12 +95,6 @@ def filter(
     return TileResponse(content=content)
 
 
-@router.get("/filter/layers/")
-def get_layers():
-    """Return layers list for filters"""
-    return [layer for layer in flat_layers() if not layer.startswith(("gwa", "gsa"))]
-
-
 @router.get("/filter/{country_id}/layers")
 def get_country_layers(country_id: str):
     """Return min/max for country layers"""
@@ -87,7 +104,7 @@ def get_country_layers(country_id: str):
     return minmax
 
 
-@router.get("/filter/schema")
+@router.get("/filter/schema", name="filter_schema")
 def get_filter_schema():
     """Return filter schema"""
     return Filters.schema()["properties"]

@@ -14,14 +14,16 @@ def demo(request: Request):
         {
             "request": request,
             "filter_endpoint": request.url_for(
-                "filter", **dict(z="{z}", x="{x}", y="{y}")
+                "filter_country", **dict(country_id="NGA", z="{z}", x="{x}", y="{y}")
             ),
             "lcoe_endpoint": request.url_for("lcoe", **dict(z="{z}", x="{x}", y="{y}")),
             "score_endpoint": request.url_for(
                 "score", **dict(country="AFG", z="{z}", x="{x}", y="{y}")
             ),
             "layers_endpoint": request.url_for(
-                "layers", **dict(id="roads", z="{z}", x="{x}", y="{y}")
+                "layers", **dict(id="{id}", z="{z}", x="{x}", y="{y}")
             ),
+            "layer_list": request.url_for("layer_list"),
+            "filter_schema": request.url_for("filter_schema"),
         },
     )

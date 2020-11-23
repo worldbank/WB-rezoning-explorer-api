@@ -64,12 +64,14 @@ def get_capacity_factor(
 
     cf, _ = read_dataset(
         f"s3://{BUCKET}/multiband/{cf_tif_loc}.tif",
-        layers=LAYERS[cf_tif_loc],
+        layers=LAYERS[f"multiband/{cf_tif_loc}"],
         aoi=aoi.dict(),
         tilesize=tilesize,
     )
 
-    return cf.sel(layer=LAYERS[cf_tif_loc][0])  # TODO: which layer to read from
+    return cf.sel(
+        layer=LAYERS[f"multiband/{cf_tif_loc}"][0]
+    )  # TODO: which layer to read from
 
 
 def get_distances(aoi: Union[Polygon, MultiPolygon], filters, tilesize=None):
@@ -86,7 +88,7 @@ def get_distances(aoi: Union[Polygon, MultiPolygon], filters, tilesize=None):
     arrays = []
     for dataset in datasets:
         data, _ = read_dataset(
-            f"s3://{BUCKET}/multiband/{dataset}.tif",
+            f"s3://{BUCKET}/{dataset}.tif",
             LAYERS[dataset],
             aoi=aoi.dict(),
             tilesize=tilesize,
@@ -158,7 +160,6 @@ def _filter(array, filters):
                     tmp = single_layer > 4 & single_layer < 10
                 else:
                     tmp = single_layer == int(filt)
-            print(layer_name, tmp.shape, array.sel(layer=layer_name).shape)
             np_filters.append(tmp)
 
     all_true = np.prod(np.stack(np_filters), axis=0).astype(np.uint8)
@@ -243,8 +244,13 @@ def flat_layers():
 def get_layer_location(id):
     """get layer location and dataset index"""
     loc = [(k, int(v.index(id))) for k, v in LAYERS.items() if id in v]
+    if "raster" in loc[0][0]:
+        ext = "vrt"
+    else:
+        ext = "tif"
+
     if loc:
-        return (f"s3://{BUCKET}/multiband/{loc[0][0]}.tif", loc[0][1])
+        return (f"s3://{BUCKET}/{loc[0][0]}.{ext}", loc[0][1])
     else:
         return (None, None)
 

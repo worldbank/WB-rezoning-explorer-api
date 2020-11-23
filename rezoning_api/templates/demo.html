@@ -45,9 +45,6 @@
             z-index: 2;
             top: 10px;
             left: 10px;
-            padding: 10px;
-            height: 400px;
-            width: 300px;
         }
     </style>
 </head>
@@ -55,87 +52,27 @@
 <body>
     <div id='map'>
 
-        <div class="zoom-info"><span id="zoom"></span></div>
     </div>
     <div id='select'>
-        Distance to Airports
-        <div id='airport' class="ui range labeled ticked slider"></div>
-        Distance to Ports
-        <div id='port' class="ui range labeled ticked slider"></div>
-        Distance to Anchorages
-        <div id='anchorage' class="ui range labeled ticked slider"></div>
-        Distance to Grids
-        <div id='grid' class="ui range labeled ticked slider"></div>
-        Distance to Roads
-        <div id='road' class="ui range labeled ticked slider"></div>
+        <select id="layers"></select>
     </div>
     <script>
-        $('#airport.ui.range.slider')
-        .slider({
-            min: 0,
-            max: 1000000,
-            start: 0,
-            end: 1000000,
-            step: 50000,
-            onChange: (wid, min, max) => {
-                aiportFilters = `${min},${max}`
-                swap()
-            }
-        })
-
-        $('#port.ui.range.slider')
-        .slider({
-            min: 0,
-            max: 1000000,
-            start: 0,
-            end: 1000000,
-            step: 50000,
-            onChange: (wid, min, max) => {
-                portFilters = `${min},${max}`
-                swap()
-            }
-        })
-        $('#anchorage.ui.range.slider')
-        .slider({
-            min: 0,
-            max: 1000000,
-            start: 0,
-            end: 1000000,
-            step: 50000,
-            onChange: (wid, min, max) => {
-                anchorageFilters = `${min},${max}`
-                swap()
-            }
-        })
-
-        $('#grid.ui.range.slider')
-        .slider({
-            min: 0,
-            max: 100000,
-            start: 0,
-            end: 100000,
-            step: 5000,
-            onChange: (wid, min, max) => {
-                gridFilters = `${min},${max}`
-                swap()
-            }
-        })
-        $('#road.ui.range.slider')
-        .slider({
-            min: 0,
-            max: 100000,
-            start: 0,
-            end: 100000,
-            step: 5000,
-            onChange: (wid, min, max) => {
-                roadFilters = `${min},${max}`
-                swap()
-            }
-        })
-
-        var scope = { url: "", metadata: {}, config: {} }
-
         const filterEndpoint = '{{ filter_endpoint }}'
+        const layersEndpoint =  '{{ layers_endpoint }}'
+        const layerList = '{{ layer_list }}'
+        const lcoeEndpoint = '{{ lcoe_endpoint }}'
+        const select = document.getElementById("layers")
+        fetch(layerList)
+          .then(resp => resp.json())
+          .then(resp => {
+              resp.forEach((layer, idx) => {
+                  select.options[select.options.length] = new Option(layer, layer);
+              })
+          })
+
+        select.addEventListener('change', (e) => {
+            swap(e.target.value)
+        });
 
         var map = new mapboxgl.Map({
             container: 'map',
@@ -144,25 +81,15 @@
             zoom: 5
         })
 
-        map.on('zoom', function (e) {
-            const z = (map.getZoom()).toString().slice(0, 6)
-            document.getElementById('zoom').textContent = z
-        })
-        // airports, ports, anchorages, grid, road
-        let airportFilters = '0,1000000'
-        let portFilters = '0,1000000'
-        let anchorageFilter = '0,1000000'
-        let gridFilters = '0,100000'
-        let roadFilters = '0,5000'
-
-        function swap () {
+        function swap (id) {
             if (map.getLayer('raster')) map.removeLayer('raster')
             if (map.getSource('raster')) map.removeSource('raster')
             
-            let filters = `f_roads=${roadFilters}&f_land_cover=12,13`
-            console.log(filters)
-            let url = `${filterEndpoint}?${filters}&color=45,39,88,178 `
-            // let url = `${filterEndpoint}?${filters}&colormap=viridis`
+            let filters = `f_roads=0,5000&f_land_cover=12,13`
+            // console.log(filters)
+            let url = `${filterEndpoint}?${filters}&color=45,39,88,178`
+            // let url = `${layersEndpoint.replace('{id}', id)}?colormap=viridis`
+            // let url = `${lcoeEndpoint}?${filters}&colormap=viridis`
             map.addSource(
               'raster', { type: 'raster', tiles: [url], tileSize: 256 }
             )
@@ -173,10 +100,6 @@
                 source: 'raster'
             })
         }
-
-        map.on('load', () => {
-            swap()
-        })
     </script>
 </body>
 </html>

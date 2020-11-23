@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, Depends
 
-from rezoning_api.models.zone import ZoneRequest, ZoneResponse, Filters
+from rezoning_api.models.zone import ZoneRequest, ZoneResponse, Filters, Weights
 from rezoning_api.api.utils import (
     lcoe_generation,
     lcoe_interconnection,
@@ -50,3 +50,9 @@ def zone(query: ZoneRequest, filters: Filters = Depends()):
         zone_output=cf.sum(),
         zone_output_density=cf.sum() / (500 ** 2),
     )
+
+
+@router.get("/zone/schema", name="weights_schema")
+def get_filter_schema():
+    """Return weights schema"""
+    return Weights.schema()["properties"]

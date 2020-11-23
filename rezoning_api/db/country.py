@@ -13,7 +13,9 @@ with open(op.join(op.dirname(__file__), "countries.geojson"), "r") as f:
 def get_country_geojson(id):
     """get geojson for a single country"""
     filtered = [
-        feature for feature in world["features"] if feature["properties"]["GID_0"] == id
+        feature
+        for feature in world["features"]
+        if feature["properties"]["GID_0"].lower() == id.lower()
     ]
     try:
         return Feature(**filtered[0])
