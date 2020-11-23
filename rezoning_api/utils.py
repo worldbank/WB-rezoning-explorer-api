@@ -1,7 +1,7 @@
 """utility functions"""
 import boto3
 import rasterio
-from typing import Union, List
+from typing import Union, List, Optional
 from geojson_pydantic.geometries import Polygon, MultiPolygon
 from shapely.geometry import shape
 from rasterio.windows import from_bounds
@@ -29,6 +29,7 @@ def read_dataset(
     aoi: Union[Polygon, MultiPolygon],
     tilesize=None,
     nan=0,
+    extra_mask_geometry: Optional[Union[Polygon, MultiPolygon]] = None,
 ):
     """read a dataset in a given area"""
     with rasterio.open(dataset) as src:
@@ -48,7 +49,9 @@ def read_dataset(
 
         # for non-tiles, mask with geometry
         mask = data.mask
-        if not out_shape:
+        if not out_shape or extra_mask_geometry:
+            if extra_mask_geometry:
+                g2 = transform_geom(PLATE_CARREE, src.crs, extra_mask_geometry)
             mask = np.logical_or(
                 features.geometry_mask(
                     [g2],

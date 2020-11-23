@@ -87,11 +87,9 @@
             
             let filters = `f_roads=0,5000&f_land_cover=12,13`
             // console.log(filters)
-            // let url = `${filterEndpoint}?${filters}&color=45,39,88,178 `
-            // let url = `${filterEndpoint}?${filters}&colormap=viridis`
-            // let url = `${filterEndpoint}?f_gebco=0,1000&f_roads=0,5000&f_land_cover=12,13&color=45,39,88,178`
+            let url = `${filterEndpoint}?${filters}&color=45,39,88,178`
             // let url = `${layersEndpoint.replace('{id}', id)}?colormap=viridis`
-            let url = `${lcoeEndpoint}?${filters}&colormap=viridis`
+            // let url = `${lcoeEndpoint}?${filters}&colormap=viridis`
             map.addSource(
               'raster', { type: 'raster', tiles: [url], tileSize: 256 }
             )
