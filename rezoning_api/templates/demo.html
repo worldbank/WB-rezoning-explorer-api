@@ -77,7 +77,8 @@
         var map = new mapboxgl.Map({
             container: 'map',
             style: { version: 8, sources: {}, layers: [] },
-            center: [10, 10],
+            center: [64.92919921875,
+          33.32134852669881],
             zoom: 5
         })
 
@@ -85,7 +86,7 @@
             if (map.getLayer('raster')) map.removeLayer('raster')
             if (map.getSource('raster')) map.removeSource('raster')
             
-            let filters = `f_roads=0,5000&f_land_cover=12,13`
+            let filters = `f_roads=0,50000`
             // console.log(filters)
             let url = `${filterEndpoint}?${filters}&color=45,39,88,178`
             // let url = `${layersEndpoint.replace('{id}', id)}?colormap=viridis`
