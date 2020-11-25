@@ -8,6 +8,7 @@ from rasterio.windows import from_bounds
 from rasterio.warp import transform_geom
 from rasterio.crs import CRS
 from rasterio import features
+from rasterio import Affine as A
 import numpy as np
 import numpy.ma as ma
 import xarray as xr
@@ -50,13 +51,17 @@ def read_dataset(
         # for non-tiles, mask with geometry
         mask = data.mask
         if not out_shape or extra_mask_geometry:
+            transform = src.window_transform(window)
             if extra_mask_geometry:
                 g2 = transform_geom(PLATE_CARREE, src.crs, extra_mask_geometry)
+                transform = transform * A.scale(
+                    window.width / tilesize, window.height / tilesize
+                )
             mask = np.logical_or(
                 features.geometry_mask(
                     [g2],
                     out_shape=data.shape[1:],
-                    transform=src.window_transform(window),
+                    transform=transform,
                     all_touched=True,
                 ),
                 mask,
