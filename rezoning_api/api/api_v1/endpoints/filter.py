@@ -12,7 +12,7 @@ from typing import Optional
 from rezoning_api.core.config import BUCKET
 from rezoning_api.models.tiles import TileResponse
 from rezoning_api.models.zone import Filters
-from rezoning_api.api.utils import _filter, LAYERS, filter_to_layer_name
+from rezoning_api.utils import _filter, LAYERS, filter_to_layer_name
 from rezoning_api.db.country import get_country_min_max, get_country_geojson
 
 router = APIRouter()

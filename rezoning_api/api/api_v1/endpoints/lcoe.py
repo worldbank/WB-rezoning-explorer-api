@@ -9,7 +9,7 @@ from geojson_pydantic.geometries import Polygon
 
 from rezoning_api.models.tiles import TileResponse
 from rezoning_api.models.zone import LCOE, Filters
-from rezoning_api.api.utils import (
+from rezoning_api.utils import (
     lcoe_generation,
     lcoe_interconnection,
     lcoe_road,
@@ -40,8 +40,8 @@ def lcoe(
 
     # calculate LCOE (from zone.py, TODO: DRY)
     # spatial temporal inputs
-    ds, dr, _calc, mask = get_distances(aoi, filters, tilesize=256)
-    cf = get_capacity_factor(aoi, lcoe.turbine_type, tilesize=256)
+    ds, dr, _calc, mask = get_distances(aoi.dict(), filters, tilesize=256)
+    cf = get_capacity_factor(aoi.dict(), lcoe.turbine_type, tilesize=256)
 
     # lcoe component calculation
     lg = lcoe_generation(lcoe, cf)

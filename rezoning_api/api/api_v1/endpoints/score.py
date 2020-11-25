@@ -34,7 +34,7 @@ def score(
     # get AOI from tile
     aoi = Polygon(**feature(Tile(x, y, z))["geometry"])
 
-    data, mask = calc_score(country, aoi, lcoe, weights, filters, tilesize=256)
+    data, mask = calc_score(country, aoi.dict(), lcoe, weights, filters, tilesize=256)
     print(data.shape, mask.shape)
     tile = linear_rescale(data, in_range=[0, 1], out_range=[0, 255]).astype(np.uint8)
     print(tile.shape)

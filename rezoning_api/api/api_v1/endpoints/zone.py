@@ -3,7 +3,7 @@
 from fastapi import APIRouter, Depends
 
 from rezoning_api.models.zone import ZoneRequest, ZoneResponse, Filters, Weights
-from rezoning_api.api.utils import (
+from rezoning_api.utils import (
     lcoe_generation,
     lcoe_interconnection,
     lcoe_road,
