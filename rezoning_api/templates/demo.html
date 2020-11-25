@@ -86,7 +86,7 @@
             if (map.getLayer('raster')) map.removeLayer('raster')
             if (map.getSource('raster')) map.removeSource('raster')
             
-            let filters = `f_roads=0,50000`
+            let filters = ``
             // console.log(filters)
             let url = `${filterEndpoint}?${filters}&color=45,39,88,178`
             // let url = `${layersEndpoint.replace('{id}', id)}?colormap=viridis`

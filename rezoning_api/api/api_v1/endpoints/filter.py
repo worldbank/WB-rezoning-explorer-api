@@ -71,12 +71,15 @@ def filter(
             extra_mask_geometry=extra_mask_geometry,
         )
         arrays.append(data)
+    if arrays:
+        arr = xr.concat(arrays, dim="layer")
+        tile, new_mask = _filter(arr, filters)
+    else:
+        tile = np.ones((256, 256), dtype=np.uint8)
+        new_mask = np.ones((256, 256), dtype=np.bool)
 
-    arr = xr.concat(arrays, dim="layer")
     # color like 45,39,88,178 (RGBA)
     color_list = list(map(lambda x: int(x), color.split(",")))
-
-    tile, new_mask = _filter(arr, filters)
 
     color_tile = np.stack(
         [
