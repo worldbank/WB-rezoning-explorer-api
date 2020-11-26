@@ -287,6 +287,18 @@ class Filters(BaseModel):
     f_waterbodies: Optional[bool] = FilterField(
         title="Water Bodies", category=Category.NATURAL
     )
+    f_gwa_power_100: Optional[RangeFilter] = FilterField(
+        title="Wind Power",
+        category=Category.NATURAL,
+        energy_type=["wind", "offshore"],
+        unit="W/m²",
+    )
+    f_air_density: Optional[RangeFilter] = FilterField(
+        title="Air Density",
+        category=Category.NATURAL,
+        energy_type=["offshore", "wind"],
+        unit="kg/m³",
+    )
 
 
 class ZoneRequest(BaseModel):
