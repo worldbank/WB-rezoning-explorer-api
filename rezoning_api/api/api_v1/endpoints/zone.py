@@ -23,7 +23,7 @@ def zone(query: ZoneRequest, filters: Filters = Depends()):
     """calculate LCOE, then weight for zone score"""
     # spatial temporal inputs
     ds, dr, calc, mask = get_distances(query.aoi, filters)
-    cf = get_capacity_factor(query.aoi, query.lcoe.turbine_type)
+    cf = get_capacity_factor(query.aoi, query.lcoe.capacity_factor)
 
     # lcoe component calculation
     lg = lcoe_generation(query.lcoe, cf)

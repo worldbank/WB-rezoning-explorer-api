@@ -7,8 +7,7 @@ import numpy as np
 
 
 from rezoning_api.models.tiles import TileResponse
-from rezoning_api.api.utils import get_layer_location, flat_layers, get_min_max
-from rezoning_api.utils import s3_get
+from rezoning_api.utils import get_layer_location, flat_layers, get_min_max, s3_get
 from rezoning_api.core.config import BUCKET
 
 router = APIRouter()

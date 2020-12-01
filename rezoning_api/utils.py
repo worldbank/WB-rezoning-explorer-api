@@ -1,4 +1,5 @@
 """utility functions"""
+import xml.etree.ElementTree as ET
 import boto3
 import rasterio
 from typing import Union, List, Optional
@@ -12,6 +13,8 @@ from rasterio import Affine as A
 import numpy as np
 import numpy.ma as ma
 import xarray as xr
+from pydantic import create_model
+
 
 from rezoning_api.core.config import BUCKET
 from rezoning_api.models.zone import LCOE
@@ -123,24 +126,24 @@ def lcoe_road(lr: LCOE, cf, dr):
 
 
 def get_capacity_factor(
-    aoi: Union[Polygon, MultiPolygon], turbine_type=None, tilesize=None
+    aoi: Union[Polygon, MultiPolygon], capacity_factor: str, tilesize=None
 ):
     """Calculate Capacity Factor"""
     # decide which capacity factor tif to pull from
-    cf_tif_loc = "gsa"
-    if turbine_type:
-        cf_tif_loc = "gwa"
+    cf_tif_loc, cf_idx = get_layer_location(capacity_factor)
+    dataset = cf_tif_loc.replace(f"s3://{BUCKET}/", "").replace(".tif", "")
+
+    if not cf_tif_loc:
+        raise Exception("invalid capacity factor")
 
     cf, _ = read_dataset(
-        f"s3://{BUCKET}/multiband/{cf_tif_loc}.tif",
-        layers=LAYERS[f"multiband/{cf_tif_loc}"],
+        cf_tif_loc,
+        layers=LAYERS[dataset],
         aoi=aoi,
         tilesize=tilesize,
     )
 
-    return cf.sel(
-        layer=LAYERS[f"multiband/{cf_tif_loc}"][0]
-    )  # TODO: which layer to read from
+    return cf.sel(layer=LAYERS[dataset][cf_idx])
 
 
 def get_distances(aoi: Union[Polygon, MultiPolygon], filters, tilesize=None):
@@ -220,3 +223,47 @@ def _filter(array, filters):
 
     all_true = np.prod(np.stack(np_filters), axis=0).astype(np.uint8)
     return (all_true, all_true != 0)
+
+
+def flat_layers():
+    """flatten layer list"""
+    return [flat for layer in LAYERS.values() for flat in layer]
+
+
+def get_layer_location(id):
+    """get layer location and dataset index"""
+    loc = [(k, int(v.index(id))) for k, v in LAYERS.items() if id in v]
+    if loc:
+        return (f"s3://{BUCKET}/{loc[0][0]}.tif", loc[0][1])
+    else:
+        return (None, None)
+
+
+LayerNames = create_model("LayerNames", **dict(zip(flat_layers(), flat_layers())))
+
+
+def min_max_scale(arr, scale_min=None, scale_max=None):
+    """returns a normalized ~0.0-1.0 array from optional min/maxes"""
+    if not scale_min:
+        scale_min = arr.min()
+    if not scale_max:
+        scale_max = arr.max()
+
+    return (arr - scale_min) / (scale_max - scale_min)
+
+
+def get_min_max(xml):
+    """get minimum and maximum values from VRT"""
+    root = ET.fromstring(xml)
+    mins = get_stat(root, "STATISTICS_MINIMUM")
+    maxs = get_stat(root, "STATISTICS_MAXIMUM")
+    return (mins, maxs)
+
+
+def get_stat(root, attrib_key):
+    """get from XML"""
+    return [
+        float(elem.text)
+        for elem in root.iterfind(".//MDI")
+        if elem.attrib.get("key") == attrib_key
+    ]
