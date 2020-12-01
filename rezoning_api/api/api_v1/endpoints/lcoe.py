@@ -9,6 +9,7 @@ from geojson_pydantic.geometries import Polygon
 
 from rezoning_api.models.tiles import TileResponse
 from rezoning_api.models.zone import LCOE, Filters
+from rezoning_api.db.cf import get_capacity_factor_options
 from rezoning_api.utils import (
     lcoe_generation,
     lcoe_interconnection,
@@ -63,4 +64,6 @@ def lcoe(
 @router.get("/lcoe/schema", name="lcoe_schema")
 def get_filter_schema():
     """Return lcoe schema"""
-    return LCOE.schema()["properties"]
+    schema = LCOE.schema()["properties"]
+    schema["capacity_factor"]["options"] = get_capacity_factor_options()
+    return schema
