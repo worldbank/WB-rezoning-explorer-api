@@ -16,6 +16,7 @@ from rio_tiler.utils import linear_rescale
 from rezoning_api.utils import read_dataset
 from rezoning_api.core.config import BUCKET
 from rezoning_api.db.country import get_country_geojson, world
+from rezoning_api.db.cf import get_capacity_factor_options
 from rezoning_api.models.zone import LCOE, Filters
 from rezoning_api.utils import (
     get_capacity_factor,
@@ -58,15 +59,20 @@ def refresh_country_extrema(partial=False):
                 print(f"could not read {dataset}")
 
         # calculate LCOE (from zone.py, TODO: DRY)
-        # default inputs
+        # default inputs + every cf combination
         print("calc LCOE extrema")
-        try:
-            lcoe = LCOE()
+        cfo = get_capacity_factor_options()
+        options = list(set([cf for cf_list in cfo.values() for cf in cf_list]))
+        extrema["lcoe"] = dict()
+        for option in options:
+            print(f"LCOE extrema, cf: {option}")
+            # try:
+            lcoe = LCOE(capacity_factor=option)
             filters = Filters()
 
             # spatial temporal inputs
             ds, dr, _calc, _mask = get_distances(aoi, filters, tilesize=64)
-            cf = get_capacity_factor(aoi, lcoe.turbine_type, tilesize=64)
+            cf = get_capacity_factor(aoi, lcoe.capacity_factor, tilesize=64)
 
             # lcoe component calculation
             lg = lcoe_generation(lcoe, cf)
@@ -75,24 +81,27 @@ def refresh_country_extrema(partial=False):
             lcoe_total = lg + li + lr
 
             # add to extrema
-            extrema["lg"] = dict(
-                min=float(lg.min()),
-                max=float(lg.max()),
+            extrema["lcoe"][option] = dict(
+                lg=dict(
+                    min=float(lg.min()),
+                    max=float(lg.max()),
+                ),
+                li=dict(
+                    min=float(li.min()),
+                    max=float(li.max()),
+                ),
+                lr=dict(
+                    min=float(lr.min()),
+                    max=float(lr.max()),
+                ),
+                total=dict(
+                    min=float(lcoe_total.min()),
+                    max=float(lcoe_total.max()),
+                ),
             )
-            extrema["li"] = dict(
-                min=float(li.min()),
-                max=float(li.max()),
-            )
-            extrema["lr"] = dict(
-                min=float(lr.min()),
-                max=float(lr.max()),
-            )
-            extrema["lcoe_total"] = dict(
-                min=float(lcoe_total.min()),
-                max=float(lcoe_total.max()),
-            )
-        except Exception:
-            print("lcoe error")
+            # except Exception as e:
+            #     print(e)
+            #     print("lcoe error")
 
         with open(fname, "w") as out:
             json.dump(extrema, out)

@@ -1,5 +1,6 @@
 """LCOE endpoints."""
 
+from rezoning_api.db.country import get_country_min_max
 from fastapi import APIRouter, Depends
 from mercantile import feature, Tile
 from rio_tiler.colormap import cmap
@@ -22,7 +23,7 @@ router = APIRouter()
 
 
 @router.get(
-    "/lcoe/{z}/{x}/{y}.png",
+    "/lcoe/{country_id}/{z}/{x}/{y}.png",
     responses={200: dict(description="return an LCOE tile given certain parameters")},
     response_class=TileResponse,
     name="lcoe",
@@ -32,6 +33,7 @@ def lcoe(
     x: int,
     y: int,
     colormap: str,
+    country_id: str,
     filters: Filters = Depends(),
     lcoe: LCOE = Depends(),
 ):
@@ -50,9 +52,13 @@ def lcoe(
     lr = lcoe_road(lcoe, cf, dr)
     lcoe_total = lg + li + lr
 
+    # get country min max for scaling
+    country_min_max = get_country_min_max(country_id)
+    lcoe_min_max = country_min_max["lcoe"][lcoe.capacity_factor]["total"]
+
     tile = linear_rescale(
-        np.nan_to_num(lcoe_total.values, lcoe_total.min()),
-        in_range=[float(lcoe_total.min()), float(lcoe_total.max())],
+        lcoe_total.values,
+        in_range=[lcoe_min_max["min"], lcoe_min_max["max"]],
         out_range=[0, 255],
     ).astype(np.uint8)
 

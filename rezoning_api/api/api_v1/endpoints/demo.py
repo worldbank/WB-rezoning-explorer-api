@@ -16,7 +16,9 @@ def demo(request: Request):
             "filter_endpoint": request.url_for(
                 "filter_country", **dict(country_id="AFG", z="{z}", x="{x}", y="{y}")
             ),
-            "lcoe_endpoint": request.url_for("lcoe", **dict(z="{z}", x="{x}", y="{y}")),
+            "lcoe_endpoint": request.url_for(
+                "lcoe", **dict(country_id="AFG", z="{z}", x="{x}", y="{y}")
+            ),
             "score_endpoint": request.url_for(
                 "score", **dict(country="AFG", z="{z}", x="{x}", y="{y}")
             ),
