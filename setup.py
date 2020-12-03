@@ -39,7 +39,12 @@ setup(
     description=u"""API for the REZoning project""",
     packages=find_packages(exclude=["tests"]),
     package_data={
-        "rezoning_api": ["templates/*.html", "db/countries.geojson", "db/layers.json"]
+        "rezoning_api": [
+            "templates/*.html",
+            "db/countries.geojson",
+            "db/layers.json",
+            "db/cf.json",
+        ]
     },
     zip_safe=False,
     install_requires=inst_reqs,
