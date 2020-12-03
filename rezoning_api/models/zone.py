@@ -169,7 +169,7 @@ class Weights(BaseModel):
 class LCOE(BaseModel):
     """User provided Levelized cost of energy inputs."""
 
-    turbine_type: Optional[int] = Field(None, title="Turbine Type or Solar Unit Type")
+    capacity_factor: str = Field(None, title="Turbine Type or Solar Unit Type")
     crf: float = Field(1, title="Capital Recovery Factor (CRF)")
     cg: int = Field(2000, title="Generation – capital [USD/kW] (Cg)")
     omfg: int = Field(50000, title="Generation – fixed O&M [USD/MW/y] (OMf,g)")
@@ -286,6 +286,18 @@ class Filters(BaseModel):
     )
     f_waterbodies: Optional[bool] = FilterField(
         title="Water Bodies", category=Category.NATURAL
+    )
+    f_gwa_power_100: Optional[RangeFilter] = FilterField(
+        title="Wind Power",
+        category=Category.NATURAL,
+        energy_type=["wind", "offshore"],
+        unit="W/m²",
+    )
+    f_air_density: Optional[RangeFilter] = FilterField(
+        title="Air Density",
+        category=Category.NATURAL,
+        energy_type=["offshore", "wind"],
+        unit="kg/m³",
     )
 
 

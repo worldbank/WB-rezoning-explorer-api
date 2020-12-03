@@ -1,0 +1,43 @@
+{
+    "solar": ["gsa-pvout"],
+    "wind": [
+        "gwa-iec1",
+        "gwa-iec2",
+        "gwa-iec3",
+        "gwa-enercon-e44-50",
+        "gwa-enercon-e48-50",
+        "gwa-enercon-e53-50",
+        "gwa-vestas-v100-mode0-100",
+        "gwa-vestas-v100-mode0-120",
+        "gwa-vestas-v100-mode0-150",
+        "gwa-vestas-v100-mode0-80",
+        "gwa-vestas-v110-mode0-100",
+        "gwa-vestas-v110-mode0-120",
+        "gwa-vestas-v110-mode0-150",
+        "gwa-vestas-v110-mode0-80",
+        "gwa-vestas-v112-mode0-100",
+        "gwa-vestas-v112-mode0-120",
+        "gwa-vestas-v112-mode0-150",
+        "gwa-vestas-v112-mode0-80",
+        "gwa-vestas-v120-mode0-100",
+        "gwa-vestas-v120-mode0-120",
+        "gwa-vestas-v120-mode0-150",
+        "gwa-vestas-v120-mode0-80",
+        "gwa-vestas-v126-mode0-100",
+        "gwa-vestas-v126-mode0-120",
+        "gwa-vestas-v126-mode0-150",
+        "gwa-vestas-v126-mode0-80",
+        "gwa-vestas-v136-mode0-100",
+        "gwa-vestas-v136-mode0-120",
+        "gwa-vestas-v136-mode0-150",
+        "gwa-vestas-v136-mode0-80"
+    ],
+    "offshore": [
+        "gwa-iec1",
+        "gwa-iec2",
+        "gwa-iec3",
+        "gwa-offshore-dtu-10mw-119",
+        "gwa-offshore-iea-15mw-150",
+        "gwa-offshore-leanwind-8mw-110"
+    ]
+}
