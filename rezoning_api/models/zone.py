@@ -195,42 +195,45 @@ class Filters(BaseModel):
     """filter properties"""
 
     f_worldpop: Optional[RangeFilter] = FilterField(
-        title="Population Density", unit="ppl/km²", category=Category.NATURAL
+        title="Population Density", unit="ppl/km²", category=Category.NATURAL, description="A measurement of population per unit area"
     )
     f_slope: Optional[RangeFilter] = FilterField(
-        title="Slope", unit="degress", category=Category.NATURAL
+        title="Slope", unit="degrees", category=Category.NATURAL, description="The steepness or angle considered with reference to the horizon."
     )
     f_land_cover: Optional[CategorialFilter] = FilterField(
         title="Land Cover", category=Category.NATURAL, options=LAND_COVER_OPTIONS
     )
     f_grid: Optional[RangeFilter] = FilterField(
-        title="Distance to Grid", unit="meters", category=Category.INFRASTRUCTURE
+        title="Distance to Grid", unit="meters", category=Category.INFRASTRUCTURE, description="Areas within a defined distance to transmission lines"
     )
     f_airports: Optional[RangeFilter] = FilterField(
-        title="Distanct to Airports", unit="meters", category=Category.INFRASTRUCTURE
+        title="Distanct to Airports", unit="meters", category=Category.INFRASTRUCTURE, description="Areas within a defined distance to airports."
     )
     f_ports: Optional[RangeFilter] = FilterField(
         title="Distance to Ports",
         unit="meters",
         category=Category.INFRASTRUCTURE,
         energy_type=["offshore"],
+        description="Areas within a defined distance to ports."
     )
     f_anchorages: Optional[RangeFilter] = FilterField(
         title="Distance to Anchorages",
         unit="meters",
         category=Category.INFRASTRUCTURE,
         energy_type=["offshore"],
+        description="Areas within a defined distance to anchorages."
     )
     f_roads: Optional[RangeFilter] = FilterField(
-        title="Distance to Roads", unit="meters", category=Category.INFRASTRUCTURE
+        title="Distance to Roads", unit="meters", category=Category.INFRASTRUCTURE, description="Areas within a defined distance to roads."
     )
     f_pp_whs: Optional[RangeFilter] = FilterField(
         title="Distance to World Heritage Sites",
         unit="meters",
         category=Category.ENVIRONMENT,
+        description="A landmark or area with legal protection by an international convention for having cultural, historical, scientific or other form of significance."
     )
     f_unep_coral: Optional[RangeFilter] = FilterField(
-        title="Distance to Coral", unit="meters", category=Category.ENVIRONMENT
+        title="Distance to Coral", unit="meters", category=Category.ENVIRONMENT, description="Areas containing underwater ecosystems characterized by reef-building corals."
     )
     f_unesco: Optional[RangeFilter] = FilterField(
         title="Distance to Cultural Sites", unit="meters", category=Category.CULTURAL
@@ -239,15 +242,16 @@ class Filters(BaseModel):
         title="Distance to Ramsar Wetlands",
         unit="meters",
         category=Category.ENVIRONMENT,
+        description="Wetland sites designated to be of international importance under the Ramsar Convention."
     )
     f_wwf_glw_3: Optional[bool] = FilterField(
-        title="Wetlands", category=Category.ENVIRONMENT
+        title="Wetlands", category=Category.ENVIRONMENT, description="Areas where water covers the soil, or is near the surface of the soil for all or part of the year, and supports both aquatic and terrestrial species."
     )
     f_pp_marine_protected: Optional[bool] = FilterField(
-        False, title="Marine Protected Zone", category=Category.ENVIRONMENT
+        False, title="Marine Protected Zone", category=Category.ENVIRONMENT, description="Areas in need of protection in open-ocean waters and deep-sea habitats as designated by the Conference of the Parties to the Convention on Biological Diversity (COP 9)."
     )
     f_unep_tidal: Optional[bool] = FilterField(
-        False, title="Tidal Zone", category=Category.ENVIRONMENT
+        False, title="Tidal Zone", category=Category.ENVIRONMENT, description="Areas where the ocean meets the land between high and low tides."
     )
     f_capacity_value: Optional[RangeFilter] = FilterField(
         title="Capacity Value", category=Category.ZONE_PARAMETERS
@@ -266,39 +270,45 @@ class Filters(BaseModel):
         unit="kWh/m²",
         category=Category.NATURAL,
         energy_type=["solar"],
+        description="The solar resource, or electromagnetic radiation, emitted by the sun in a geographic location."
     )
     f_gsa_pvout: Optional[RangeFilter] = FilterField(
         title="Solar PVOut",
         unit="kWh/kWp",
         category=Category.NATURAL,
         energy_type=["solar"],
+        description="The solar photovoltaic (PV) generation potential in a geographic location."
     )
     f_srtm90: Optional[RangeFilter] = FilterField(
         title="Elevation",
         unit="meters",
         category=Category.NATURAL,
         energy_type=["solar", "wind"],
+        description="The height above mean sea level (MSL)."
     )
     f_gebco: Optional[RangeFilter] = FilterField(
         title="Bathymetry",
         unit="meters",
         category=Category.NATURAL,
         energy_type=["offshore"],
+        description="A measurement of depth of water in oceans, seas, or lakes."
     )
     f_waterbodies: Optional[bool] = FilterField(
-        title="Water Bodies", category=Category.NATURAL
+        title="Water Bodies", category=Category.NATURAL, description="Natural or artificial water bodies with the presence of a water surface during most of the year, including both fresh and salt water resources."
     )
     f_gwa_power_100: Optional[RangeFilter] = FilterField(
         title="Wind Power",
         category=Category.NATURAL,
         energy_type=["wind", "offshore"],
         unit="W/m²",
+        description="The wind resource, or wind energy, potential generated through wind turbines "
     )
     f_air_density: Optional[RangeFilter] = FilterField(
         title="Air Density",
         category=Category.NATURAL,
         energy_type=["offshore", "wind"],
         unit="kg/m³",
+        description="The density of air, or atmospheric density, is the mass per unit volume of Earth's atmosphere."
     )
 
 
