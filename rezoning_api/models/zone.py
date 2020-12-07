@@ -276,7 +276,7 @@ class Filters(BaseModel):
         description="Areas within a defined distance to transmission lines",
     )
     f_airports: Optional[RangeFilter] = FilterField(
-        title="Distanct to Airports",
+        title="Distance to Airports",
         unit="meters",
         category=Category.INFRASTRUCTURE,
         description="Areas within a defined distance to airports.",
