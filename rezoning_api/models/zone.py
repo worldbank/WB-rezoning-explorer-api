@@ -186,9 +186,9 @@ class LCOE(BaseModel):
     decom: float = Field(0, title="Decommission % rate (Decom)", description="Decommissioning costs incurred at end of lifetime as a share of capital costs of generation.")
     i: float = Field(0.1, title="Economic discount rate [%] (i)", description="Rate of return used to discount future cash flows back to their present value. This rate is often a company’s Weighted Average Cost of Capital (WACC), required rate of return, or the hurdle rate that investors expect to earn relative to the risk of the investment.")
     n: float = Field(25, title="Lifetime [years] (N)", description="Lifetime of the power plant")
-    landuse: float = Field(0, title="Land use score", description="Land use factor is the average land area occupied by a power plant. More information: https://www.nrel.gov/analysis/tech-size.html ")
+    landuse: float = Field(0, title="Land Use Factor [MW/km2]", description="Land use factor is the average land area occupied by a power plant. More information: https://www.nrel.gov/analysis/tech-size.html ")
     tlf: float = Field(0, title="Technical Loss Factor", description="Percentage of gross energy generation lost due to technical losses (e.g. wake effects for wind turbines; wiring and inverter losses for solar PV systems)")
-    af: float = Field(1, title="Availability Factor", description="Percentage of energy generation lost due to forced or scheduled outages (Applied after technical losses).")
+    af: float = Field(1, title="Unavailability Factor", description="Percentage of energy generation lost due to forced or scheduled outages (Applied after technical losses).")
 
 
 class Filters(BaseModel):
