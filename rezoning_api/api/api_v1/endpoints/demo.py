@@ -20,7 +20,7 @@ def demo(request: Request):
                 "lcoe", **dict(country_id="AFG", z="{z}", x="{x}", y="{y}")
             ),
             "score_endpoint": request.url_for(
-                "score", **dict(country="AFG", z="{z}", x="{x}", y="{y}")
+                "score", **dict(country_id="AFG", z="{z}", x="{x}", y="{y}")
             ),
             "layers_endpoint": request.url_for(
                 "layers", **dict(id="{id}", z="{z}", x="{x}", y="{y}")

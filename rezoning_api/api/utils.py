@@ -7,6 +7,7 @@ from rezoning_api.core.config import BUCKET
 from rezoning_api.utils import read_dataset, min_max_scale
 from rezoning_api.db.layers import get_layers
 from rezoning_api.db.country import get_country_min_max
+from rezoning_api.utils import get_distances, get_layer_location
 
 LAYERS = get_layers()
 
@@ -26,7 +27,7 @@ def calc_score(id, aoi, lcoe, weights, filters, tilesize=None):
     aggregated into zones so here we refer to the function as a "score" calculation
     """
     # spatial temporal inputs
-    # ds, dr, calc, mask = get_distances(aoi, filters, tilesize=tilesize)
+    ds, dr, calc, mask = get_distances(aoi, filters, tilesize=tilesize)
     # cf = get_capacity_factor(aoi, lcoe.turbine_type, tilesize=tilesize)
 
     # lcoe component calculation
@@ -39,26 +40,31 @@ def calc_score(id, aoi, lcoe, weights, filters, tilesize=None):
 
     # zone score
     score_array = np.zeros((tilesize, tilesize))
-    for dataset, layers in LAYERS.items():
-        data, _ = read_dataset(
-            f"s3://{BUCKET}/{dataset}.tif",
-            layers,
-            aoi,
-            tilesize=tilesize,
-        )
-        for layer in layers:
-            ll = layer.replace("-", "_")
+    for weight in weights:
+        layer = weight[0].replace("_", "-")
+        print(layer)
+        loc, idx = get_layer_location(layer)
+        if loc:
+            dataset = loc.replace(f"s3://{BUCKET}/", "").replace(".tif", "")
+            data, _ = read_dataset(
+                f"s3://{BUCKET}/{dataset}.tif",
+                LAYERS[dataset],
+                aoi,
+                tilesize=tilesize,
+            )
             try:
-                if weights.dict()[ll] > 0:
+                if weight[1] > 0:
                     scaled_array = min_max_scale(
                         data.sel(layer=layer).values,
                         cmm[layer]["min"],
                         cmm[layer]["max"],
                     )
-                    score_array += weights.dict()[ll] * scaled_array
+                    score_array += weight[1] * scaled_array
             except KeyError as e:
                 print(e)
                 print("Drew: add this key to the weights model")
+        else:
+            print(f"handle {layer}, non dataset")
 
     # non-layer zone score additions
     # TODO: need scaling
@@ -66,6 +72,6 @@ def calc_score(id, aoi, lcoe, weights, filters, tilesize=None):
     # score_array += weights.lcoe_transmission * li
     # score_array += weights.lcoe_road * lr
 
-    # TODO: uncomment things, add bask mask
+    # TODO: uncomment things, add back mask
     # return (min_max_scale(score_array), mask)
-    return min_max_scale(score_array)
+    return min_max_scale(score_array), mask
