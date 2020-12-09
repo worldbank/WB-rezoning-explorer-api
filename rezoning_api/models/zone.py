@@ -302,10 +302,10 @@ class Filters(BaseModel):
         description="Areas within a defined distance to roads.",
     )
     f_pp_whs: Optional[RangeFilter] = FilterField(
-        title="Distance to World Heritage Sites",
+        title="Distance to Protected Areas",
         unit="meters",
         category=Category.ENVIRONMENT,
-        description="A landmark or area with legal protection by an international convention for having cultural, historical, scientific or other form of significance.",
+        description="An area recognised, dedicated and managed, through legal or other effective means, to achieve the long term conservation of nature with associated ecosystem services and cultural value.",
     )
     f_unep_coral: Optional[RangeFilter] = FilterField(
         title="Distance to Coral",
@@ -314,7 +314,7 @@ class Filters(BaseModel):
         description="Areas containing underwater ecosystems characterized by reef-building corals.",
     )
     f_unesco: Optional[RangeFilter] = FilterField(
-        title="Distance to Cultural Sites", unit="meters", category=Category.CULTURAL
+        title="Distance to World Heritage Sites", unit="meters", category=Category.CULTURAL, description="A landmark or area with legal protection by an international convention for having cultural, historical, scientific or other form of significance."
     )
     f_unesco_ramsar: Optional[RangeFilter] = FilterField(
         title="Distance to Ramsar Wetlands",
