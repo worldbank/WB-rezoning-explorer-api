@@ -4,10 +4,18 @@ import numpy as np
 from rasterio import features
 
 from rezoning_api.core.config import BUCKET
+from rezoning_api.models.zone import Weights
 from rezoning_api.utils import read_dataset, min_max_scale
 from rezoning_api.db.layers import get_layers
 from rezoning_api.db.country import get_country_min_max
-from rezoning_api.utils import get_distances, get_layer_location
+from rezoning_api.utils import (
+    get_distances,
+    get_layer_location,
+    get_capacity_factor,
+    lcoe_generation,
+    lcoe_interconnection,
+    lcoe_road,
+)
 
 LAYERS = get_layers()
 
@@ -28,23 +36,29 @@ def calc_score(id, aoi, lcoe, weights, filters, tilesize=None):
     """
     # spatial temporal inputs
     ds, dr, calc, mask = get_distances(aoi, filters, tilesize=tilesize)
-    # cf = get_capacity_factor(aoi, lcoe.turbine_type, tilesize=tilesize)
+    cf = get_capacity_factor(aoi, lcoe.capacity_factor, tilesize=tilesize)
 
     # lcoe component calculation
-    # lg = lcoe_generation(lcoe, cf)
-    # li = lcoe_interconnection(lcoe, cf, ds)
-    # lr = lcoe_road(lcoe, cf, dr)
+    lg = lcoe_generation(lcoe, cf)
+    li = lcoe_interconnection(lcoe, cf, ds)
+    lr = lcoe_road(lcoe, cf, dr)
 
     # get regional min/max
     cmm = get_country_min_max(id)
 
+    # normalize weights
+    scale_max = sum([wv for wn, wv in weights])
+    temp_weights = weights.dict()
+    for weight_name, weight_value in temp_weights.items():
+        temp_weights[weight_name] = weight_value / scale_max
+    weights = Weights(**temp_weights)
+
     # zone score
     score_array = np.zeros((tilesize, tilesize))
-    for weight in weights:
-        layer = weight[0].replace("_", "-")
-        print(layer)
-        loc, idx = get_layer_location(layer)
-        if loc:
+    for weight_name, weight_value in weights:
+        layer = weight_name.replace("_", "-")
+        loc, _idx = get_layer_location(layer)
+        if loc and weight_value > 0:
             dataset = loc.replace(f"s3://{BUCKET}/", "").replace(".tif", "")
             data, _ = read_dataset(
                 f"s3://{BUCKET}/{dataset}.tif",
@@ -52,26 +66,43 @@ def calc_score(id, aoi, lcoe, weights, filters, tilesize=None):
                 aoi,
                 tilesize=tilesize,
             )
-            try:
-                if weight[1] > 0:
-                    scaled_array = min_max_scale(
-                        data.sel(layer=layer).values,
-                        cmm[layer]["min"],
-                        cmm[layer]["max"],
-                    )
-                    score_array += weight[1] * scaled_array
-            except KeyError as e:
-                print(e)
-                print("Drew: add this key to the weights model")
-        else:
-            print(f"handle {layer}, non dataset")
 
-    # non-layer zone score additions
-    # TODO: need scaling
-    # score_array += weights.lcoe_gen * lg
-    # score_array += weights.lcoe_transmission * li
-    # score_array += weights.lcoe_road * lr
+            scaled_array = min_max_scale(
+                np.nan_to_num(data.sel(layer=layer).values, nan=0),
+                cmm[layer]["min"],
+                cmm[layer]["max"],
+            )
+            score_array += weight_value * scaled_array
+
+        # non-layer zone score additions
+        score_array += (
+            min_max_scale(
+                lg.values,
+                cmm["lcoe"][lcoe.capacity_factor]["lg"]["min"],
+                cmm["lcoe"][lcoe.capacity_factor]["lg"]["max"],
+            )
+            * weights.lcoe_gen
+        )
+
+        score_array += (
+            min_max_scale(
+                li.values,
+                cmm["lcoe"][lcoe.capacity_factor]["li"]["min"],
+                cmm["lcoe"][lcoe.capacity_factor]["li"]["max"],
+            )
+            * weights.lcoe_transmission
+        )
+
+        score_array += (
+            min_max_scale(
+                lr.values,
+                cmm["lcoe"][lcoe.capacity_factor]["lr"]["min"],
+                cmm["lcoe"][lcoe.capacity_factor]["lr"]["max"],
+            )
+            * weights.lcoe_road
+        )
+
+    print(score_array.max())
 
     # TODO: uncomment things, add back mask
-    # return (min_max_scale(score_array), mask)
-    return min_max_scale(score_array), mask
+    return score_array, mask

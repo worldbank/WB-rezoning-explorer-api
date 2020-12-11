@@ -36,9 +36,9 @@ def score(
     data, mask = calc_score(
         country_id, aoi.dict(), lcoe, weights, filters, tilesize=256
     )
-    print(data.shape, mask.shape)
+
     tile = linear_rescale(data, in_range=[0, 1], out_range=[0, 255]).astype(np.uint8)
-    print(tile.shape)
+
     colormap = cmap.get(colormap)
-    content = render(tile, mask=~mask * 255, colormap=colormap)
+    content = render(tile, mask=mask * 255, colormap=colormap)
     return TileResponse(content=content)

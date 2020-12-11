@@ -249,6 +249,9 @@ def min_max_scale(arr, scale_min=None, scale_max=None):
     if not scale_max:
         scale_max = arr.max()
 
+    # to prevent divide by zero errors
+    scale_max = max(scale_max, 1e5)
+
     return (arr - scale_min) / (scale_max - scale_min)
 
 
