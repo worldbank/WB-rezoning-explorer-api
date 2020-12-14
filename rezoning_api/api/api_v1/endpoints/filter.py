@@ -106,4 +106,7 @@ def get_country_layers(country_id: str):
 @router.get("/filter/schema", name="filter_schema")
 def get_filter_schema():
     """Return filter schema"""
-    return Filters.schema()["properties"]
+    schema = Filters.schema()["properties"]
+    for key in schema.keys():
+        schema[key]["layer"] = filter_to_layer_name(key)
+    return schema
