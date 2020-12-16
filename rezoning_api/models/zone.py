@@ -68,6 +68,7 @@ class RangeFilter(str):
             raise TypeError("string required")
         m = range_filter_regex.fullmatch(v)
         if not m:
+
             raise ValueError("invalid range filter format")
         return cls(v)
 
@@ -97,7 +98,7 @@ class CategorialFilter(str):
         """validate inputs"""
         if not isinstance(v, str):
             raise TypeError("string required")
-        m = range_filter_regex.fullmatch(v)
+        m = categorical_filter_regex.fullmatch(v)
         if not m:
             raise ValueError("invalid categorical filter format")
         return cls(v)
