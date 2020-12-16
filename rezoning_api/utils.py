@@ -216,7 +216,7 @@ def _filter(array, filters):
                 # for wwf-glw-3 (wetlands), we have special handling
                 # https://www.worldwildlife.org/publications/global-lakes-and-wetlands-database-lakes-and-wetlands-grid-level-3
                 if layer_name == "wwf-glw-3":
-                    tmp = single_layer > 4 & single_layer < 10
+                    tmp = np.logical_and(single_layer > 4, single_layer < 10)
                 else:
                     tmp = single_layer == int(filt)
             np_filters.append(tmp)
