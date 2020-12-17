@@ -2,7 +2,9 @@
 import xml.etree.ElementTree as ET
 import boto3
 import rasterio
-from typing import Union, List, Optional
+import hashlib
+import json
+from typing import Union, List, Optional, Any
 from geojson_pydantic.geometries import Polygon, MultiPolygon
 from shapely.geometry import shape
 from rasterio.windows import from_bounds
@@ -27,10 +29,17 @@ MAX_DIST = 1000000  # meters
 s3 = boto3.client("s3")
 
 
-def s3_get(bucket: str, key: str):
+def s3_get(bucket: str, key: str, full_response=False):
     """Get AWS S3 Object."""
     response = s3.get_object(Bucket=bucket, Key=key)
+    if full_response:
+        return response
     return response["Body"].read()
+
+
+def s3_head(bucket: str, key: str):
+    """Head request on S3 Object."""
+    return s3.head_object(Bucket=bucket, Key=key)
 
 
 def read_dataset(
@@ -270,3 +279,8 @@ def get_stat(root, attrib_key):
         for elem in root.iterfind(".//MDI")
         if elem.attrib.get("key") == attrib_key
     ]
+
+
+def get_hash(**kwargs: Any) -> str:
+    """Create hash from kwargs."""
+    return hashlib.sha224(json.dumps(kwargs, sort_keys=True).encode()).hexdigest()
