@@ -11,6 +11,7 @@ inst_reqs = [
     "geojson_pydantic",
     "shapely",
     "xarray",
+    "aiofiles",
 ]
 
 extra_reqs = {
@@ -34,7 +35,7 @@ extra_reqs = {
 
 setup(
     name="rezoning-api",
-    version="0.1.24",
+    version="0.1.25",
     python_requires=">=3",
     description=u"""API for the REZoning project""",
     packages=find_packages(exclude=["tests"]),
