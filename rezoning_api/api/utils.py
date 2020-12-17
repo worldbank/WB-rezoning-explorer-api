@@ -54,7 +54,8 @@ def calc_score(id, aoi, lcoe, weights, filters, tilesize=None):
     weights = Weights(**temp_weights)
 
     # zone score
-    score_array = np.zeros((tilesize, tilesize))
+    shape = (tilesize, tilesize) if tilesize else cf.shape
+    score_array = np.zeros(shape)
     for weight_name, weight_value in weights:
         layer = weight_name.replace("_", "-")
         loc, _idx = get_layer_location(layer)

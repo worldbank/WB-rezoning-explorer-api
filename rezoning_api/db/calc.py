@@ -10,14 +10,12 @@ from shapely.geometry import shape
 from rasterio.windows import from_bounds
 from rasterio.warp import transform_geom
 from rasterio.crs import CRS
-from rio_tiler.colormap import cmap
-from rio_tiler.utils import linear_rescale
 
 from rezoning_api.utils import read_dataset
 from rezoning_api.core.config import BUCKET
 from rezoning_api.db.country import get_country_geojson, world
 from rezoning_api.db.cf import get_capacity_factor_options
-from rezoning_api.models.zone import LCOE, Filters
+from rezoning_api.models.zone import LCOE, Filters, Weights
 from rezoning_api.utils import (
     get_capacity_factor,
     get_distances,
@@ -26,6 +24,7 @@ from rezoning_api.utils import (
     lcoe_road,
 )
 from rezoning_api.db.layers import get_layers
+from rezoning_api.api.utils import calc_score
 
 PLATE_CARREE = CRS.from_epsg(4326)
 
@@ -110,14 +109,14 @@ def refresh_country_extrema(partial=False):
         print(f"elapsed: {time() - t1} seconds")
 
 
-def single_country_lcoe(id, lcoe=LCOE(), filters=Filters(), colormap="viridis"):
+def single_country_lcoe(country_id, lcoe=LCOE(), filters=Filters()):
     """calculate lcoe for single country"""
     t1 = time()
-    aoi = get_country_geojson(id).geometry.dict()
+    aoi = get_country_geojson(country_id).geometry.dict()
 
     # spatial temporal inputs
     ds, dr, _calc, _mask = get_distances(aoi, filters)
-    cf = get_capacity_factor(aoi, lcoe.turbine_type)
+    cf = get_capacity_factor(aoi, lcoe.capacity_factor)
 
     # lcoe component calculation
     lg = lcoe_generation(lcoe, cf)
@@ -134,26 +133,50 @@ def single_country_lcoe(id, lcoe=LCOE(), filters=Filters(), colormap="viridis"):
 
         profile = src.profile
         profile.update(
-            dtype=rasterio.uint8,
+            dtype=rasterio.float32,
             count=1,
-            compress="lzw",
+            compress="deflate",
             transform=src.window_transform(window),
             height=window.height,
             width=window.width,
         )
 
-        data = linear_rescale(
-            lcoe_total.values,
-            in_range=(
-                float(lcoe_total.min(skipna=True)),
-                float(lcoe_total.max(skipna=True)),
-            ),
-            out_range=(1, 255),
-        ).astype(np.uint8)
+        data = lcoe_total.values.astype(np.float32)
 
         # write out
-        with rasterio.open(f"LCOE_{id}.tif", "w", **profile) as dst:
+        with rasterio.open(f"LCOE_{country_id}.tif", "w", **profile) as dst:
             dst.write(data, 1)
-            dst.write_colormap(1, cmap.get(colormap))
+
+    print(f"elapsed: {time() - t1} seconds")
+
+
+def single_country_score(country_id, lcoe=LCOE(), filters=Filters(), weights=Weights()):
+    # TODO: DRY
+    """calculate score for single country"""
+    t1 = time()
+    aoi = get_country_geojson(country_id).geometry.dict()
+
+    data, _mask = calc_score(country_id, aoi, lcoe, weights, filters)
+
+    # match with filter for src profile
+    match_data = f"s3://{BUCKET}/multiband/filter.tif"
+    with rasterio.open(match_data) as src:
+        g2 = transform_geom(PLATE_CARREE, src.crs, aoi)
+        bounds = shape(g2).bounds
+        window = from_bounds(*bounds, transform=src.transform)
+        print(window)
+        profile = src.profile
+        profile.update(
+            dtype=rasterio.float32,
+            count=1,
+            compress="deflate",
+            transform=src.window_transform(window),
+            height=window.height,
+            width=window.width,
+        )
+
+        # write out
+        with rasterio.open(f"score_{country_id}.tif", "w", **profile) as dst:
+            dst.write(data.astype(np.float32), 1)
 
     print(f"elapsed: {time() - t1} seconds")
