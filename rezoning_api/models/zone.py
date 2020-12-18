@@ -127,6 +127,7 @@ def FilterField(
     energy_type: List = ["solar", "wind", "offshore"],
     category=None,
     options=None,
+    priority=False,
 ):
     """filter field defaults"""
     # TODO: evaulate whether we need this now that everything gets passed straight down
@@ -138,6 +139,7 @@ def FilterField(
         energy_type=energy_type,
         category=category,
         options=options,
+        priority=priority,
     )
 
 
@@ -358,6 +360,7 @@ class Filters(BaseModel):
         category=Category.NATURAL,
         energy_type=["solar"],
         description="The solar resource, or electromagnetic radiation, emitted by the sun in a geographic location.",
+        priority=True,
     )
     f_gsa_pvout: Optional[RangeFilter] = FilterField(
         title="Solar PVOut",
@@ -365,6 +368,7 @@ class Filters(BaseModel):
         category=Category.NATURAL,
         energy_type=["solar"],
         description="The solar photovoltaic (PV) generation potential in a geographic location.",
+        priority=True,
     )
     f_srtm90: Optional[RangeFilter] = FilterField(
         title="Elevation",
@@ -390,7 +394,8 @@ class Filters(BaseModel):
         category=Category.NATURAL,
         energy_type=["wind", "offshore"],
         unit="W/m²",
-        description="The wind resource, or wind energy, potential generated through wind turbines ",
+        description="The wind resource, or wind energy, potential generated through wind turbines",
+        priority=True,
     )
     f_air_density: Optional[RangeFilter] = FilterField(
         title="Air Density",
@@ -398,6 +403,7 @@ class Filters(BaseModel):
         energy_type=["offshore", "wind"],
         unit="kg/m³",
         description="The density of air, or atmospheric density, is the mass per unit volume of Earth's atmosphere.",
+        priority=True,
     )
 
 
