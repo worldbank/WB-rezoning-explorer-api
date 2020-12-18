@@ -7,8 +7,16 @@ from rio_tiler.colormap import cmap
 import numpy as np
 
 from rezoning_api.models.tiles import TileResponse
-from rezoning_api.utils import get_layer_location, flat_layers, get_min_max, s3_get
+from rezoning_api.models.zone import Filters
+from rezoning_api.utils import (
+    get_layer_location,
+    flat_layers,
+    get_min_max,
+    s3_get,
+    filter_to_layer_name,
+)
 from rezoning_api.core.config import BUCKET
+from rezoning_api.db.cf import get_capacity_factor_options
 
 router = APIRouter()
 
@@ -104,4 +112,36 @@ def layers(id: str, z: int, x: int, y: int, colormap: str, country_id: str = Non
 @router.get("/layers/", name="layer_list")
 def get_layers():
     """Return layers list"""
-    return [layer for layer in flat_layers()]
+    layers = {layer: {} for layer in flat_layers()}
+
+    # for later matching
+    cfo = get_capacity_factor_options()
+    cfo_flat = cfo["solar"] + cfo["wind"] + cfo["offshore"]
+
+    for lkey, layer in layers.items():
+        # add descriptions, categories, and titles from matching titles
+        matching_filters = [
+            filter
+            for key, filter in Filters.schema()["properties"].items()
+            if filter_to_layer_name(key) == lkey
+        ]
+        if matching_filters:
+            mf = matching_filters[0]
+            layer["description"] = mf.get("description", None)
+            layer["category"] = mf.get("category", None)
+            layer["title"] = mf.get("title", None)
+        elif lkey in cfo_flat:
+            layer["description"] = f"Capacity Factor derived from {lkey} input"
+            layer["category"] = "capacity-factor"
+            layer["title"] = lkey
+        else:
+            layer["description"] = None
+            layer["category"] = "unknown"
+            layer["title"] = lkey
+
+    # for now, remove excess manually
+    layers.pop("wwf-glw-1", None)
+    layers.pop("wwf-glw-2", None)
+    layers.pop("jrc-gsw", None)
+
+    return layers
