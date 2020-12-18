@@ -66,7 +66,8 @@
         fetch(layerList)
           .then(resp => resp.json())
           .then(resp => {
-              resp.forEach((layer, idx) => {
+              console.log(resp)
+              Object.keys(resp).forEach((layer, idx) => {
                   select.options[select.options.length] = new Option(layer, layer);
               })
           })
@@ -89,7 +90,8 @@
             if (map.getLayer('raster')) map.removeLayer('raster')
             if (map.getSource('raster')) map.removeSource('raster')
             
-            let filters = 'f_worldpop=0,19528.3&f_slope=0,50.61&f_airports=2500,344090&f_roads=0,204260'
+            let filters = ''
+            // let filters = 'f_worldpop=0,19528.3&f_slope=0,50.61&f_airports=2500,344090&f_roads=0,204260'
             // console.log(filters)
             let url = `${filterEndpoint}?${filters}&color=45,39,88,178`
             // let url = `${layersEndpoint.replace('{id}', id)}?colormap=viridis`
