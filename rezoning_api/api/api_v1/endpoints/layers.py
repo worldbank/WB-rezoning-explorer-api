@@ -1,10 +1,10 @@
 """Filter endpoints."""
+from rezoning_api.db.country import get_country_geojson, get_country_min_max
 from fastapi import APIRouter
 from rio_tiler.io import COGReader
-from rio_tiler.utils import render, linear_rescale
+from rio_tiler.utils import render, linear_rescale, create_cutline
 from rio_tiler.colormap import cmap
 import numpy as np
-
 
 from rezoning_api.models.tiles import TileResponse
 from rezoning_api.utils import get_layer_location, flat_layers, get_min_max, s3_get
@@ -19,17 +19,47 @@ router = APIRouter()
     response_class=TileResponse,
     name="layers",
 )
-def layers(id: str, z: int, x: int, y: int, colormap: str):
+@router.get(
+    "/layers/{country_id}/{id}/{z}/{x}/{y}.png",
+    responses={
+        200: dict(description="return a tile for a given layer, filtered by country")
+    },
+    response_class=TileResponse,
+    name="layers",
+)
+def layers(id: str, z: int, x: int, y: int, colormap: str, country_id: str = None):
     """Return a tile from a layer."""
     loc, idx = get_layer_location(id)
     key = loc.replace(f"s3://{BUCKET}/", "").replace("tif", "vrt")
+
     with COGReader(loc) as cog:
-        data, mask = cog.tile(x, y, z, tilesize=256, indexes=[idx + 1])
+        vrt_options = None
+        if country_id:
+            aoi = get_country_geojson(country_id)
+            if aoi.geometry.type == "Polygon":
+                feature = aoi.dict()
+            else:
+                coords = aoi.geometry.dict()["coordinates"]
+                coords.sort(reverse=True, key=lambda x: len(x[0]))
+                longest_polygon = dict(type="Polygon", coordinates=coords[0])
+                feature = dict(type="Feature", geometry=longest_polygon, properties={})
+
+            cutline = create_cutline(cog.dataset, feature, geometry_crs="epsg:4326")
+            vrt_options = {"cutline": cutline}
+
+        data, mask = cog.tile(
+            x, y, z, tilesize=256, indexes=[idx + 1], vrt_options=vrt_options
+        )
 
     try:
-        layer_min_arr, layer_max_arr = get_min_max(s3_get(BUCKET, key))
-        layer_min = layer_min_arr[idx]
-        layer_max = layer_max_arr[idx]
+        if country_id:
+            minmax = get_country_min_max(country_id)
+            layer_min = minmax[id]["min"]
+            layer_max = minmax[id]["max"]
+        else:
+            layer_min_arr, layer_max_arr = get_min_max(s3_get(BUCKET, key))
+            layer_min = layer_min_arr[idx]
+            layer_max = layer_max_arr[idx]
     except Exception:
         layer_min = data.min()
         layer_max = data.max()

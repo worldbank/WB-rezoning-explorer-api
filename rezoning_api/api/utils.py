@@ -1,7 +1,5 @@
 """api utility functions"""
-
 import numpy as np
-from rasterio import features
 
 from rezoning_api.core.config import BUCKET
 from rezoning_api.models.zone import Weights
@@ -18,14 +16,6 @@ from rezoning_api.utils import (
 )
 
 LAYERS = get_layers()
-
-
-def _rasterize_geom(geom, shape, affinetrans, all_touched):
-    indata = [(geom, 1)]
-    rv_array = features.rasterize(
-        indata, out_shape=shape, transform=affinetrans, fill=0, all_touched=all_touched
-    )
-    return rv_array
 
 
 def calc_score(id, aoi, lcoe, weights, filters, tilesize=None):
