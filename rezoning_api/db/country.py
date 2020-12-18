@@ -26,6 +26,8 @@ def get_country_geojson(id):
 def get_country_min_max(id):
     """get minmax for country"""
     try:
-        return json.loads(s3_get(BUCKET, f"api/minmax/{id}.json"))
+        minmax = s3_get(BUCKET, f"api/minmax/{id}.json")
+        mm = minmax.replace("Infinity", "1000000")
+        return json.loads(mm)
     except Exception:
         return json.loads(s3_get(BUCKET, "api/minmax/AFG.json"))
