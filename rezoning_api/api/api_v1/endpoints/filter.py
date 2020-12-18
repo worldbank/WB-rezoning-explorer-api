@@ -11,7 +11,7 @@ from typing import Optional
 
 from rezoning_api.core.config import BUCKET
 from rezoning_api.models.tiles import TileResponse
-from rezoning_api.models.zone import Filters
+from rezoning_api.models.zone import Filters, RangeFilter
 from rezoning_api.utils import _filter, LAYERS, filter_to_layer_name
 from rezoning_api.db.country import get_country_min_max, get_country_geojson
 
@@ -54,7 +54,7 @@ def filter(
     # find the tile
     aoi = Polygon(**feature(Tile(x, y, z))["geometry"]).dict()
 
-    # potentiall mask by country
+    # potentially mask by country
     extra_mask_geometry = None
     if country_id:
         # TODO: early return for tiles outside country bounds
@@ -75,8 +75,19 @@ def filter(
         arr = xr.concat(arrays, dim="layer")
         tile, new_mask = _filter(arr, filters)
     else:
-        tile = np.ones((256, 256), dtype=np.uint8)
-        new_mask = np.ones((256, 256), dtype=np.bool)
+        # if we didn't have anything to read, read SRTM so we can mask
+        # TODO: improve this
+        data, _ = read_dataset(
+            f"s3://{BUCKET}/srtm90/srtm_combined.tif",
+            ["srtm90"],
+            aoi=aoi,
+            tilesize=256,
+            extra_mask_geometry=extra_mask_geometry,
+        )
+        arrays.append(data)
+        arr = xr.concat(arrays, dim="layer")
+        filters.f_srtm90 = RangeFilter("0,100000")
+        tile, new_mask = _filter(arr, filters)
 
     # color like 45,39,88,178 (RGBA)
     color_list = list(map(lambda x: int(x), color.split(",")))
