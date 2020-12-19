@@ -134,9 +134,14 @@ def get_layers():
             layer["description"] = f"Capacity Factor derived from {lkey} input"
             layer["category"] = "capacity-factor"
             layer["title"] = lkey
+        elif lkey.startswith("gwa"):
+            _, kind, height = lkey.split("-")
+            layer["description"] = None
+            layer["category"] = "additional-wind"
+            layer["title"] = f"Mean Wind {kind.capitalize()} @ {height}m "
         else:
             layer["description"] = None
-            layer["category"] = "unknown"
+            layer["category"] = "additional"
             layer["title"] = lkey
 
     # for now, remove excess manually
