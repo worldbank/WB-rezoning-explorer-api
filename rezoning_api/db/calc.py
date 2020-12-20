@@ -109,7 +109,7 @@ def refresh_country_extrema(partial=False):
         print(f"elapsed: {time() - t1} seconds")
 
 
-def single_country_lcoe(country_id, lcoe=LCOE(), filters=Filters()):
+def single_country_lcoe(dest_file: str, country_id, lcoe=LCOE(), filters=Filters()):
     """calculate lcoe for single country"""
     t1 = time()
     aoi = get_country_geojson(country_id).geometry.dict()
@@ -144,13 +144,16 @@ def single_country_lcoe(country_id, lcoe=LCOE(), filters=Filters()):
         data = lcoe_total.values.astype(np.float32)
 
         # write out
-        with rasterio.open(f"LCOE_{country_id}.tif", "w", **profile) as dst:
+        with rasterio.open(dest_file, "w", **profile) as dst:
+            print(f"saving to {dest_file}")
             dst.write(data, 1)
 
     print(f"elapsed: {time() - t1} seconds")
 
 
-def single_country_score(country_id, lcoe=LCOE(), filters=Filters(), weights=Weights()):
+def single_country_score(
+    dest_file: str, country_id, lcoe=LCOE(), filters=Filters(), weights=Weights()
+):
     # TODO: DRY
     """calculate score for single country"""
     t1 = time()
@@ -176,7 +179,8 @@ def single_country_score(country_id, lcoe=LCOE(), filters=Filters(), weights=Wei
         )
 
         # write out
-        with rasterio.open(f"score_{country_id}.tif", "w", **profile) as dst:
+        with rasterio.open(dest_file, "w", **profile) as dst:
+            print(f"saving to {dest_file}")
             dst.write(data.astype(np.float32), 1)
 
     print(f"elapsed: {time() - t1} seconds")

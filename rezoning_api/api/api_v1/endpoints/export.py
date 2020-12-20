@@ -1,6 +1,7 @@
 """Filter endpoints."""
 from enum import Enum
 from email.utils import format_datetime
+import boto3
 
 from fastapi import APIRouter, Depends, status, HTTPException
 from fastapi.responses import FileResponse, Response, StreamingResponse
@@ -45,8 +46,36 @@ def export(
         **filters.dict(),
     )
     name = f"{country_id}-{operation}-{hash}"
-    # TODO: connect to fargate task
-    # boto3.start_task(arguments, hash, name)
+    # run fargate task
+    client = boto3.client("ecs")
+    client.run_task(
+        cluster="",
+        launchType="FARGATE",
+        count=1,
+        taskDefinition="",
+        overrides={
+            "containerOverrides": [
+                {
+                    "command": [
+                        "python",
+                        "export.py",
+                        "--file_name",
+                        f"{name}.tif",
+                        "--country_id",
+                        country_id,
+                        "--operation",
+                        operation,
+                        "--weights",
+                        weights.json(),
+                        "--lcoe",
+                        lcoe.json(),
+                        "--filters",
+                        filters.json(),
+                    ]
+                }
+            ]
+        },
+    )
 
     return {"id": name}
 
