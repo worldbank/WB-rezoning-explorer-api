@@ -1,12 +1,12 @@
 """Config."""
-
 import os
-
 
 API_VERSION_STR = "/v1"
 
 PROJECT_NAME = "rezoning_api"
 BUCKET = "gre-processed-data"
+CLUSTER_NAME = "export-cluster"
+TASK_NAME = "export"
 
 SERVER_NAME = os.getenv("SERVER_NAME")
 SERVER_HOST = os.getenv("SERVER_HOST")

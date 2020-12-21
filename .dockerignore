@@ -1,2 +1,6 @@
 cdk.out
 *.tif
+grid_files
+.git
+.ipynb_checkpoints
+.tox

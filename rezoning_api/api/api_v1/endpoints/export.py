@@ -1,14 +1,14 @@
 """Filter endpoints."""
 from enum import Enum
 from email.utils import format_datetime
+import boto3
 
-from fastapi import APIRouter, Depends, status, HTTPException
+from fastapi import APIRouter, status, HTTPException
 from fastapi.responses import FileResponse, Response, StreamingResponse
 
 from rezoning_api.utils import s3_head, s3_get, get_hash
-from rezoning_api.core.config import BUCKET
-from rezoning_api.models.zone import Filters, LCOE, Weights
-
+from rezoning_api.core.config import BUCKET, CLUSTER_NAME, TASK_NAME
+from rezoning_api.models.zone import ExportRequest
 
 router = APIRouter()
 
@@ -26,17 +26,20 @@ class Operation(str, Enum):
     name="export",
 )
 def export(
+    query: ExportRequest,
     operation: Operation,
     country_id: str,
-    weights: Weights = Depends(),
-    lcoe: LCOE = Depends(),
-    filters: Filters = Depends(),
 ):
     """Return id of export operation and start it"""
-    if not lcoe.capacity_factor:
+    if not query.lcoe.capacity_factor:
         raise HTTPException(
             status_code=400, detail="Requires capacity factor to be set"
         )
+
+    weights = query.weights
+    lcoe = query.lcoe
+    filters = query.filters
+
     hash = get_hash(
         operation=operation,
         country_id=country_id,
@@ -45,8 +48,36 @@ def export(
         **filters.dict(),
     )
     name = f"{country_id}-{operation}-{hash}"
-    # TODO: connect to fargate task
-    # boto3.start_task(arguments, hash, name)
+    # run fargate task
+    client = boto3.client("ecs")
+    client.run_task(
+        cluster=CLUSTER_NAME,
+        launchType="FARGATE",
+        count=1,
+        taskDefinition=TASK_NAME,
+        overrides={
+            "containerOverrides": [
+                {
+                    "command": [
+                        "python",
+                        "export.py",
+                        "--file_name",
+                        f"{name}.tif",
+                        "--country_id",
+                        country_id,
+                        "--operation",
+                        operation,
+                        "--weights",
+                        weights.json(),
+                        "--lcoe",
+                        lcoe.json(),
+                        "--filters",
+                        filters.json(),
+                    ]
+                }
+            ]
+        },
+    )
 
     return {"id": name}
 
