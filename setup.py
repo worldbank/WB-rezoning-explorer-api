@@ -29,6 +29,8 @@ extra_reqs = {
         "aws-cdk.aws_ecs_patterns==1.72.0",
         "aws-cdk.aws_iam==1.72.0",
         "aws-cdk.aws_elasticache==1.72.0",
+        "aws-cdk.aws_logs==1.72.0",
+        "aws-cdk.aws_ecr==1.72.0",
     ],
     "test": ["moto", "mock", "pytest", "pytest-cov", "pytest-asyncio", "requests"],
 }

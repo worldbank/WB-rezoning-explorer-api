@@ -12,6 +12,8 @@ from aws_cdk import (
     aws_ecs_patterns as ecs_patterns,
     aws_lambda,
     aws_apigatewayv2 as apigw,
+    aws_logs as logs,
+    aws_ecr as ecr,
     # aws_elasticache as escache,
 )
 import docker
@@ -56,6 +58,70 @@ class rezoningApiLambdaStack(core.Stack):
     ) -> None:
         """Define stack."""
         super().__init__(scope, id, *kwargs)
+
+        # create ECS Cluster + Fargate Task Definition
+        vpc = ec2.Vpc(self, f"{id}-vpc")
+
+        base_ecs_policy = iam.PolicyStatement(
+            actions=[
+                "ecr:GetAuthorizationToken",
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:BatchGetImage",
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+            ],
+            resources=["*"],
+        )
+
+        s3_access_policy = iam.PolicyStatement(
+            actions=["s3:*"],
+            resources=[
+                "arn:aws:s3:::gre-processed-data",
+                "arn:aws:s3:::gre-processed-data/*",
+            ],
+        )
+
+        fargate_role = iam.Role(
+            self,
+            id=f"{id}-fargate-execution-role",
+            assumed_by=iam.ServicePrincipal("ecs.amazonaws.com"),
+        )
+
+        fargate_role.add_to_policy(base_ecs_policy)
+        fargate_role.add_to_policy(s3_access_policy)
+
+        ecs.Cluster(
+            self,
+            f"{id}-ExportProcessingCluster",
+            vpc=vpc,
+            cluster_name=config.CLUSTER_NAME,
+        )
+        fargate_task = ecs.FargateTaskDefinition(
+            self,
+            f"{id}-ExportProcessingTask",
+            cpu=2048,
+            memory_limit_mib=4096,
+            execution_role=fargate_role,
+            family=config.TASK_NAME,
+        )
+
+        log_driver = ecs.AwsLogDriver(
+            stream_prefix=f"remote-workstation/{id}",
+            log_retention=logs.RetentionDays.ONE_WEEK,
+        )
+
+        image = ecs.ContainerImage.from_ecr_repository(
+            ecr.Repository.from_repository_name(
+                self, f"{id}-export-repo", repository_name="export-fargate"
+            )
+        )
+        fargate_task.add_container(
+            f"container-definition-{id}",
+            image=image,
+            logging=log_driver,
+            environment=DEFAULT_ENV,
+        )
 
         # add cache
         # vpc = ec2.Vpc(self, f"{id}-vpc")

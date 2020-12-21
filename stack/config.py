@@ -7,6 +7,8 @@ STAGE = os.environ.get("STAGE", "dev")
 
 # primary bucket
 BUCKET = "gre-processed-data"
+CLUSTER_NAME = "export-cluster"
+TASK_NAME = "export"
 
 # Additional environement variable to set in the task/lambda
 ENV: dict = dict()
