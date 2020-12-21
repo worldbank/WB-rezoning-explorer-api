@@ -80,8 +80,8 @@
             container: 'map',
             style: { version: 8, sources: {}, layers: [] },
             center: [
-            65.390625,
-              33.137551192346145
+            -88.6541748046875,
+          17.23525150539053
             ],
             zoom: 5
         })
@@ -90,11 +90,11 @@
             if (map.getLayer('raster')) map.removeLayer('raster')
             if (map.getSource('raster')) map.removeSource('raster')
             
-            let filters = ''
-            // let filters = 'f_worldpop=0,19528.3&f_slope=0,50.61&f_airports=2500,344090&f_roads=0,204260'
+            // let filters = ''
+            // let filters = 'f_unep_tidal=false'
             // console.log(filters)
-            let url = `${filterEndpoint}?${filters}&color=45,39,88,178`
-            // let url = `${layersEndpoint.replace('{id}', id)}?colormap=viridis`
+            // let url = `${filterEndpoint}?offshore=true&${filters}&color=45,39,88,178`
+            let url = `${layersEndpoint.replace('{id}', id)}?colormap=viridis`
             // let url = `${lcoeEndpoint}?${filters}&capacity_factor=gwa-iec1&colormap=viridis`
             // let url = `${scoreEndpoint}?${filters}&capacity_factor=gwa-iec1&colormap=viridis`
             map.addSource(

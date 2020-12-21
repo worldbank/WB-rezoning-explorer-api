@@ -43,6 +43,7 @@ def filter(
     color: str,
     country_id: Optional[str] = None,
     filters: Filters = Depends(),
+    offshore: bool = False,
 ):
     """Return filtered tile."""
     # find the required datasets to open
@@ -58,7 +59,7 @@ def filter(
     extra_mask_geometry = None
     if country_id:
         # TODO: early return for tiles outside country bounds
-        feat = get_country_geojson(country_id)
+        feat = get_country_geojson(country_id, offshore)
         extra_mask_geometry = feat.geometry.dict()
 
     arrays = []
@@ -75,18 +76,18 @@ def filter(
         arr = xr.concat(arrays, dim="layer")
         tile, new_mask = _filter(arr, filters)
     else:
-        # if we didn't have anything to read, read SRTM so we can mask
+        # if we didn't have anything to read, read air-density so we can mask
         # TODO: improve this
         data, _ = read_dataset(
-            f"s3://{BUCKET}/srtm90/srtm_combined.tif",
-            ["srtm90"],
+            f"s3://{BUCKET}/raster/gwa-density-100/gwa-density-100.tif",
+            ["air-density"],
             aoi=aoi,
             tilesize=256,
             extra_mask_geometry=extra_mask_geometry,
         )
         arrays.append(data)
         arr = xr.concat(arrays, dim="layer")
-        filters.f_srtm90 = RangeFilter("0,100000")
+        filters.f_air_density = RangeFilter("0,100000")
         tile, new_mask = _filter(arr, filters)
 
     # color like 45,39,88,178 (RGBA)

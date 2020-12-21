@@ -9,13 +9,19 @@ from rezoning_api.core.config import BUCKET
 with open(op.join(op.dirname(__file__), "countries.geojson"), "r") as f:
     world = json.load(f)
 
+with open(op.join(op.dirname(__file__), "eez.geojson"), "r") as f:
+    eez = json.load(f)
 
-def get_country_geojson(id):
-    """get geojson for a single country"""
+
+def get_country_geojson(id, offshore=False):
+    """get geojson for a single country or eez"""
+    vector_data = eez if offshore else world
+    key = "ISO_SOV1" if offshore else "GID_0"
+
     filtered = [
         feature
-        for feature in world["features"]
-        if feature["properties"]["GID_0"].lower() == id.lower()
+        for feature in vector_data["features"]
+        if feature["properties"][key].lower() == id.lower()
     ]
     try:
         return Feature(**filtered[0])
@@ -25,6 +31,7 @@ def get_country_geojson(id):
 
 def get_country_min_max(id):
     """get minmax for country"""
+    # TODO: calculate and use offshore minmax when requested
     try:
         minmax = s3_get(BUCKET, f"api/minmax/{id}.json")
         mm = minmax.replace("Infinity", "1000000")
