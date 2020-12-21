@@ -46,7 +46,9 @@ def filter(
 ):
     """Return filtered tile."""
     # find the required datasets to open
-    sent_filters = [filter_to_layer_name(k) for k, v in filters.dict().items() if v]
+    sent_filters = [
+        filter_to_layer_name(k) for k, v in filters.dict().items() if v is not None
+    ]
     datasets = [
         k for k, v in LAYERS.items() if any([layer in sent_filters for layer in v])
     ]
@@ -63,7 +65,7 @@ def filter(
 
     arrays = []
     for dataset in datasets:
-        data, _ = read_dataset(
+        data, mask = read_dataset(
             f"s3://{BUCKET}/{dataset}.tif",
             LAYERS[dataset],
             aoi=aoi,
@@ -77,7 +79,7 @@ def filter(
     else:
         # if we didn't have anything to read, read SRTM so we can mask
         # TODO: improve this
-        data, _ = read_dataset(
+        data, mask = read_dataset(
             f"s3://{BUCKET}/srtm90/srtm_combined.tif",
             ["srtm90"],
             aoi=aoi,
@@ -89,6 +91,8 @@ def filter(
         filters.f_srtm90 = RangeFilter("0,100000")
         tile, new_mask = _filter(arr, filters)
 
+    print(tile.shape)
+
     # color like 45,39,88,178 (RGBA)
     color_list = list(map(lambda x: int(x), color.split(",")))
 
@@ -97,7 +101,7 @@ def filter(
             tile * color_list[0],
             tile * color_list[1],
             tile * color_list[2],
-            (new_mask * color_list[3]).astype(np.uint8),
+            (~mask * new_mask * color_list[3]).astype(np.uint8),  # type: ignore
         ]
     )
 
