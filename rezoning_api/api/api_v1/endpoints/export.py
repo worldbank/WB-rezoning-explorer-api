@@ -48,16 +48,27 @@ def export(
         **filters.dict(),
     )
     name = f"{country_id}-{operation}-{hash}"
+    print(TASK_NAME, CLUSTER_NAME)
     # run fargate task
     client = boto3.client("ecs")
+    # TODO: unhardcode container name
     client.run_task(
         cluster=CLUSTER_NAME,
         launchType="FARGATE",
         count=1,
         taskDefinition=TASK_NAME,
+        networkConfiguration={
+            "awsvpcConfiguration": {
+                "subnets": [
+                    "subnet-06c1403cc7d78526d",
+                ],
+                "assignPublicIp": "DISABLED",
+            }
+        },
         overrides={
             "containerOverrides": [
                 {
+                    "name": "container-definition-rezoning-api-lambda-dev",
                     "command": [
                         "python",
                         "export.py",
@@ -73,7 +84,7 @@ def export(
                         lcoe.json(),
                         "--filters",
                         filters.json(),
-                    ]
+                    ],
                 }
             ]
         },

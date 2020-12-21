@@ -85,7 +85,7 @@ class rezoningApiLambdaStack(core.Stack):
         fargate_role = iam.Role(
             self,
             id=f"{id}-fargate-execution-role",
-            assumed_by=iam.ServicePrincipal("ecs.amazonaws.com"),
+            assumed_by=iam.ServicePrincipal("ecs-tasks.amazonaws.com"),
         )
 
         fargate_role.add_to_policy(base_ecs_policy)
