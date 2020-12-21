@@ -411,8 +411,16 @@ class ZoneRequest(BaseModel):
     """Zone POST request"""
 
     aoi: Union[Polygon, MultiPolygon]
-    lcoe: LCOE = LCOE()
+    lcoe: LCOE
     weights: Weights = Weights()
+
+
+class ExportRequest(BaseModel):
+    """Export POST request"""
+
+    lcoe: LCOE
+    weights: Weights = Weights()
+    filters: Filters = Filters()
 
 
 class ZoneResponse(BaseModel):
