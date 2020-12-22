@@ -5,13 +5,16 @@ from setuptools import find_packages, setup
 # Runtime requirements.
 inst_reqs = [
     "fastapi",
-    "rio-tiler==2.0b19",
     "pydantic",
     "jinja2",
     "geojson_pydantic",
     "shapely",
     "xarray",
     "aiofiles",
+]
+
+dependency_links = [
+    "https://github.com/cogeotiff/rio-tiler/tarball/master#egg=209db52bc6fee1fa74611f7c92bf3f5ad161813d"
 ]
 
 extra_reqs = {
@@ -40,6 +43,7 @@ setup(
     version="0.1.30",
     python_requires=">=3",
     description=u"""API for the REZoning project""",
+    dependency_links=dependency_links,
     packages=find_packages(exclude=["tests"]),
     package_data={
         "rezoning_api": [

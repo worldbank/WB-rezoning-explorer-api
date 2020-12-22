@@ -52,15 +52,7 @@ def layers(
         vrt_options = None
         if country_id:
             aoi = get_country_geojson(country_id, offshore)
-            if aoi.geometry.type == "Polygon":
-                feature = aoi.dict()
-            else:
-                coords = aoi.geometry.dict()["coordinates"]
-                coords.sort(reverse=True, key=lambda x: len(x[0]))
-                longest_polygon = dict(type="Polygon", coordinates=coords[0])
-                feature = dict(type="Feature", geometry=longest_polygon, properties={})
-
-            cutline = create_cutline(cog.dataset, feature, geometry_crs="epsg:4326")
+            cutline = create_cutline(cog.dataset, aoi.dict(), geometry_crs="epsg:4326")
             vrt_options = {"cutline": cutline}
 
         data, mask = cog.tile(
