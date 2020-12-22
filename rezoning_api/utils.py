@@ -197,6 +197,11 @@ def _filter(array, filters):
     filter xarray based on per-band ranges, supplied as path parameter
     filters look like ?f_roads=0,10000&f_grid=0,10000...
     """
+    # TODO: make this more readable
+    # the condition is "no filter has a value which isn't none"
+    if not any([True for filter in filters.dict().values() if filter is not None]):
+        return (array, array.astype(np.bool))
+
     np_filters = []
     for f_layer, filt in filters.dict().items():
         if filt is not None:

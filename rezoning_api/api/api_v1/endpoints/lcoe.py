@@ -63,7 +63,7 @@ def lcoe(
     ).astype(np.uint8)
 
     colormap = cmap.get(colormap)
-    content = render(tile, mask=mask * 255, colormap=colormap)
+    content = render(tile, mask=mask[0] * 255, colormap=colormap)
     return TileResponse(content=content)
 
 
