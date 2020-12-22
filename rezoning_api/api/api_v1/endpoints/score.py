@@ -40,5 +40,5 @@ def score(
     tile = linear_rescale(data, in_range=[0, 1], out_range=[0, 255]).astype(np.uint8)
 
     colormap = cmap.get(colormap)
-    content = render(tile, mask=mask[0] * 255, colormap=colormap)
+    content = render(tile, mask=mask.squeeze() * 255, colormap=colormap)
     return TileResponse(content=content)

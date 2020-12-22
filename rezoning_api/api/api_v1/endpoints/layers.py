@@ -164,6 +164,11 @@ def get_layers():
             layer["category"] = "additional"
             layer["title"] = lkey
 
+    # add some non-raster layers
+    layers["grid"]["tiles"] = [
+        "http://107.22.154.146/services/grid/tiles/{z}/{x}/{y}.pbf"
+    ]
+
     # for now, remove excess manually
     layers.pop("wwf-glw-1", None)
     layers.pop("wwf-glw-2", None)

@@ -158,7 +158,9 @@ def get_capacity_factor(
 def get_distances(aoi: Union[Polygon, MultiPolygon], filters, tilesize=None):
     """Get filtered masks and distance arrays"""
     # find the required datasets to open
-    sent_filters = [filter_to_layer_name(k) for k, v in filters.dict().items() if v]
+    sent_filters = [
+        filter_to_layer_name(k) for k, v in filters.dict().items() if v is not None
+    ]
     # we require grid and roads for calculations
     sent_filters += ["grid", "roads"]
 
@@ -207,7 +209,6 @@ def _filter(array, filters):
         if filt is not None:
             filter_type = filters.schema()["properties"][f_layer].get("pattern")
             layer_name = filter_to_layer_name(f_layer)
-            print(layer_name, filter_type)
             single_layer = array.sel(layer=layer_name).values.squeeze()
             if filter_type == "range_filter":
                 tmp = np.logical_and(
@@ -225,8 +226,12 @@ def _filter(array, filters):
                 # https://www.worldwildlife.org/publications/global-lakes-and-wetlands-database-lakes-and-wetlands-grid-level-3
                 if layer_name == "wwf-glw-3":
                     tmp = ~np.logical_and(single_layer > 4, single_layer < 10)
+                elif layer_name == "waterbodies":
+                    # booleans are only sent when false, match non values
+                    tmp = single_layer != 2
                 else:
-                    tmp = single_layer == int(filt)
+                    # booleans are only sent when false, match non values
+                    tmp = single_layer > 0
             np_filters.append(tmp)
 
     all_true = np.prod(np.stack(np_filters), axis=0).astype(np.uint8)

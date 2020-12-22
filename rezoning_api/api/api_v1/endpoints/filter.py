@@ -62,7 +62,6 @@ def filter(
         # TODO: early return for tiles outside country bounds
         feat = get_country_geojson(country_id)
         extra_mask_geometry = feat.geometry.dict()
-
     arrays = []
     for dataset in datasets:
         data, mask = read_dataset(
@@ -91,17 +90,14 @@ def filter(
         filters.f_srtm90 = RangeFilter("0,100000")
         tile, new_mask = _filter(arr, filters)
 
-    print(tile.shape)
-
     # color like 45,39,88,178 (RGBA)
     color_list = list(map(lambda x: int(x), color.split(",")))
-
     color_tile = np.stack(
         [
             tile * color_list[0],
             tile * color_list[1],
             tile * color_list[2],
-            (~mask[0] * new_mask * color_list[3]).astype(np.uint8),  # type: ignore
+            (~mask.squeeze() * new_mask * color_list[3]).astype(np.uint8),  # type: ignore
         ]
     )
 

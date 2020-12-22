@@ -91,12 +91,12 @@
             if (map.getSource('raster')) map.removeSource('raster')
             
             // let filters = ''
-            let filters = 'f_wwf_glw_3=false'
+            let filters = 'f_wwf_glw_3=false&f_roads=0,5000&f_'
             // console.log(filters)
-            let url = `${filterEndpoint}?${filters}&color=45,39,88,178`
+            // let url = `${filterEndpoint}?${filters}&color=45,39,88,178`
             // let url = `${layersEndpoint.replace('{id}', id)}?colormap=viridis`
             // let url = `${lcoeEndpoint}?${filters}&capacity_factor=gwa-iec1&colormap=viridis`
-            // let url = `${scoreEndpoint}?${filters}&capacity_factor=gwa-iec1&colormap=viridis`
+            let url = `${scoreEndpoint}?${filters}&capacity_factor=gwa-iec1&colormap=viridis`
             map.addSource(
               'raster', { type: 'raster', tiles: [url], tileSize: 256 }
             )

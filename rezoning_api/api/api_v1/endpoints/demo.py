@@ -23,7 +23,7 @@ def demo(request: Request):
                 "score", **dict(country_id="AFG", z="{z}", x="{x}", y="{y}")
             ),
             "layers_endpoint": request.url_for(
-                "layers", **dict(country_id="CHN", id="{id}", z="{z}", x="{x}", y="{y}")
+                "layers", **dict(country_id="BOL", id="{id}", z="{z}", x="{x}", y="{y}")
             ),
             "layer_list": request.url_for("layer_list"),
             "filter_schema": request.url_for("filter_schema"),
