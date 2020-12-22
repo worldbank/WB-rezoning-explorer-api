@@ -11,6 +11,7 @@ inst_reqs = [
     "shapely",
     "xarray",
     "aiofiles",
+    "rio-tiler==2.0.0rc4",
 ]
 
 dependency_links = [
