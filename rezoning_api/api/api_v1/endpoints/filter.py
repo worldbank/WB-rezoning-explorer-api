@@ -101,7 +101,7 @@ def filter(
             tile * color_list[0],
             tile * color_list[1],
             tile * color_list[2],
-            (~mask * new_mask * color_list[3]).astype(np.uint8),  # type: ignore
+            (~mask[0] * new_mask * color_list[3]).astype(np.uint8),  # type: ignore
         ]
     )
 
