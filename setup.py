@@ -37,7 +37,7 @@ extra_reqs = {
 
 setup(
     name="rezoning-api",
-    version="0.1.30",
+    version="0.1.32",
     python_requires=">=3",
     description=u"""API for the REZoning project""",
     packages=find_packages(exclude=["tests"]),
@@ -45,6 +45,7 @@ setup(
         "rezoning_api": [
             "templates/*.html",
             "db/countries.geojson",
+            "db/eez.geojson",
             "db/layers.json",
             "db/cf.json",
         ]
