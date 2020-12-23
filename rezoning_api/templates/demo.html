@@ -80,8 +80,8 @@
             container: 'map',
             style: { version: 8, sources: {}, layers: [] },
             center: [
-            7.734374999999999,
-          8.581021215641854
+            -65.21484375,
+              -16.13026201203474
             ],
             zoom: 5
         })
@@ -91,7 +91,7 @@
             if (map.getSource('raster')) map.removeSource('raster')
             
             // let filters = ''
-            // let filters = 'f_unep_tidal=false'
+            let filters = 'f_gwa_power_100=0,962500'
             // console.log(filters)
             // let url = `${filterEndpoint}?offshore=true&${filters}&color=45,39,88,178`
             let url = `${layersEndpoint.replace('{id}', id)}?colormap=viridis`

@@ -131,18 +131,43 @@ def get_layers():
             layer["category"] = mf.get("category", None)
             layer["title"] = mf.get("title", None)
         elif lkey in cfo_flat:
-            layer["description"] = f"Capacity Factor derived from {lkey} input"
+            cf_params = lkey.split("-")
+            if len(cf_params) == 2:
+                title = f"IEC Class {'I' * int(cf_params[1][3])}"
+            else:
+                main = f"{' '.join([s.capitalize() if len(s) > 4 else s.upper() for s in cf_params[1:-1]])}"
+                height = cf_params[-1]
+                title = f"{main} @ {height}m"
+                title = title.replace("Mode0", "Mode 0")
+            layer["description"] = f"Capacity Factor derived from {title} input"
             layer["category"] = "capacity-factor"
-            layer["title"] = lkey
+            layer["title"] = title
         elif lkey.startswith("gwa"):
             _, kind, height = lkey.split("-")
             layer["description"] = None
             layer["category"] = "additional-wind"
             layer["title"] = f"Mean Wind {kind.capitalize()} @ {height}m "
+        elif lkey == "gsa-gti":
+            layer["description"] = None
+            layer["category"] = "additional-solar"
+            layer["title"] = "Global Titled Irradiation"
+        elif lkey == "gsa-ghi":
+            layer["description"] = None
+            layer["category"] = "additional-solar"
+            layer["title"] = "Global Horizontal Irradiation"
+        elif lkey == "gsa-temp":
+            layer["description"] = None
+            layer["category"] = "additional-solar"
+            layer["title"] = "Air Temperature"
         else:
             layer["description"] = None
             layer["category"] = "additional"
             layer["title"] = lkey
+
+    # add some non-raster layers
+    layers["grid"]["tiles"] = [
+        "http://107.22.154.146/services/grid/tiles/{z}/{x}/{y}.pbf"
+    ]
 
     # for now, remove excess manually
     layers.pop("wwf-glw-1", None)

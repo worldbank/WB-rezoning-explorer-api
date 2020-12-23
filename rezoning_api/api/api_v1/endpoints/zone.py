@@ -1,6 +1,7 @@
 """LCOE endpoints."""
 
 from fastapi import APIRouter, Depends
+import numpy as np
 
 from rezoning_api.models.zone import ZoneRequest, ZoneResponse, Filters, Weights
 from rezoning_api.utils import (
@@ -44,9 +45,11 @@ def zone(query: ZoneRequest, filters: Filters = Depends()):
         # + query.weights.capacity_value * cf.sum()
     )
 
+    zs = 0 if np.isinf(zone_score) else zone_score
+
     return dict(
         lcoe=lcoe.sum() / 1000,
-        zone_score=zone_score,
+        zone_score=zs,
         zone_output=cf.sum(),
         zone_output_density=cf.sum() / (500 ** 2),
     )

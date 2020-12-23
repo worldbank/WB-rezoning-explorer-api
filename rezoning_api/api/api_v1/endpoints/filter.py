@@ -47,7 +47,9 @@ def filter(
 ):
     """Return filtered tile."""
     # find the required datasets to open
-    sent_filters = [filter_to_layer_name(k) for k, v in filters.dict().items() if v]
+    sent_filters = [
+        filter_to_layer_name(k) for k, v in filters.dict().items() if v is not None
+    ]
     datasets = [
         k for k, v in LAYERS.items() if any([layer in sent_filters for layer in v])
     ]
@@ -61,10 +63,9 @@ def filter(
         # TODO: early return for tiles outside country bounds
         feat = get_country_geojson(country_id, offshore)
         extra_mask_geometry = feat.geometry.dict()
-
     arrays = []
     for dataset in datasets:
-        data, _ = read_dataset(
+        data, mask = read_dataset(
             f"s3://{BUCKET}/{dataset}.tif",
             LAYERS[dataset],
             aoi=aoi,
@@ -78,7 +79,7 @@ def filter(
     else:
         # if we didn't have anything to read, read air-density so we can mask
         # TODO: improve this
-        data, _ = read_dataset(
+        data, mask = read_dataset(
             f"s3://{BUCKET}/raster/gwa-density-100/gwa-density-100.tif",
             ["air-density"],
             aoi=aoi,
@@ -92,13 +93,12 @@ def filter(
 
     # color like 45,39,88,178 (RGBA)
     color_list = list(map(lambda x: int(x), color.split(",")))
-
     color_tile = np.stack(
         [
             tile * color_list[0],
             tile * color_list[1],
             tile * color_list[2],
-            (new_mask * color_list[3]).astype(np.uint8),
+            (~mask.squeeze() * new_mask * color_list[3]).astype(np.uint8),  # type: ignore
         ]
     )
 

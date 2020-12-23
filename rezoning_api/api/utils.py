@@ -93,7 +93,5 @@ def calc_score(id, aoi, lcoe, weights, filters, tilesize=None):
             * weights.lcoe_road
         )
 
-    print(score_array.max())
-
     # TODO: uncomment things, add back mask
     return score_array, mask

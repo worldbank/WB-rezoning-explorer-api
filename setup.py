@@ -31,13 +31,14 @@ extra_reqs = {
         "aws-cdk.aws_elasticache==1.72.0",
         "aws-cdk.aws_logs==1.72.0",
         "aws-cdk.aws_ecr==1.72.0",
+        "aws-cdk.aws_s3==1.72.00",
     ],
     "test": ["moto", "mock", "pytest", "pytest-cov", "pytest-asyncio", "requests"],
 }
 
 setup(
     name="rezoning-api",
-    version="0.1.30",
+    version="0.1.38",
     python_requires=">=3",
     description=u"""API for the REZoning project""",
     packages=find_packages(exclude=["tests"]),
@@ -45,6 +46,7 @@ setup(
         "rezoning_api": [
             "templates/*.html",
             "db/countries.geojson",
+            "db/eez.geojson",
             "db/layers.json",
             "db/cf.json",
         ]

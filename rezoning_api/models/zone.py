@@ -331,13 +331,11 @@ class Filters(BaseModel):
         description="Areas where water covers the soil, or is near the surface of the soil for all or part of the year, and supports both aquatic and terrestrial species.",
     )
     f_pp_marine_protected: Optional[bool] = FilterField(
-        False,
         title="Marine Protected Zone",
         category=Category.ENVIRONMENT,
         description="Areas in need of protection in open-ocean waters and deep-sea habitats as designated by the Conference of the Parties to the Convention on Biological Diversity (COP 9).",
     )
     f_unep_tidal: Optional[bool] = FilterField(
-        False,
         title="Tidal Zone",
         category=Category.ENVIRONMENT,
         description="Areas where the ocean meets the land between high and low tides.",
