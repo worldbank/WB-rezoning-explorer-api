@@ -20,9 +20,6 @@ from aws_cdk import (
 import docker
 import config
 
-iam_policy_statement = iam.PolicyStatement(
-    actions=["s3:*"], resources=[f"arn:aws:s3:::{config.BUCKET}*"]
-)
 
 DEFAULT_ENV = dict(
     CPL_TMPDIR="/tmp",
@@ -138,6 +135,11 @@ class rezoningApiLambdaStack(core.Stack):
             environment=DEFAULT_ENV,
         )
 
+        run_task_policy = iam.PolicyStatement(
+            actions=["ecs:RunTask", "iam:PassRole", "iam:GetRole"],
+            resources=["*"],
+        )
+
         # add cache
         # vpc = ec2.Vpc(self, f"{id}-vpc")
         # sb_group = escache.CfnSubnetGroup(
@@ -194,7 +196,8 @@ class rezoningApiLambdaStack(core.Stack):
             environment=lambda_env,
             # vpc=vpc,
         )
-        lambda_function.add_to_role_policy(iam_policy_statement)
+        lambda_function.add_to_role_policy(s3_access_policy)
+        lambda_function.add_to_role_policy(run_task_policy)
         # lambda_function.add_to_role_policy(vpc_access_policy_statement)
 
         # defines an API Gateway Http API resource backed by our "dynamoLambda" function.
