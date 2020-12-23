@@ -314,7 +314,10 @@ class Filters(BaseModel):
         description="Areas containing underwater ecosystems characterized by reef-building corals.",
     )
     f_unesco: Optional[RangeFilter] = FilterField(
-        title="Distance to World Heritage Sites", unit="meters", category=Category.CULTURAL, description="A landmark or area with legal protection by an international convention for having cultural, historical, scientific or other form of significance."
+        title="Distance to World Heritage Sites",
+        unit="meters",
+        category=Category.CULTURAL,
+        description="A landmark or area with legal protection by an international convention for having cultural, historical, scientific or other form of significance.",
     )
     f_unesco_ramsar: Optional[RangeFilter] = FilterField(
         title="Distance to Ramsar Wetlands",
