@@ -85,6 +85,9 @@ def read_dataset(
                 mask,
             )
 
+        # reduce mask to a single dimension
+        mask = np.prod(mask, axis=0) > 0
+
         # return as xarray + mask
         return (
             xr.DataArray(
