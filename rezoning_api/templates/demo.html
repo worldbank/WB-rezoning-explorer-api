@@ -93,8 +93,8 @@
             // let filters = ''
             let filters = 'f_gwa_power_100=0,962500'
             // console.log(filters)
-            let url = `${filterEndpoint}?${filters}&color=45,39,88,178`
-            // let url = `${layersEndpoint.replace('{id}', id)}?colormap=viridis`
+            // let url = `${filterEndpoint}?offshore=true&${filters}&color=45,39,88,178`
+            let url = `${layersEndpoint.replace('{id}', id)}?colormap=viridis`
             // let url = `${lcoeEndpoint}?${filters}&capacity_factor=gwa-iec1&colormap=viridis`
             // let url = `${scoreEndpoint}?${filters}&capacity_factor=gwa-iec1&colormap=viridis`
             map.addSource(

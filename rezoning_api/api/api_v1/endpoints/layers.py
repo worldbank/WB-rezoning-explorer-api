@@ -35,7 +35,15 @@ router = APIRouter()
     response_class=TileResponse,
     name="layers",
 )
-def layers(id: str, z: int, x: int, y: int, colormap: str, country_id: str = None):
+def layers(
+    id: str,
+    z: int,
+    x: int,
+    y: int,
+    colormap: str,
+    country_id: str = None,
+    offshore: bool = False,
+):
     """Return a tile from a layer."""
     loc, idx = get_layer_location(id)
     key = loc.replace(f"s3://{BUCKET}/", "").replace("tif", "vrt")
@@ -43,16 +51,8 @@ def layers(id: str, z: int, x: int, y: int, colormap: str, country_id: str = Non
     with COGReader(loc) as cog:
         vrt_options = None
         if country_id:
-            aoi = get_country_geojson(country_id)
-            if aoi.geometry.type == "Polygon":
-                feature = aoi.dict()
-            else:
-                coords = aoi.geometry.dict()["coordinates"]
-                coords.sort(reverse=True, key=lambda x: len(x[0]))
-                longest_polygon = dict(type="Polygon", coordinates=coords[0])
-                feature = dict(type="Feature", geometry=longest_polygon, properties={})
-
-            cutline = create_cutline(cog.dataset, feature, geometry_crs="epsg:4326")
+            aoi = get_country_geojson(country_id, offshore)
+            cutline = create_cutline(cog.dataset, aoi.dict(), geometry_crs="epsg:4326")
             vrt_options = {"cutline": cutline}
 
         data, mask = cog.tile(
