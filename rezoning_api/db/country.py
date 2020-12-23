@@ -39,7 +39,7 @@ def get_country_min_max(id):
     # TODO: calculate and use offshore minmax when requested
     try:
         minmax = s3_get(BUCKET, f"api/minmax/{id}.json")
-        mm = minmax.replace("Infinity", "1000000")
+        mm = minmax.decode("utf-8").replace("Infinity", "1000000")
         return json.loads(mm)
     except Exception:
         return json.loads(s3_get(BUCKET, "api/minmax/AFG.json"))
