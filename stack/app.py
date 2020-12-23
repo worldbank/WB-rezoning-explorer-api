@@ -6,6 +6,7 @@ import os
 
 from aws_cdk import (
     core,
+    aws_s3 as s3,
     aws_iam as iam,
     aws_ec2 as ec2,
     aws_ecs as ecs,
@@ -74,22 +75,35 @@ class rezoningApiLambdaStack(core.Stack):
             resources=["*"],
         )
 
+        bucket = s3.Bucket(
+            self, id=f"{id}-export-bucket", bucket_name=config.EXPORT_BUCKET
+        )
+
         s3_access_policy = iam.PolicyStatement(
             actions=["s3:*"],
             resources=[
-                "arn:aws:s3:::gre-processed-data",
-                "arn:aws:s3:::gre-processed-data/*",
+                bucket.bucket_arn,
+                f"{bucket.bucket_arn}/*",
+                f"arn:aws:s3:::{config.BUCKET}",
+                f"arn:aws:s3:::{config.BUCKET}/*",
             ],
         )
 
         fargate_role = iam.Role(
             self,
             id=f"{id}-fargate-execution-role",
-            assumed_by=iam.ServicePrincipal("ecs.amazonaws.com"),
+            assumed_by=iam.ServicePrincipal("ecs-tasks.amazonaws.com"),
+        )
+
+        container_role = iam.Role(
+            self,
+            id=f"{id}-fargate-container-role",
+            assumed_by=iam.ServicePrincipal("ecs-tasks.amazonaws.com"),
         )
 
         fargate_role.add_to_policy(base_ecs_policy)
         fargate_role.add_to_policy(s3_access_policy)
+        container_role.add_to_policy(s3_access_policy)
 
         ecs.Cluster(
             self,
@@ -104,10 +118,11 @@ class rezoningApiLambdaStack(core.Stack):
             memory_limit_mib=4096,
             execution_role=fargate_role,
             family=config.TASK_NAME,
+            task_role=container_role,
         )
 
         log_driver = ecs.AwsLogDriver(
-            stream_prefix=f"remote-workstation/{id}",
+            stream_prefix=f"export-processing-{id}",
             log_retention=logs.RetentionDays.ONE_WEEK,
         )
 

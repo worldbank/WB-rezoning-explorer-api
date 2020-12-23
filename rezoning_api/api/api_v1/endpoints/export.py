@@ -7,7 +7,7 @@ from fastapi import APIRouter, status, HTTPException
 from fastapi.responses import FileResponse, Response, StreamingResponse
 
 from rezoning_api.utils import s3_head, s3_get, get_hash
-from rezoning_api.core.config import BUCKET, CLUSTER_NAME, TASK_NAME
+from rezoning_api.core.config import EXPORT_BUCKET, CLUSTER_NAME, TASK_NAME
 from rezoning_api.models.zone import ExportRequest
 
 router = APIRouter()
@@ -48,16 +48,27 @@ def export(
         **filters.dict(),
     )
     name = f"{country_id}-{operation}-{hash}"
+
     # run fargate task
     client = boto3.client("ecs")
+    # TODO: unhardcode container name
     client.run_task(
         cluster=CLUSTER_NAME,
         launchType="FARGATE",
         count=1,
         taskDefinition=TASK_NAME,
+        networkConfiguration={
+            "awsvpcConfiguration": {
+                "subnets": [
+                    "subnet-06c1403cc7d78526d",
+                ],
+                "assignPublicIp": "ENABLED",
+            }
+        },
         overrides={
             "containerOverrides": [
                 {
+                    "name": "container-definition-rezoning-api-lambda-dev",
                     "command": [
                         "python",
                         "export.py",
@@ -73,7 +84,7 @@ def export(
                         lcoe.json(),
                         "--filters",
                         filters.json(),
-                    ]
+                    ],
                 }
             ]
         },
@@ -86,7 +97,7 @@ def export(
 def get_export_status(id: str, response: Response):
     """Return export status"""
     try:
-        s3_head(bucket=BUCKET, key=f"export/{id}.tif")
+        s3_head(bucket=EXPORT_BUCKET, key=f"export/{id}.tif")
         return dict(status="complete")
     except Exception as e:
         print(e)
@@ -97,7 +108,7 @@ def get_export_status(id: str, response: Response):
 @router.get("/export/{id}", response_class=FileResponse)
 def get_export(id: str):
     """download exported file"""
-    response = s3_get(bucket=BUCKET, key=f"export/{id}.tif", full_response=True)
+    response = s3_get(bucket=EXPORT_BUCKET, key=f"export/{id}.tif", full_response=True)
 
     headers = {
         "cache-control": "private, immutable, max-age=43200",
