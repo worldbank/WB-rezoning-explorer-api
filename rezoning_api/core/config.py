@@ -7,6 +7,7 @@ PROJECT_NAME = "rezoning_api"
 BUCKET = "gre-processed-data"
 CLUSTER_NAME = "export-cluster"
 TASK_NAME = "export"
+EXPORT_BUCKET = "rezoning-exports"
 
 SERVER_NAME = os.getenv("SERVER_NAME")
 SERVER_HOST = os.getenv("SERVER_HOST")

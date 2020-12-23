@@ -1,9 +1,11 @@
 """CLI for fargate image for LCOE/Score export"""
 import argparse
 import json
+import boto3
 
 from rezoning_api.db.calc import single_country_lcoe, single_country_score
 from rezoning_api.models.zone import Filters, Weights, LCOE
+from rezoning_api.core.config import EXPORT_BUCKET
 
 
 if __name__ == "__main__":
@@ -28,16 +30,23 @@ if __name__ == "__main__":
 
     if not args.file_name:
         raise Exception("No file name set")
+    file_path = f"export/{args.file_name}"
+
+    operations = ["lcoe", "score"]
+    if args.operation not in operations:
+        raise Exception(f"operation must be one of: {' '.join(operations)}")
 
     if args.operation == "lcoe":
-        single_country_lcoe(f"export/{args.file_name}", args.country_id, lcoe, filters)
-    elif args.operation == "score":
+        single_country_lcoe(file_path, args.country_id, lcoe, filters)
+    else:
         single_country_score(
-            f"export/{args.file_name}",
+            file_path,
             args.country_id,
             lcoe,
             filters,
             weights,
         )
-    else:
-        print("no operation specified, exiting")
+
+    s3 = boto3.client("s3")
+
+    s3.upload_file(file_path, EXPORT_BUCKET, file_path)
