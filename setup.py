@@ -38,7 +38,7 @@ extra_reqs = {
 
 setup(
     name="rezoning-api",
-    version="0.1.38",
+    version="0.1.39",
     python_requires=">=3",
     description=u"""API for the REZoning project""",
     packages=find_packages(exclude=["tests"]),
