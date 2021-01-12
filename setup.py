@@ -12,6 +12,7 @@ inst_reqs = [
     "xarray",
     "aiofiles",
     "rio-tiler @ git+https://github.com/cogeotiff/rio-tiler.git",
+    "mercantile",
 ]
 
 extra_reqs = {
