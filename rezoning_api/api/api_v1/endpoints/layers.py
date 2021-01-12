@@ -169,6 +169,22 @@ def get_layers():
         "http://107.22.154.146/services/grid/tiles/{z}/{x}/{y}.pbf"
     ]
 
+    layers["anchorages"]["tiles"] = [
+        "http://107.22.154.146/services/anchorages/tiles/{z}/{x}/{y}.pbf"
+    ]
+
+    layers["airports"]["tiles"] = [
+        "http://107.22.154.146/services/airports/tiles/{z}/{x}/{y}.pbf"
+    ]
+
+    layers["ports"]["tiles"] = [
+        "http://107.22.154.146/services/ports/tiles/{z}/{x}/{y}.pbf"
+    ]
+
+    layers["roads"]["tiles"] = [
+        "http://107.22.154.146/services/roads/tiles/{z}/{x}/{y}.pbf"
+    ]
+
     # for now, remove excess manually
     layers.pop("wwf-glw-1", None)
     layers.pop("wwf-glw-2", None)
