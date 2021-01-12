@@ -119,6 +119,8 @@ def get_layers():
     cfo_flat = cfo["solar"] + cfo["wind"] + cfo["offshore"]
 
     for lkey, layer in layers.items():
+        # everything starts as a raster
+        layer["type"] = "raster"
         # add descriptions, categories, and titles from matching titles
         matching_filters = [
             filter
@@ -168,22 +170,35 @@ def get_layers():
     layers["grid"]["tiles"] = [
         "http://107.22.154.146/services/grid/tiles/{z}/{x}/{y}.pbf"
     ]
+    layers["grid"]["type"] = "line"
+    layers["grid"]["color"] = "#FABE21"
 
     layers["anchorages"]["tiles"] = [
         "http://107.22.154.146/services/anchorages/tiles/{z}/{x}/{y}.pbf"
     ]
+    layers["anchorages"]["type"] = "symbol"
+    layers["anchorages"]["symbol"] = "harbor-15"
+    layers["anchorages"]["color"] = "#02577F"
 
     layers["airports"]["tiles"] = [
         "http://107.22.154.146/services/airports/tiles/{z}/{x}/{y}.pbf"
     ]
+    layers["airports"]["type"] = "symbol"
+    layers["airports"]["symbol"] = "airport-15"
+    layers["airports"]["color"] = "#E47B2F"
 
     layers["ports"]["tiles"] = [
         "http://107.22.154.146/services/ports/tiles/{z}/{x}/{y}.pbf"
     ]
+    layers["ports"]["type"] = "symbol"
+    layers["ports"]["symbol"] = "ferry-15"
+    layers["ports"]["color"] = "#538CF1"
 
     layers["roads"]["tiles"] = [
         "http://107.22.154.146/services/roads/tiles/{z}/{x}/{y}.pbf"
     ]
+    layers["roads"]["type"] = "line"
+    layers["roads"]["color"] = "#434343"
 
     # for now, remove excess manually
     layers.pop("wwf-glw-1", None)
