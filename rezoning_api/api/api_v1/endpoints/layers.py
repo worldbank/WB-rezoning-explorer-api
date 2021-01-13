@@ -20,6 +20,8 @@ from rezoning_api.db.cf import get_capacity_factor_options
 
 router = APIRouter()
 
+TILE_URL = "http://54.157.11.17/services/{layer}/tiles/{{z}}/{{x}}/{{y}}.pbf"
+
 
 @router.get(
     "/layers/{id}/{z}/{x}/{y}.png",
@@ -167,36 +169,26 @@ def get_layers():
             layer["title"] = lkey
 
     # add some non-raster layers
-    layers["grid"]["tiles"] = [
-        "http://107.22.154.146/services/grid/tiles/{z}/{x}/{y}.pbf"
-    ]
+    layers["grid"]["tiles"] = TILE_URL.format(layer="grid")
     layers["grid"]["type"] = "line"
     layers["grid"]["color"] = "#FABE21"
 
-    layers["anchorages"]["tiles"] = [
-        "http://107.22.154.146/services/anchorages/tiles/{z}/{x}/{y}.pbf"
-    ]
+    layers["anchorages"]["tiles"] = TILE_URL.format(layer="anchorages")
     layers["anchorages"]["type"] = "symbol"
     layers["anchorages"]["symbol"] = "harbor-15"
     layers["anchorages"]["color"] = "#02577F"
 
-    layers["airports"]["tiles"] = [
-        "http://107.22.154.146/services/airports/tiles/{z}/{x}/{y}.pbf"
-    ]
+    layers["airports"]["tiles"] = TILE_URL.format(layer="airports")
     layers["airports"]["type"] = "symbol"
     layers["airports"]["symbol"] = "airport-15"
     layers["airports"]["color"] = "#E47B2F"
 
-    layers["ports"]["tiles"] = [
-        "http://107.22.154.146/services/ports/tiles/{z}/{x}/{y}.pbf"
-    ]
+    layers["ports"]["tiles"] = TILE_URL.format(layer="ports")
     layers["ports"]["type"] = "symbol"
     layers["ports"]["symbol"] = "ferry-15"
     layers["ports"]["color"] = "#538CF1"
 
-    layers["roads"]["tiles"] = [
-        "http://107.22.154.146/services/roads/tiles/{z}/{x}/{y}.pbf"
-    ]
+    layers["roads"]["tiles"] = TILE_URL.format(layer="roads")
     layers["roads"]["type"] = "line"
     layers["roads"]["color"] = "#434343"
 
