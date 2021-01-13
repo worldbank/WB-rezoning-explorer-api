@@ -1,12 +1,13 @@
 """Filter endpoints."""
 from enum import Enum
+import json
 import boto3
 
 from fastapi import APIRouter, status, HTTPException
 from fastapi.responses import Response
 
 from rezoning_api.utils import s3_head, get_hash
-from rezoning_api.core.config import EXPORT_BUCKET, CLUSTER_NAME, TASK_NAME
+from rezoning_api.core.config import EXPORT_BUCKET, QUEUE_URL
 from rezoning_api.models.zone import ExportRequest
 
 router = APIRouter()
@@ -50,45 +51,20 @@ def export(
     )
     name = f"{country_id}-{operation}-{hash}"
 
-    # run fargate task
-    client = boto3.client("ecs")
-    # TODO: unhardcode container name
-    client.run_task(
-        cluster=CLUSTER_NAME,
-        launchType="FARGATE",
-        count=1,
-        taskDefinition=TASK_NAME,
-        networkConfiguration={
-            "awsvpcConfiguration": {
-                "subnets": [
-                    "subnet-06c1403cc7d78526d",
-                ],
-                "assignPublicIp": "ENABLED",
-            }
-        },
-        overrides={
-            "containerOverrides": [
-                {
-                    "name": "container-definition-rezoning-api-lambda-dev",
-                    "command": [
-                        "python",
-                        "export.py",
-                        "--file_name",
-                        f"{name}.tif",
-                        "--country_id",
-                        country_id,
-                        "--operation",
-                        operation,
-                        "--weights",
-                        weights.json(),
-                        "--lcoe",
-                        lcoe.json(),
-                        "--filters",
-                        filters.json(),
-                    ],
-                }
-            ]
-        },
+    # run export queue processing
+    client = boto3.client("sqs")
+    client.send_message(
+        QueueUrl=QUEUE_URL,
+        MessageBody=json.dumps(
+            dict(
+                file_name=f"{name}.tif",
+                country_id=country_id,
+                operation=operation,
+                weights=weights.json(),
+                lcoe=lcoe.json(),
+                filters=filters.json(),
+            )
+        ),
     )
 
     return {"id": name}
