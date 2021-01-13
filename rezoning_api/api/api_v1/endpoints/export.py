@@ -1,16 +1,17 @@
 """Filter endpoints."""
 from enum import Enum
-from email.utils import format_datetime
 import boto3
 
 from fastapi import APIRouter, status, HTTPException
-from fastapi.responses import FileResponse, Response, StreamingResponse
+from fastapi.responses import Response
 
-from rezoning_api.utils import s3_head, s3_get, get_hash
+from rezoning_api.utils import s3_head, get_hash
 from rezoning_api.core.config import EXPORT_BUCKET, CLUSTER_NAME, TASK_NAME
 from rezoning_api.models.zone import ExportRequest
 
 router = APIRouter()
+
+s3 = boto3.client("s3")
 
 
 class Operation(str, Enum):
@@ -97,26 +98,13 @@ def export(
 def get_export_status(id: str, response: Response):
     """Return export status"""
     try:
-        s3_head(bucket=EXPORT_BUCKET, key=f"export/{id}.tif")
-        return dict(status="complete")
+        key = f"export/{id}.tif"
+        s3_head(bucket=EXPORT_BUCKET, key=key)
+        url = s3.generate_presigned_url(
+            "get_object", Params={"Bucket": EXPORT_BUCKET, "Key": key}, ExpiresIn=300
+        )
+        return dict(status="complete", url=url)
     except Exception as e:
         print(e)
         response.status_code = status.HTTP_202_ACCEPTED
         return dict(status="processing")
-
-
-@router.get("/export/{id}", response_class=FileResponse)
-def get_export(id: str):
-    """download exported file"""
-    response = s3_get(bucket=EXPORT_BUCKET, key=f"export/{id}.tif", full_response=True)
-
-    headers = {
-        "cache-control": "private, immutable, max-age=43200",
-        "last-modified": format_datetime(response["LastModified"]),
-        "content-length": str(response["ContentLength"]),
-        "etag": response["ETag"],
-    }
-
-    return StreamingResponse(
-        response["Body"], media_type=response["ContentType"], headers=headers
-    )
