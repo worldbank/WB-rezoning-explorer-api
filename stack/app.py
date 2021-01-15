@@ -13,7 +13,6 @@ from aws_cdk import (
     aws_ecs_patterns as ecs_patterns,
     aws_lambda,
     aws_apigatewayv2 as apigw,
-    aws_logs as logs,
     aws_ecr as ecr,
     # aws_elasticache as escache,
 )
@@ -57,20 +56,7 @@ class rezoningApiLambdaStack(core.Stack):
         """Define stack."""
         super().__init__(scope, id, *kwargs)
 
-        # create ECS Cluster + Fargate Task Definition
         vpc = ec2.Vpc(self, f"{id}-vpc")
-
-        base_ecs_policy = iam.PolicyStatement(
-            actions=[
-                "ecr:GetAuthorizationToken",
-                "ecr:BatchCheckLayerAvailability",
-                "ecr:GetDownloadUrlForLayer",
-                "ecr:BatchGetImage",
-                "logs:CreateLogStream",
-                "logs:PutLogEvents",
-            ],
-            resources=["*"],
-        )
 
         bucket = s3.Bucket(
             self, id=f"{id}-export-bucket", bucket_name=config.EXPORT_BUCKET
@@ -86,58 +72,40 @@ class rezoningApiLambdaStack(core.Stack):
             ],
         )
 
-        fargate_role = iam.Role(
-            self,
-            id=f"{id}-fargate-execution-role",
-            assumed_by=iam.ServicePrincipal("ecs-tasks.amazonaws.com"),
-        )
-
-        container_role = iam.Role(
-            self,
-            id=f"{id}-fargate-container-role",
-            assumed_by=iam.ServicePrincipal("ecs-tasks.amazonaws.com"),
-        )
-
-        fargate_role.add_to_policy(base_ecs_policy)
-        fargate_role.add_to_policy(s3_access_policy)
-        container_role.add_to_policy(s3_access_policy)
-
-        ecs.Cluster(
+        cluster = ecs.Cluster(
             self,
             f"{id}-ExportProcessingCluster",
             vpc=vpc,
             cluster_name=config.CLUSTER_NAME,
         )
-        fargate_task = ecs.FargateTaskDefinition(
-            self,
-            f"{id}-ExportProcessingTask",
-            cpu=2048,
-            memory_limit_mib=4096,
-            execution_role=fargate_role,
-            family=config.TASK_NAME,
-            task_role=container_role,
-        )
 
-        log_driver = ecs.AwsLogDriver(
-            stream_prefix=f"export-processing-{id}",
-            log_retention=logs.RetentionDays.ONE_WEEK,
+        cluster.add_capacity(
+            id=f"{id}-autoscaling-capacity",
+            instance_type=ec2.InstanceType("t2.large"),
+            desired_capacity=1,
         )
 
         image = ecs.ContainerImage.from_ecr_repository(
             ecr.Repository.from_repository_name(
-                self, f"{id}-export-repo", repository_name="export-fargate"
+                self, f"{id}-export-repo", repository_name="export-queue-processing"
             )
         )
-        fargate_task.add_container(
-            f"container-definition-{id}",
+
+        queue_processor = ecs_patterns.QueueProcessingEc2Service(
+            self,
+            f"{id}-queue-processor",
+            cpu=1800,
+            memory_limit_mib=3600,
             image=image,
-            logging=log_driver,
-            environment=DEFAULT_ENV,
+            cluster=cluster,
+            environment={"REGION": "us-east-2"},
         )
 
-        run_task_policy = iam.PolicyStatement(
-            actions=["ecs:RunTask", "iam:PassRole", "iam:GetRole"],
-            resources=["*"],
+        queue_processor.task_definition.task_role.add_to_policy(s3_access_policy)
+
+        sqs_access_policy = iam.PolicyStatement(
+            actions=["sqs:*"],
+            resources=[queue_processor.sqs_queue.queue_arn],
         )
 
         # add cache
@@ -179,6 +147,7 @@ class rezoningApiLambdaStack(core.Stack):
                 VARIABLE_NAME="app",
                 WORKERS_PER_CORE="1",
                 LOG_LEVEL="error",
+                QUEUE_URL=queue_processor.sqs_queue.queue_url
                 # MEMCACHE_HOST=cache.attr_configuration_endpoint_address,
                 # MEMCACHE_PORT=cache.attr_configuration_endpoint_port,
             )
@@ -197,7 +166,7 @@ class rezoningApiLambdaStack(core.Stack):
             # vpc=vpc,
         )
         lambda_function.add_to_role_policy(s3_access_policy)
-        lambda_function.add_to_role_policy(run_task_policy)
+        lambda_function.add_to_role_policy(sqs_access_policy)
         # lambda_function.add_to_role_policy(vpc_access_policy_statement)
 
         # defines an API Gateway Http API resource backed by our "dynamoLambda" function.
