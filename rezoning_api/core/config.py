@@ -6,6 +6,7 @@ API_VERSION_STR = "/v1"
 PROJECT_NAME = "rezoning_api"
 BUCKET = "gre-processed-data"
 EXPORT_BUCKET = "rezoning-exports"
+LCOE_MAX = 10000
 
 QUEUE_URL = os.getenv("QUEUE_URL")
 SERVER_NAME = os.getenv("SERVER_NAME")

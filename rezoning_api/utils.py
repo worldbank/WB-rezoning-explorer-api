@@ -120,7 +120,7 @@ def lcoe_generation(lr: LCOE, cf):
     """Calculate LCOE from Generation"""
     numerator = lr.cg * calc_crf(lr) + lr.omfg
     denominator = cf * 8760
-    return (numerator / denominator) + lr.omvg
+    return (numerator / denominator) * 1000 + lr.omvg
 
 
 def lcoe_interconnection(lr: LCOE, cf, ds):

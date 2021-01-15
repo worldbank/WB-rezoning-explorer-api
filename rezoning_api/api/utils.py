@@ -6,6 +6,7 @@ from rezoning_api.models.zone import Weights
 from rezoning_api.utils import read_dataset, min_max_scale
 from rezoning_api.db.layers import get_layers
 from rezoning_api.db.country import get_country_min_max
+from rezoning_api.core.config import LCOE_MAX
 from rezoning_api.utils import (
     get_distances,
     get_layer_location,
@@ -32,6 +33,11 @@ def calc_score(id, aoi, lcoe, weights, filters, tilesize=None):
     lg = lcoe_generation(lcoe, cf)
     li = lcoe_interconnection(lcoe, cf, ds)
     lr = lcoe_road(lcoe, cf, dr)
+
+    # cap lcoe components
+    lg = np.clip(lg, None, LCOE_MAX)
+    li = np.clip(li, None, LCOE_MAX)
+    lr = np.clip(lr, None, LCOE_MAX)
 
     # get regional min/max
     cmm = get_country_min_max(id)

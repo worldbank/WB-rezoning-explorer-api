@@ -12,7 +12,7 @@ from rasterio.warp import transform_geom
 from rasterio.crs import CRS
 
 from rezoning_api.utils import read_dataset
-from rezoning_api.core.config import BUCKET
+from rezoning_api.core.config import BUCKET, LCOE_MAX
 from rezoning_api.db.country import get_country_geojson, world
 from rezoning_api.db.cf import get_capacity_factor_options
 from rezoning_api.models.zone import LCOE, Filters, Weights
@@ -79,6 +79,12 @@ def refresh_country_extrema(partial=False):
             lr = lcoe_road(lcoe, cf, dr)
             lcoe_total = lg + li + lr
 
+            # cap lcoe components + total
+            lg = np.clip(lg, None, LCOE_MAX)
+            li = np.clip(li, None, LCOE_MAX)
+            lr = np.clip(lr, None, LCOE_MAX)
+            lcoe_total = np.clip(lcoe_total, None, LCOE_MAX)
+
             # add to extrema
             extrema["lcoe"][option] = dict(
                 lg=dict(
@@ -123,6 +129,12 @@ def single_country_lcoe(dest_file: str, country_id, lcoe=LCOE(), filters=Filters
     li = lcoe_interconnection(lcoe, cf, ds)
     lr = lcoe_road(lcoe, cf, dr)
     lcoe_total = lg + li + lr
+
+    # cap lcoe components + total
+    lg = np.clip(lg, None, LCOE_MAX)
+    li = np.clip(li, None, LCOE_MAX)
+    lr = np.clip(lr, None, LCOE_MAX)
+    lcoe_total = np.clip(lcoe_total, None, LCOE_MAX)
 
     # match with filter for src profile
     match_data = f"s3://{BUCKET}/multiband/filter.tif"

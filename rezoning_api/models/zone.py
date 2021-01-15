@@ -190,8 +190,8 @@ class LCOE(BaseModel):
         description="Capital expenditure for generation, per unit of capacity.",
     )
     omfg: int = Field(
-        50000,
-        title="Generation – fixed O&M [USD/MW/y] (OMf,g)",
+        40,
+        title="Generation – fixed O&M [USD/kW/y] (OMf,g)",
         description="Fixed Operation and Maintenance costs for the generation part of the system, per unit of capacity, per year.",
     )
     omvg: float = Field(
@@ -200,24 +200,24 @@ class LCOE(BaseModel):
         description="Variable Operation and Maintenance costs for generation, per unit of energy produced.",
     )
     ct: int = Field(
-        990,
+        1000,
         title="Transmission (land cabling) – capital [USD/MW/km] (Ct)",
         description="Capital expenditure for transmission (land cabling), per unit of capacity and distance.",
     )
     omft: int = Field(
         0,
-        title="Transmission – fixed O&M [USD/km] (OMf,t)",
+        title="Transmission – fixed O&M [USD/MW/km] (OMf,t)",
         description="Fixed Operation and Maintenance costs for the transmission, per unit of distance, per year.",
     )
     cs: float = Field(
-        71000,
-        title="Substation – capital [USD / two substations (per new transmission connection) ] (Cs)",
+        70000,
+        title="Substation – capital [USD / MW / two substations (per new transmission connection) ] (Cs)",
         description="Capital expenditure for new substations or upgrades per transmission connection.",
     )
     cr: float = Field(
         407000,
         title="Road – capital [USD/km] (Cr)",
-        description="Capital expenditure for road infrastructure, per unit of distance.",
+        description="Capital expenditure for road infrastructure, per unit of distance. One road assumed for every 50 MW of installed capacity",
     )
     omfr: float = Field(
         0,
