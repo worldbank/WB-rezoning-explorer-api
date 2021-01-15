@@ -167,6 +167,10 @@ def get_layers():
             layer["description"] = None
             layer["category"] = "additional"
             layer["title"] = lkey
+        # rename vector layers
+        if lkey in ["grid", "anchorages", "airports", "ports", "roads"]:
+            layer["title"] = layer["title"].replace("Distance to ", "")
+            layer["description"] = f"Location of {lkey.lower()}"
 
     # add some non-raster layers
     layers["grid"]["tiles"] = TILE_URL.format(layer="grid")
