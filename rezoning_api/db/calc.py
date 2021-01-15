@@ -22,9 +22,9 @@ from rezoning_api.utils import (
     lcoe_generation,
     lcoe_interconnection,
     lcoe_road,
+    calc_score,
 )
 from rezoning_api.db.layers import get_layers
-from rezoning_api.api.utils import calc_score
 
 PLATE_CARREE = CRS.from_epsg(4326)
 
