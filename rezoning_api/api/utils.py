@@ -56,6 +56,11 @@ def calc_score(id, aoi, lcoe, weights, filters, tilesize=None):
         layer = weight_name.replace("_", "-")
         loc, _idx = get_layer_location(layer)
         if loc and weight_value > 0:
+            # flip min/max for certain weights
+            flip = False
+            if weight_name not in ["grid", "worldpop", "roads", "gsa_gti", "gsa_pvout"]:
+                flip = True
+
             dataset = loc.replace(f"s3://{BUCKET}/", "").replace(".tif", "")
             data, _ = read_dataset(
                 f"s3://{BUCKET}/{dataset}.tif",
@@ -68,6 +73,7 @@ def calc_score(id, aoi, lcoe, weights, filters, tilesize=None):
                 np.nan_to_num(data.sel(layer=layer).values, nan=0),
                 cmm[layer]["min"],
                 cmm[layer]["max"],
+                flip,
             )
             score_array += weight_value * scaled_array
 

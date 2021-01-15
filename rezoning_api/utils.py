@@ -259,12 +259,18 @@ def get_layer_location(id):
 LayerNames = create_model("LayerNames", **dict(zip(flat_layers(), flat_layers())))
 
 
-def min_max_scale(arr, scale_min=None, scale_max=None):
+def min_max_scale(arr, scale_min=None, scale_max=None, flip=False):
     """returns a normalized ~0.0-1.0 array from optional min/maxes"""
     if not scale_min:
         scale_min = arr.min()
     if not scale_max:
         scale_max = arr.max()
+
+    # flip min/max if requested
+    if flip:
+        temp = scale_max
+        scale_max = scale_min
+        scale_min = temp
 
     # to prevent divide by zero errors
     scale_max = max(scale_max, 1e5)
