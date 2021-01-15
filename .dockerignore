@@ -4,3 +4,4 @@ grid_files
 .git
 .ipynb_checkpoints
 .tox
+*.mbtiles
