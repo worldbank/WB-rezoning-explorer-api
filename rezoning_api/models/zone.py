@@ -108,10 +108,10 @@ class CategorialFilter(str):
         return f"CategoricalFilter({super().__repr__()})"
 
 
-def WeightField(title=None):
+def WeightField(default: float = 0, title=None):
     """weight field defaults"""
     return Field(
-        0.5,
+        default,
         gte=0,
         lte=1,
         description=f"weight assigned to {title} parameter",
@@ -146,12 +146,12 @@ def FilterField(
 class Weights(BaseModel):
     """User provided weights"""
 
-    lcoe_gen: float = WeightField(title="LCOE Generation")
-    lcoe_transmission: float = WeightField(title="LCOE Transmission")
-    lcoe_road: float = WeightField(title="LCOE Road")
-    grid: float = WeightField(title="Grid")
-    worldpop: float = WeightField(title="Population Density")
-    slope: float = WeightField(title="Slope")
+    lcoe_gen: float = WeightField(0.4, title="LCOE Generation")
+    lcoe_transmission: float = WeightField(0.05, title="LCOE Transmission")
+    lcoe_road: float = WeightField(0.02, title="LCOE Road")
+    grid: float = WeightField(0.15, title="Grid")
+    worldpop: float = WeightField(0.05, title="Population Density")
+    slope: float = WeightField(0.08, title="Slope")
     # capacity_value: float = WeightField(title="Capacity Value")
     airports: float = WeightField(title="Airports")
     ports: float = WeightField(title="Ports")

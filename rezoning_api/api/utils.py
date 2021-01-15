@@ -83,6 +83,7 @@ def calc_score(id, aoi, lcoe, weights, filters, tilesize=None):
                 lg.values,
                 cmm["lcoe"][lcoe.capacity_factor]["lg"]["min"],
                 cmm["lcoe"][lcoe.capacity_factor]["lg"]["max"],
+                flip=True,
             )
             * weights.lcoe_gen
         )
@@ -92,6 +93,7 @@ def calc_score(id, aoi, lcoe, weights, filters, tilesize=None):
                 li.values,
                 cmm["lcoe"][lcoe.capacity_factor]["li"]["min"],
                 cmm["lcoe"][lcoe.capacity_factor]["li"]["max"],
+                flip=True,
             )
             * weights.lcoe_transmission
         )
@@ -101,6 +103,7 @@ def calc_score(id, aoi, lcoe, weights, filters, tilesize=None):
                 lr.values,
                 cmm["lcoe"][lcoe.capacity_factor]["lr"]["min"],
                 cmm["lcoe"][lcoe.capacity_factor]["lr"]["max"],
+                flip=True,
             )
             * weights.lcoe_road
         )
