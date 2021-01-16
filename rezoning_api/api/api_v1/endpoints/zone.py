@@ -1,6 +1,7 @@
 """LCOE endpoints."""
 
 from fastapi import APIRouter, Depends
+import numpy as np
 
 from rezoning_api.models.zone import ZoneRequest, ZoneResponse, Filters, Weights
 from rezoning_api.utils import calc_score
@@ -34,6 +35,7 @@ def zone(query: ZoneRequest, country_id: str = "AFG", filters: Filters = Depends
     cf = extras["cf"]
 
     zs = data.mean()
+    zs = 0.01 if np.isnan(zs) else zs
 
     return dict(
         lcoe=lcoe.mean(),
