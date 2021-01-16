@@ -110,8 +110,8 @@ def filter(
 def get_country_layers(country_id: str):
     """Return min/max for country layers"""
     minmax = get_country_min_max(country_id)
-    keys = list(minmax.keys())
-    [minmax.pop(key) for key in keys if key.startswith(("gwa", "gsa"))]
+    # keys = list(minmax.keys())
+    # [minmax.pop(key) for key in keys if key.startswith(("gwa", "gsa"))]
     return minmax
 
 
