@@ -3,8 +3,8 @@ from os import path as op
 import json
 from geojson_pydantic.features import Feature
 from shapely.geometry import shape, mapping, box
+import boto3
 
-from rezoning_api.utils import s3_get
 from rezoning_api.core.config import BUCKET
 
 with open(op.join(op.dirname(__file__), "countries.geojson"), "r") as f:
@@ -12,6 +12,19 @@ with open(op.join(op.dirname(__file__), "countries.geojson"), "r") as f:
 
 with open(op.join(op.dirname(__file__), "eez.geojson"), "r") as f:
     eez = json.load(f)
+
+
+# duplicated to prevent circular import
+# TODO: fix someday
+s3 = boto3.client("s3")
+
+
+def s3_get(bucket: str, key: str, full_response=False):
+    """Get AWS S3 Object."""
+    response = s3.get_object(Bucket=bucket, Key=key)
+    if full_response:
+        return response
+    return response["Body"].read()
 
 
 def get_country_geojson(id, offshore=False):

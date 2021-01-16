@@ -4,13 +4,7 @@ from fastapi import APIRouter, Depends
 import numpy as np
 
 from rezoning_api.models.zone import ZoneRequest, ZoneResponse, Filters, Weights
-from rezoning_api.utils import (
-    lcoe_generation,
-    lcoe_interconnection,
-    lcoe_road,
-    get_capacity_factor,
-    get_distances,
-)
+from rezoning_api.utils import calc_score
 
 router = APIRouter()
 
@@ -20,35 +14,31 @@ router = APIRouter()
     responses={200: dict(description="return an LCOE calculation for a given area")},
     response_model=ZoneResponse,
 )
-def zone(query: ZoneRequest, filters: Filters = Depends()):
-    """calculate LCOE, then weight for zone score"""
-    # spatial temporal inputs
-    ds, dr, calc, mask = get_distances(query.aoi.dict(), filters)
-    cf = get_capacity_factor(query.aoi.dict(), query.lcoe.capacity_factor)
-
-    # lcoe component calculation
-    lg = lcoe_generation(query.lcoe, cf)
-    li = lcoe_interconnection(query.lcoe, cf, ds)
-    lr = lcoe_road(query.lcoe, cf, dr)
-    # TODO: restore mask
-    lcoe = lg + li + lr
-
-    # zone score
-    zone_score = (
-        query.weights.lcoe_gen * lg.sum()
-        + query.weights.lcoe_transmission * li.sum()
-        + query.weights.lcoe_road * lr.sum()
-        # technology_colocation: float = 0.5
-        # human_footprint: float = 0.5
-        + query.weights.worldpop * calc[0].sum()
-        + query.weights.slope * calc[1].sum()
-        # + query.weights.capacity_value * cf.sum()
+@router.post(
+    "/zone/{country_id}",
+    responses={200: dict(description="return an LCOE calculation for a given area")},
+    response_model=ZoneResponse,
+)
+def zone(query: ZoneRequest, country_id: str = "AFG", filters: Filters = Depends()):
+    """calculate LCOE and weight for zone score"""
+    data, mask, extras = calc_score(
+        country_id,
+        query.aoi.dict(),
+        query.lcoe,
+        query.weights,
+        filters,
+        tilesize=256,
+        ret_extras=True,
     )
 
-    zs = 0 if np.isinf(zone_score) else zone_score
+    lcoe = extras["lcoe"]
+    cf = extras["cf"]
+
+    zs = data.mean()
+    zs = 0.01 if np.isnan(zs) else zs
 
     return dict(
-        lcoe=lcoe.sum() / 1000,
+        lcoe=lcoe.mean(),
         zone_score=zs,
         zone_output=cf.sum(),
         zone_output_density=cf.sum() / (500 ** 2),

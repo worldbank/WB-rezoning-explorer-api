@@ -108,10 +108,10 @@ class CategorialFilter(str):
         return f"CategoricalFilter({super().__repr__()})"
 
 
-def WeightField(title=None):
+def WeightField(default: float = 0, title=None):
     """weight field defaults"""
     return Field(
-        0.5,
+        default,
         gte=0,
         lte=1,
         description=f"weight assigned to {title} parameter",
@@ -146,12 +146,12 @@ def FilterField(
 class Weights(BaseModel):
     """User provided weights"""
 
-    lcoe_gen: float = WeightField(title="LCOE Generation")
-    lcoe_transmission: float = WeightField(title="LCOE Transmission")
-    lcoe_road: float = WeightField(title="LCOE Road")
-    grid: float = WeightField(title="Grid")
-    worldpop: float = WeightField(title="Population Density")
-    slope: float = WeightField(title="Slope")
+    lcoe_gen: float = WeightField(0.4, title="LCOE Generation")
+    lcoe_transmission: float = WeightField(0.05, title="LCOE Transmission")
+    lcoe_road: float = WeightField(0.02, title="LCOE Road")
+    grid: float = WeightField(0.15, title="Grid")
+    worldpop: float = WeightField(0.05, title="Population Density")
+    slope: float = WeightField(0.08, title="Slope")
     # capacity_value: float = WeightField(title="Capacity Value")
     airports: float = WeightField(title="Airports")
     ports: float = WeightField(title="Ports")
@@ -190,8 +190,8 @@ class LCOE(BaseModel):
         description="Capital expenditure for generation, per unit of capacity.",
     )
     omfg: int = Field(
-        50000,
-        title="Generation – fixed O&M [USD/MW/y] (OMf,g)",
+        40,
+        title="Generation – fixed O&M [USD/kW/y] (OMf,g)",
         description="Fixed Operation and Maintenance costs for the generation part of the system, per unit of capacity, per year.",
     )
     omvg: float = Field(
@@ -200,24 +200,24 @@ class LCOE(BaseModel):
         description="Variable Operation and Maintenance costs for generation, per unit of energy produced.",
     )
     ct: int = Field(
-        990,
+        1000,
         title="Transmission (land cabling) – capital [USD/MW/km] (Ct)",
         description="Capital expenditure for transmission (land cabling), per unit of capacity and distance.",
     )
     omft: int = Field(
         0,
-        title="Transmission – fixed O&M [USD/km] (OMf,t)",
+        title="Transmission – fixed O&M [USD/MW/km] (OMf,t)",
         description="Fixed Operation and Maintenance costs for the transmission, per unit of distance, per year.",
     )
     cs: float = Field(
-        71000,
-        title="Substation – capital [USD / two substations (per new transmission connection) ] (Cs)",
+        70000,
+        title="Substation – capital [USD / MW / two substations (per new transmission connection) ] (Cs)",
         description="Capital expenditure for new substations or upgrades per transmission connection.",
     )
     cr: float = Field(
         407000,
         title="Road – capital [USD/km] (Cr)",
-        description="Capital expenditure for road infrastructure, per unit of distance.",
+        description="Capital expenditure for road infrastructure, per unit of distance. One road assumed for every 50 MW of installed capacity",
     )
     omfr: float = Field(
         0,

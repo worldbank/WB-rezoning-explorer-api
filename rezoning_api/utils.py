@@ -19,8 +19,9 @@ from pydantic import create_model
 
 
 from rezoning_api.core.config import BUCKET
-from rezoning_api.models.zone import LCOE
+from rezoning_api.models.zone import LCOE, Weights
 from rezoning_api.db.layers import get_layers
+from rezoning_api.db.country import get_country_min_max
 
 LAYERS = get_layers()
 PLATE_CARREE = CRS.from_epsg(4326)
@@ -120,7 +121,7 @@ def lcoe_generation(lr: LCOE, cf):
     """Calculate LCOE from Generation"""
     numerator = lr.cg * calc_crf(lr) + lr.omfg
     denominator = cf * 8760
-    return (numerator / denominator) + lr.omvg
+    return (numerator / denominator) * 1000 + lr.omvg
 
 
 def lcoe_interconnection(lr: LCOE, cf, ds):
@@ -259,12 +260,18 @@ def get_layer_location(id):
 LayerNames = create_model("LayerNames", **dict(zip(flat_layers(), flat_layers())))
 
 
-def min_max_scale(arr, scale_min=None, scale_max=None):
+def min_max_scale(arr, scale_min=None, scale_max=None, flip=False):
     """returns a normalized ~0.0-1.0 array from optional min/maxes"""
     if not scale_min:
         scale_min = arr.min()
     if not scale_max:
         scale_max = arr.max()
+
+    # flip min/max if requested
+    if flip:
+        temp = scale_max
+        scale_max = scale_min
+        scale_min = temp
 
     # to prevent divide by zero errors
     scale_max = max(scale_max, 1e5)
@@ -292,3 +299,86 @@ def get_stat(root, attrib_key):
 def get_hash(**kwargs: Any) -> str:
     """Create hash from kwargs."""
     return hashlib.sha224(json.dumps(kwargs, sort_keys=True).encode()).hexdigest()
+
+
+def calc_score(id, aoi, lcoe, weights, filters, tilesize=None, ret_extras=False):
+    """
+    calculate a "zone score" from the provided LCOE, weight, and filter inputs
+    the function returns a pixel array of scored values which can later be
+    aggregated into zones so here we refer to the function as a "score" calculation
+    """
+    # spatial temporal inputs
+    ds, dr, calc, mask = get_distances(aoi, filters, tilesize=tilesize)
+    cf = get_capacity_factor(aoi, lcoe.capacity_factor, tilesize=tilesize)
+
+    # lcoe component calculation
+    lg = lcoe_generation(lcoe, cf)
+    li = lcoe_interconnection(lcoe, cf, ds)
+    lr = lcoe_road(lcoe, cf, dr)
+
+    # get regional min/max
+    cmm = get_country_min_max(id)
+
+    # normalize weights
+    scale_max = sum([wv for wn, wv in weights])
+    temp_weights = weights.dict()
+    for weight_name, weight_value in temp_weights.items():
+        temp_weights[weight_name] = weight_value / scale_max
+    weights = Weights(**temp_weights)
+
+    # zone score
+    shape = (tilesize, tilesize) if tilesize else cf.shape
+    score_array = np.zeros(shape)
+    for weight_name, weight_value in weights:
+        layer = weight_name.replace("_", "-")
+        loc, _idx = get_layer_location(layer)
+        if loc and weight_value > 0:
+            dataset = loc.replace(f"s3://{BUCKET}/", "").replace(".tif", "")
+            data, _ = read_dataset(
+                f"s3://{BUCKET}/{dataset}.tif",
+                LAYERS[dataset],
+                aoi,
+                tilesize=tilesize,
+            )
+
+            scaled_array = min_max_scale(
+                np.nan_to_num(data.sel(layer=layer).values, nan=0),
+                cmm[layer]["min"],
+                cmm[layer]["max"],
+            )
+            score_array += weight_value * scaled_array
+
+        # non-layer zone score additions
+        score_array += (
+            min_max_scale(
+                lg.values,
+                cmm["lcoe"][lcoe.capacity_factor]["lg"]["min"],
+                cmm["lcoe"][lcoe.capacity_factor]["lg"]["max"],
+            )
+            * weights.lcoe_gen
+        )
+
+        score_array += (
+            min_max_scale(
+                li.values,
+                cmm["lcoe"][lcoe.capacity_factor]["li"]["min"],
+                cmm["lcoe"][lcoe.capacity_factor]["li"]["max"],
+            )
+            * weights.lcoe_transmission
+        )
+
+        score_array += (
+            min_max_scale(
+                lr.values,
+                cmm["lcoe"][lcoe.capacity_factor]["lr"]["min"],
+                cmm["lcoe"][lcoe.capacity_factor]["lr"]["max"],
+            )
+            * weights.lcoe_road
+        )
+
+    # TODO: uncomment things, add back mask
+    lcoe = lg + li + lr
+    if ret_extras:
+        return score_array, mask, dict(lcoe=lcoe, cf=cf)
+    else:
+        return score_array, mask

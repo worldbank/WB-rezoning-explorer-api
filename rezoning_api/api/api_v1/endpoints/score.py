@@ -9,7 +9,7 @@ from geojson_pydantic.geometries import Polygon
 
 from rezoning_api.models.tiles import TileResponse
 from rezoning_api.models.zone import LCOE, Weights, Filters
-from rezoning_api.api.utils import calc_score
+from rezoning_api.utils import calc_score
 
 router = APIRouter()
 
