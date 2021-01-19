@@ -20,7 +20,7 @@ from rezoning_api.db.cf import get_capacity_factor_options
 
 router = APIRouter()
 
-TILE_URL = "http://54.157.11.17/services/{layer}/tiles/{{z}}/{{x}}/{{y}}.pbf"
+TILE_URL = "https://reztileserver.com/services/{layer}/tiles/{{z}}/{{x}}/{{y}}.pbf"
 
 
 @router.get(
