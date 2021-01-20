@@ -39,7 +39,13 @@ def get_country_geojson(id, offshore=False):
     ]
     try:
         if offshore:
-            geom = box(*shape(filtered[0]["geometry"]).bounds)
+            double_filt = [
+                feature
+                for feature in filtered
+                if feature["properties"]["ISO_TER1"]
+                == feature["properties"]["ISO_SOV1"]
+            ]
+            geom = box(*shape(double_filt[0]["geometry"]).bounds)
             feat = dict(properties={}, geometry=mapping(geom), type="Feature")
             return Feature(**feat)
         return Feature(**filtered[0])
