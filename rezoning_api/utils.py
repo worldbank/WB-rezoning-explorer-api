@@ -174,7 +174,7 @@ def get_distances(aoi: Union[Polygon, MultiPolygon], filters, tilesize=None):
 
     arrays = []
     for dataset in datasets:
-        data, _ = read_dataset(
+        data, mask = read_dataset(
             f"s3://{BUCKET}/{dataset}.tif",
             LAYERS[dataset],
             aoi=aoi,
@@ -190,11 +190,10 @@ def get_distances(aoi: Union[Polygon, MultiPolygon], filters, tilesize=None):
         data.sel(layer="grid"),
         data.sel(layer="roads"),
         data,
-        filter_mask,
-        # TODO: restore data mask
-        # np.logical_or(
-        #     ~mask, filter_mask
-        # ),  # NOTE: we flip to a "true mask" here (True is valid)
+        # filter_mask,
+        np.logical_and(
+            ~mask, filter_mask.values
+        ),  # NOTE: we flip to a "true mask" here (True is valid)
     )
 
 
@@ -316,6 +315,11 @@ def calc_score(id, aoi, lcoe, weights, filters, tilesize=None, ret_extras=False)
     li = lcoe_interconnection(lcoe, cf, ds)
     lr = lcoe_road(lcoe, cf, dr)
 
+    # make sure nothing is infinity
+    lg = ma.masked_invalid(lg)
+    li = ma.masked_invalid(li)
+    lr = ma.masked_invalid(lr)
+
     # get regional min/max
     cmm = get_country_min_max(id)
 
@@ -351,7 +355,7 @@ def calc_score(id, aoi, lcoe, weights, filters, tilesize=None, ret_extras=False)
         # non-layer zone score additions
         score_array += (
             min_max_scale(
-                lg.values,
+                lg,
                 cmm["lcoe"][lcoe.capacity_factor]["lg"]["min"],
                 cmm["lcoe"][lcoe.capacity_factor]["lg"]["max"],
             )
@@ -360,7 +364,7 @@ def calc_score(id, aoi, lcoe, weights, filters, tilesize=None, ret_extras=False)
 
         score_array += (
             min_max_scale(
-                li.values,
+                li,
                 cmm["lcoe"][lcoe.capacity_factor]["li"]["min"],
                 cmm["lcoe"][lcoe.capacity_factor]["li"]["max"],
             )
@@ -369,15 +373,16 @@ def calc_score(id, aoi, lcoe, weights, filters, tilesize=None, ret_extras=False)
 
         score_array += (
             min_max_scale(
-                lr.values,
+                lr,
                 cmm["lcoe"][lcoe.capacity_factor]["lr"]["min"],
                 cmm["lcoe"][lcoe.capacity_factor]["lr"]["max"],
             )
             * weights.lcoe_road
         )
 
-    # TODO: uncomment things, add back mask
     lcoe = lg + li + lr
+    lcoe = ma.masked_invalid(lcoe)
+    score_array = ma.masked_invalid(score_array)
     if ret_extras:
         return score_array, mask, dict(lcoe=lcoe, cf=cf)
     else:
