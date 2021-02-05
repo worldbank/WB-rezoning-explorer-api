@@ -192,7 +192,7 @@ def get_distances(aoi: Union[Polygon, MultiPolygon], filters, tilesize=None):
         data,
         # filter_mask,
         np.logical_and(
-            ~mask, filter_mask.values
+            ~mask, filter_mask
         ),  # NOTE: we flip to a "true mask" here (True is valid)
     )
 
