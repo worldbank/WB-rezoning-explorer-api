@@ -126,14 +126,14 @@ def lcoe_generation(lr: LCOE, cf):
 
 def lcoe_interconnection(lr: LCOE, cf, ds):
     """Calculate LCOE from Interconnection"""
-    numerator = ds * (lr.ct * calc_crf(lr) + lr.omft) + lr.cs * calc_crf(lr)
+    numerator = ds / 1000 * (lr.ct * calc_crf(lr) + lr.omft) + lr.cs * calc_crf(lr)
     denominator = cf * 8760
     return numerator / denominator
 
 
 def lcoe_road(lr: LCOE, cf, dr):
     """Calculate LCOE from Roads"""
-    numerator = dr * (lr.cr * calc_crf(lr) + lr.omfr)
+    numerator = dr / 1000 * (lr.cr * calc_crf(lr) + lr.omfr)
     denominator = cf * 50 * 8760
     return numerator / denominator
 
@@ -155,6 +155,12 @@ def get_capacity_factor(
         aoi=aoi,
         tilesize=tilesize,
     )
+
+    if capacity_factor == "gsa-pvout":
+        # convert daily to hourly
+        cf = cf / 24
+        # backout the technical loss factor applied
+        cf = cf * (1 / (1 - 0.095))
 
     return cf.sel(layer=LAYERS[dataset][cf_idx])
 
