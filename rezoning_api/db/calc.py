@@ -71,7 +71,7 @@ def refresh_country_extrema(partial=False):
 
             # spatial temporal inputs
             ds, dr, _calc, _mask = get_distances(aoi, filters, tilesize=64)
-            cf = get_capacity_factor(aoi, lcoe.capacity_factor, tilesize=64)
+            cf = get_capacity_factor(aoi, lcoe.capacity_factor, lcoe.tlf, tilesize=64)
 
             # lcoe component calculation
             lg = lcoe_generation(lcoe, cf)
@@ -122,7 +122,7 @@ def single_country_lcoe(dest_file: str, country_id, lcoe=LCOE(), filters=Filters
 
     # spatial temporal inputs
     ds, dr, _calc, _mask = get_distances(aoi, filters)
-    cf = get_capacity_factor(aoi, lcoe.capacity_factor)
+    cf = get_capacity_factor(aoi, lcoe.capacity_factor, lcoe.tlf)
 
     # lcoe component calculation
     lg = lcoe_generation(lcoe, cf)

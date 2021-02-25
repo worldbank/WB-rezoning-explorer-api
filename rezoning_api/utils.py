@@ -139,7 +139,10 @@ def lcoe_road(lr: LCOE, cf, dr):
 
 
 def get_capacity_factor(
-    aoi: Union[Polygon, MultiPolygon], capacity_factor: str, tilesize=None
+    aoi: Union[Polygon, MultiPolygon],
+    capacity_factor: str,
+    loss_factor: float,
+    tilesize=None,
 ):
     """Calculate Capacity Factor"""
     # decide which capacity factor tif to pull from
@@ -161,6 +164,9 @@ def get_capacity_factor(
         cf = cf / 24
         # backout the technical loss factor applied
         cf = cf * (1 / (1 - 0.095))
+
+    # apply loss factor
+    cf = cf * (1 - loss_factor)
 
     return cf.sel(layer=LAYERS[dataset][cf_idx])
 
@@ -314,7 +320,9 @@ def calc_score(id, aoi, lcoe, weights, filters, tilesize=None, ret_extras=False)
     """
     # spatial temporal inputs
     ds, dr, calc, mask = get_distances(aoi, filters, tilesize=tilesize)
-    cf = get_capacity_factor(aoi, lcoe.capacity_factor, tilesize=tilesize)
+    cf = get_capacity_factor(
+        aoi, lcoe.capacity_factor, lcoe.loss_factor, lcoe.tlf, tilesize=tilesize
+    )
 
     # lcoe component calculation
     lg = lcoe_generation(lcoe, cf)
