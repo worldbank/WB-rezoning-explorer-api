@@ -179,11 +179,6 @@ class LCOE(BaseModel):
         title="Turbine Type or Solar Unit Type",
         description="Annual capacity factor is a unitless ratio of the actual electrical energy output over a given period of time to the maximum possible electrical energy output over that period.",
     )
-    crf: float = Field(
-        1,
-        title="Capital Recovery Factor (CRF)",
-        description="A capital recovery factor is the ratio of a constant annuity to the present value of receiving that annuity for a given length of time.",
-    )
     cg: int = Field(
         2000,
         title="Generation – capital [USD/kW] (Cg)",
