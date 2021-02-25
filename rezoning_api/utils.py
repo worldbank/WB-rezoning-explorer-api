@@ -142,6 +142,7 @@ def get_capacity_factor(
     aoi: Union[Polygon, MultiPolygon],
     capacity_factor: str,
     loss_factor: float,
+    availabity_factor: float,
     tilesize=None,
 ):
     """Calculate Capacity Factor"""
@@ -165,8 +166,8 @@ def get_capacity_factor(
         # backout the technical loss factor applied
         cf = cf * (1 / (1 - 0.095))
 
-    # apply loss factor
-    cf = cf * (1 - loss_factor)
+    # apply loss factor and availability factor
+    cf = cf * (1 - loss_factor) * (1 - availabity_factor)
 
     return cf.sel(layer=LAYERS[dataset][cf_idx])
 
@@ -321,7 +322,12 @@ def calc_score(id, aoi, lcoe, weights, filters, tilesize=None, ret_extras=False)
     # spatial temporal inputs
     ds, dr, calc, mask = get_distances(aoi, filters, tilesize=tilesize)
     cf = get_capacity_factor(
-        aoi, lcoe.capacity_factor, lcoe.loss_factor, lcoe.tlf, tilesize=tilesize
+        aoi,
+        lcoe.capacity_factor,
+        lcoe.loss_factor,
+        lcoe.tlf,
+        lcoe.af,
+        tilesize=tilesize,
     )
 
     # lcoe component calculation

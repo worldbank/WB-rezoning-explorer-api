@@ -244,8 +244,8 @@ class LCOE(BaseModel):
     )
     af: float = Field(
         1,
-        title="Unavailability Factor",
-        description="Percentage of energy generation lost due to forced or scheduled outages (Applied after technical losses).",
+        title="Availability Factor",
+        description="Percentage of energy generation available after losses due to forced or scheduled outages (Applied after technical losses).",
     )
 
 

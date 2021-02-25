@@ -45,7 +45,9 @@ def lcoe(
     # calculate LCOE (from zone.py, TODO: DRY)
     # spatial temporal inputs
     ds, dr, _calc, mask = get_distances(aoi.dict(), filters, tilesize=256)
-    cf = get_capacity_factor(aoi.dict(), lcoe.capacity_factor, lcoe.tlf, tilesize=256)
+    cf = get_capacity_factor(
+        aoi.dict(), lcoe.capacity_factor, lcoe.tlf, lcoe.af, tilesize=256
+    )
 
     # lcoe component calculation
     lg = lcoe_generation(lcoe, cf)
