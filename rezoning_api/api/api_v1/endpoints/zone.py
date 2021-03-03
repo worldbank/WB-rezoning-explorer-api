@@ -2,6 +2,7 @@
 
 from fastapi import APIRouter, Depends
 import numpy as np
+from shapely.geometry import shape
 
 from rezoning_api.models.zone import ZoneRequest, ZoneResponse, Filters, Weights
 from rezoning_api.utils import calc_score
@@ -34,13 +35,21 @@ def zone(query: ZoneRequest, country_id: str = "AFG", filters: Filters = Depends
     lcoe = extras["lcoe"]
     cf = extras["cf"]
 
+    # installed capacity potential
+    icp = query.lcoe.landuse * shape(query.aoi.dict()).area
+
+    # annual energy generation potential (divide by 1000 for GWh)
+    generation_potential = query.lcoe.landuse * cf.sum() * 8760 / 1000
+
     zs = data.mean()
     zs = 0.01 if np.isnan(zs) else zs
 
     return dict(
         lcoe=lcoe.mean(),
         zone_score=zs,
-        zone_output=cf.sum(),
+        generation_potential=generation_potential,
+        zone_output=generation_potential,
+        icp=icp,
         zone_output_density=cf.sum() / (500 ** 2),
     )
 
