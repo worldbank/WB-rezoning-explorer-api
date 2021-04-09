@@ -233,6 +233,9 @@ def _filter(array, filters):
                 elif layer_name == "waterbodies":
                     # booleans are only sent when false, match non values
                     tmp = single_layer != 2
+                elif layer_name in ["pp_whs", "unep_coral", "unesco_ramsar"]:
+                    # these are really distance layers that we treat as boolean
+                    tmp = single_layer < 1
                 else:
                     # booleans are only sent when false, match non values
                     tmp = single_layer > 0

@@ -38,11 +38,8 @@ LAND_COVER_OPTIONS = [
 class Category(Enum):
     """options for category"""
 
-    NATURAL = "natural"
-    INFRASTRUCTURE = "infrastructure"
-    ENVIRONMENT = "environment"
-    CULTURAL = "cultural"
-    ZONE_PARAMETERS = "zone parameters"
+    BASIC = "BASIC"
+    ADVANCED = "ADVANCED"
 
 
 class RangeFilter(str):
@@ -260,152 +257,164 @@ class Filters(BaseModel):
     f_worldpop: Optional[RangeFilter] = FilterField(
         title="Population Density",
         unit="ppl/km²",
-        category=Category.NATURAL,
-        description="A measurement of population per unit area",
+        category=Category.BASIC,
+        description="Set a minimum and maximum value to the population density that will be in proximity to the suitable areas.",
+        energy_type=["solar", "wind"],
     )
     f_slope: Optional[RangeFilter] = FilterField(
         title="Slope",
         unit="degrees",
-        category=Category.NATURAL,
-        description="The steepness or angle considered with reference to the horizon.",
+        category=Category.BASIC,
+        description="Set minimum and maximum slope to be included in the analysis.",
+        energy_type=["solar", "wind"],
     )
     f_land_cover: Optional[CategorialFilter] = FilterField(
-        title="Land Cover", category=Category.NATURAL, options=LAND_COVER_OPTIONS
+        title="Land Cover",
+        category=Category.ADVANCED,
+        options=LAND_COVER_OPTIONS,
+        description="Select land cover type(s) to include in zone analysis.",
+        energy_type=["solar", "wind"],
     )
     f_grid: Optional[RangeFilter] = FilterField(
-        title="Distance to Grid",
+        title="Transmission Lines (Distance to)",
         unit="meters",
-        category=Category.INFRASTRUCTURE,
-        description="Areas within a defined distance to transmission lines",
+        category=Category.BASIC,
+        description="Set a minimum and maximum distance to transmission lines from suitable areas.",
+        energy_type=["solar", "wind"],
     )
     f_airports: Optional[RangeFilter] = FilterField(
-        title="Distance to Airports",
+        title="Airports (Distance to)",
         unit="meters",
-        category=Category.INFRASTRUCTURE,
-        description="Areas within a defined distance to airports.",
+        category=Category.ADVANCED,
+        description="Set the minimum and maximum distance to airports from suitable areas",
     )
     f_ports: Optional[RangeFilter] = FilterField(
-        title="Distance to Ports",
+        title="Ports (Distance to)",
         unit="meters",
-        category=Category.INFRASTRUCTURE,
+        category=Category.ADVANCED,
         energy_type=["offshore"],
-        description="Areas within a defined distance to ports.",
+        description="Set a minimum and maximum distance to ports from suitable areas.",
     )
     f_anchorages: Optional[RangeFilter] = FilterField(
-        title="Distance to Anchorages",
+        title="Anchorages (Distance to)",
         unit="meters",
-        category=Category.INFRASTRUCTURE,
+        category=Category.BASIC,
         energy_type=["offshore"],
-        description="Areas within a defined distance to anchorages.",
+        description="Set a minimum and maximum distance to anchorages from suitable areas.",
     )
     f_roads: Optional[RangeFilter] = FilterField(
-        title="Distance to Roads",
+        title="Roads (Distance to)",
         unit="meters",
-        category=Category.INFRASTRUCTURE,
+        category=Category.ADVANCED,
         description="Areas within a defined distance to roads.",
+        energy_type=["solar", "wind"],
     )
-    f_pp_whs: Optional[RangeFilter] = FilterField(
-        title="Distance to Protected Areas",
-        unit="meters",
-        category=Category.ENVIRONMENT,
-        description="An area recognised, dedicated and managed, through legal or other effective means, to achieve the long term conservation of nature with associated ecosystem services and cultural value.",
+    f_pp_whs: Optional[bool] = FilterField(
+        title="Protected Areas",
+        category=Category.ADVANCED,
+        description="Unselect this option to exclude protected areas from the analysis.",
+        energy_type=["solar", "wind"],
     )
-    f_unep_coral: Optional[RangeFilter] = FilterField(
-        title="Distance to Coral",
-        unit="meters",
-        category=Category.ENVIRONMENT,
-        description="Areas containing underwater ecosystems characterized by reef-building corals.",
+    f_unep_coral: Optional[bool] = FilterField(
+        title="Coral Reefs",
+        category=Category.ADVANCED,
+        description="Unselect this option to exclude coral reefs from the analysis.",
+        energy_type=["offshore"],
     )
     f_unesco: Optional[RangeFilter] = FilterField(
-        title="Distance to World Heritage Sites",
+        title="UNESCO World Heritage Sites",
         unit="meters",
-        category=Category.CULTURAL,
-        description="A landmark or area with legal protection by an international convention for having cultural, historical, scientific or other form of significance.",
+        category=Category.ADVANCED,
+        description="Set a minimum distance to World Heritage Sites from suitable areas.",
     )
-    f_unesco_ramsar: Optional[RangeFilter] = FilterField(
-        title="Distance to Ramsar Wetlands",
-        unit="meters",
-        category=Category.ENVIRONMENT,
-        description="Wetland sites designated to be of international importance under the Ramsar Convention.",
+    f_unesco_ramsar: Optional[bool] = FilterField(
+        title="Ramsar Sites",
+        category=Category.ADVANCED,
+        description="Unselect this option to exclude RAMSAR sites from the analysis.",
+        energy_type=["offshore"],
     )
     f_wwf_glw_3: Optional[bool] = FilterField(
         title="Wetlands",
-        category=Category.ENVIRONMENT,
-        description="Areas where water covers the soil, or is near the surface of the soil for all or part of the year, and supports both aquatic and terrestrial species.",
+        category=Category.ADVANCED,
+        description="Unselect this option to exclude wetlands from the analysis.",
+        energy_type=["offshore"],
     )
     f_pp_marine_protected: Optional[bool] = FilterField(
-        title="Marine Protected Zone",
-        category=Category.ENVIRONMENT,
-        description="Areas in need of protection in open-ocean waters and deep-sea habitats as designated by the Conference of the Parties to the Convention on Biological Diversity (COP 9).",
+        title="Protected Areas",
+        category=Category.ADVANCED,
+        description="Unselect this option to exclude protected areas from the analysis.",
+        energy_type=["offshore"],
     )
     f_unep_tidal: Optional[bool] = FilterField(
-        title="Tidal Zone",
-        category=Category.ENVIRONMENT,
-        description="Areas where the ocean meets the land between high and low tides.",
+        title="Intertidal Areas",
+        category=Category.ADVANCED,
+        description="Unselect this option to exclude intertidal areas from the analysis.",
+        energy_type=["offshore"],
     )
-    f_capacity_value: Optional[RangeFilter] = FilterField(
-        title="Capacity Value", category=Category.ZONE_PARAMETERS
-    )
-    f_lcoe_gen: Optional[RangeFilter] = FilterField(
-        title="LCOE Generation", unit="$/MWh", category=Category.ZONE_PARAMETERS
-    )
-    f_lcoe_transmission: Optional[RangeFilter] = FilterField(
-        title="LCOE Transmission", unit="$/MWh", category=Category.ZONE_PARAMETERS
-    )
-    f_lcoe_road: Optional[RangeFilter] = FilterField(
-        title="LCOE Road", unit="$/MWh", category=Category.ZONE_PARAMETERS
-    )
-    f_gsa_gti: Optional[RangeFilter] = FilterField(
-        title="Solar Radiation",
-        unit="kWh/m²",
-        category=Category.NATURAL,
-        energy_type=["solar"],
-        description="The solar resource, or electromagnetic radiation, emitted by the sun in a geographic location.",
-        priority=True,
-    )
+    # f_capacity_value: Optional[RangeFilter] = FilterField(
+    #     title="Capacity Value", category=Category.ZONE_PARAMETERS
+    # )
+    # f_lcoe_gen: Optional[RangeFilter] = FilterField(
+    #     title="LCOE Generation", unit="$/MWh", category=Category.ZONE_PARAMETERS
+    # )
+    # f_lcoe_transmission: Optional[RangeFilter] = FilterField(
+    #     title="LCOE Transmission", unit="$/MWh", category=Category.ZONE_PARAMETERS
+    # )
+    # f_lcoe_road: Optional[RangeFilter] = FilterField(
+    #     title="LCOE Road", unit="$/MWh", category=Category.ZONE_PARAMETERS
+    # )
+    # f_gsa_gti: Optional[RangeFilter] = FilterField(
+    #     title="Solar Radiation",
+    #     unit="kWh/m²",
+    #     category=Category.NATURAL,
+    #     energy_type=["solar"],
+    #     description="The solar resource, or electromagnetic radiation, emitted by the sun in a geographic location.",
+    #     priority=True,
+    # )
     f_gsa_pvout: Optional[RangeFilter] = FilterField(
         title="Solar PVOut",
-        unit="kWh/kWp",
-        category=Category.NATURAL,
+        unit="kWh/m2/y",
+        category=Category.BASIC,
         energy_type=["solar"],
-        description="The solar photovoltaic (PV) generation potential in a geographic location.",
+        description="Set mimumum and maximum solar generation potential to be included in the analysis.",
         priority=True,
     )
     f_srtm90: Optional[RangeFilter] = FilterField(
         title="Elevation",
         unit="meters",
-        category=Category.NATURAL,
+        category=Category.BASIC,
         energy_type=["solar", "wind"],
-        description="The height above mean sea level (MSL).",
+        description="Set minimum and maximum elevation to be included in the analysis.",
     )
     f_gebco: Optional[RangeFilter] = FilterField(
         title="Bathymetry",
         unit="meters",
-        category=Category.NATURAL,
+        category=Category.BASIC,
         energy_type=["offshore"],
-        description="A measurement of depth of water in oceans, seas, or lakes.",
+        description="Set minimum and maximum water depth for floating foundation technology. Floating foundations begin at below 50 meters.",
     )
     f_waterbodies: Optional[bool] = FilterField(
         title="Water Bodies",
-        category=Category.NATURAL,
-        description="Natural or artificial water bodies with the presence of a water surface during most of the year, including both fresh and salt water resources.",
+        category=Category.ADVANCED,
+        description="Unselect this option to exclude water bodies from the analysis.",
+        energy_type=["solar", "wind"],
     )
-    f_gwa_power_100: Optional[RangeFilter] = FilterField(
-        title="Wind Power",
-        category=Category.NATURAL,
+    f_gwa_speed_100: Optional[RangeFilter] = FilterField(
+        title="Wind Speed",
+        category=Category.BASIC,
         energy_type=["wind", "offshore"],
-        unit="W/m²",
-        description="The wind resource, or wind energy, potential generated through wind turbines",
+        unit="m/s",
+        description="Set mimumum and maximum wind speed to be included in the analysis.",
         priority=True,
     )
-    f_air_density: Optional[RangeFilter] = FilterField(
-        title="Air Density",
-        category=Category.NATURAL,
-        energy_type=["offshore", "wind"],
-        unit="kg/m³",
-        description="The density of air, or atmospheric density, is the mass per unit volume of Earth's atmosphere.",
-        priority=True,
-    )
+    # f_air_density: Optional[RangeFilter] = FilterField(
+    #     title="Air Density",
+    #     category=Category.NATURAL,
+    #     energy_type=["offshore", "wind"],
+    #     unit="kg/m³",
+    #     description="The density of air, or atmospheric density, is the mass per unit volume of Earth's atmosphere.",
+    #     priority=True,
+    # )
 
 
 class ZoneRequest(BaseModel):
