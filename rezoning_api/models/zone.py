@@ -233,9 +233,9 @@ class LCOE(BaseModel):
         25, title="Lifetime [years] (N)", description="Lifetime of the power plant"
     )
     landuse: float = Field(
-        0,
+        3,
         title="Land Use Factor [MW/km2]",
-        description="Land use factor is the average land area occupied by a power plant. More information: https://www.nrel.gov/analysis/tech-size.html ",
+        description="Land use factor is the average land area occupied by a power plant. More information: https://www.nrel.gov/analysis/tech-size.html",
     )
     tlf: float = Field(
         0,

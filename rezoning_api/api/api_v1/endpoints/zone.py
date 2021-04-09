@@ -44,6 +44,7 @@ def zone(query: ZoneRequest, country_id: str = "AFG", filters: Filters = Depends
     zs = data.mean()
     zs = 0.01 if np.isnan(zs) else zs
 
+    print(lcoe, zs, generation_potential, icp, cf.sum())
     return dict(
         lcoe=lcoe.mean(),
         zone_score=zs,

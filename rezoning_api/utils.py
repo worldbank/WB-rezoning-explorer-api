@@ -160,14 +160,17 @@ def get_capacity_factor(
         tilesize=tilesize,
     )
 
+    # get our selected layer
+    sel_cf = cf.sel(layer=LAYERS[dataset][cf_idx])
+
     if capacity_factor == "gsa-pvout":
         # convert daily to hourly
-        cf = cf / 24
+        sel_cf = sel_cf / 24
         # backout the technical loss factor applied
-        cf = cf * (1 / (1 - 0.095))
+        sel_cf = sel_cf * (1 / (1 - 0.095))
 
     # apply loss factor and availability factor
-    cf = cf * (1 - loss_factor) * (1 - availabity_factor)
+    sel_cf = sel_cf * (1 - loss_factor) * (1 - availabity_factor)
 
     return cf.sel(layer=LAYERS[dataset][cf_idx])
 
@@ -324,7 +327,6 @@ def calc_score(id, aoi, lcoe, weights, filters, tilesize=None, ret_extras=False)
     cf = get_capacity_factor(
         aoi,
         lcoe.capacity_factor,
-        lcoe.loss_factor,
         lcoe.tlf,
         lcoe.af,
         tilesize=tilesize,

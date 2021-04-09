@@ -48,6 +48,7 @@ def lcoe(
     cf = get_capacity_factor(
         aoi.dict(), lcoe.capacity_factor, lcoe.tlf, lcoe.af, tilesize=256
     )
+    print(cf.sum())
 
     # lcoe component calculation
     lg = lcoe_generation(lcoe, cf)
