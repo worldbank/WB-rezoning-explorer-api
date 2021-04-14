@@ -188,79 +188,96 @@ class LCOE(BaseModel):
         None,
         title="Turbine Type or Solar Unit Type",
         description="Annual capacity factor is a unitless ratio of the actual electrical energy output over a given period of time to the maximum possible electrical energy output over that period.",
+        category=Category.BASIC,
     )
-    crf: float = Field(
-        1,
-        title="Capital Recovery Factor (CRF)",
-        description="A capital recovery factor is the ratio of a constant annuity to the present value of receiving that annuity for a given length of time.",
-    )
+    # crf: float = Field(
+    #     1,
+    #     title="Capital Recovery Factor (CRF)",
+    #     description="A capital recovery factor is the ratio of a constant annuity to the present value of receiving that annuity for a given length of time.",
+    # )
     cg: int = Field(
         2000,
         title="Generation – capital [USD/kW] (Cg)",
         description="Capital expenditure for generation, per unit of capacity.",
+        category=Category.BASIC,
     )
     omfg: int = Field(
         40,
         title="Generation – fixed O&M [USD/kW/y] (OMf,g)",
         description="Fixed Operation and Maintenance costs for the generation part of the system, per unit of capacity, per year.",
+        category=Category.BASIC,
     )
     omvg: float = Field(
         4,
         title="Generation – variable O&M [USD/MWh] (OMv,g)",
         description="Variable Operation and Maintenance costs for generation, per unit of energy produced.",
+        category=Category.ADVANCED,
     )
     ct: int = Field(
         1000,
         title="Transmission (land cabling) – capital [USD/MW/km] (Ct)",
         description="Capital expenditure for transmission (land cabling), per unit of capacity and distance.",
+        category=Category.ADVANCED,
     )
     omft: int = Field(
         0,
         title="Transmission – fixed O&M [USD/MW/km] (OMf,t)",
         description="Fixed Operation and Maintenance costs for the transmission, per unit of distance, per year.",
+        category=Category.ADVANCED,
     )
     cs: float = Field(
         70000,
         title="Substation – capital [USD / MW / two substations (per new transmission connection) ] (Cs)",
         description="Capital expenditure for new substations or upgrades per transmission connection.",
+        category=Category.ADVANCED,
     )
     cr: float = Field(
         407000,
         title="Road – capital [USD/km] (Cr)",
         description="Capital expenditure for road infrastructure, per unit of distance. One road assumed for every 50 MW of installed capacity",
+        category=Category.ADVANCED,
     )
     omfr: float = Field(
         0,
         title="Road – fixed O&M [USD/km] (OMf,r)",
         description="Fixed Operation and Maintenance costs for road infrastructure, per unit of distance, per year.",
+        category=Category.ADVANCED,
     )
     decom: float = Field(
         0,
         title="Decommission % rate (Decom)",
         description="Decommissioning costs incurred at end of lifetime as a share of capital costs of generation.",
+        category=Category.ADVANCED,
     )
     i: float = Field(
         0.1,
         title="Economic discount rate [%] (i)",
         description="Rate of return used to discount future cash flows back to their present value. This rate is often a company’s Weighted Average Cost of Capital (WACC), required rate of return, or the hurdle rate that investors expect to earn relative to the risk of the investment.",
+        category=Category.BASIC,
     )
     n: float = Field(
-        25, title="Lifetime [years] (N)", description="Lifetime of the power plant"
+        25,
+        title="Lifetime [years] (N)",
+        description="Lifetime of the power plant",
+        category=Category.ADVANCED,
     )
     landuse: float = Field(
         0,
         title="Land Use Factor [MW/km2]",
         description="Land use factor is the average land area occupied by a power plant. More information: https://www.nrel.gov/analysis/tech-size.html ",
+        category=Category.BASIC,
     )
     tlf: float = Field(
         0,
         title="Technical Loss Factor",
         description="Percentage of gross energy generation lost due to technical losses (e.g. wake effects for wind turbines; wiring and inverter losses for solar PV systems)",
+        category=Category.ADVANCED,
     )
     af: float = Field(
         1,
         title="Unavailability Factor",
         description="Percentage of energy generation lost due to forced or scheduled outages (Applied after technical losses).",
+        category=Category.ADVANCED,
     )
 
 
