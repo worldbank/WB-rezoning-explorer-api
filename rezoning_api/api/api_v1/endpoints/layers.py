@@ -135,17 +135,8 @@ def get_layers():
             layer["category"] = mf.get("secondary_category", None)
             layer["title"] = mf.get("title", None)
         elif lkey in cfo_flat:
-            cf_params = lkey.split("-")
-            if len(cf_params) == 2:
-                title = f"IEC Class {'I' * int(cf_params[1][3])}"
-            else:
-                main = f"{' '.join([s.capitalize() if len(s) > 4 else s.upper() for s in cf_params[1:-1]])}"
-                height = cf_params[-1]
-                title = f"{main} @ {height}m"
-                title = title.replace("Mode0", "Mode 0")
-            layer["description"] = f"Capacity Factor derived from {title} input"
-            layer["category"] = "capacity-factor"
-            layer["title"] = title
+            # remove excess capacity factor layers
+            layers[lkey] = {}
         elif lkey.startswith("gwa"):
             _, kind, height = lkey.split("-")
             layer["description"] = None
@@ -200,5 +191,10 @@ def get_layers():
     layers.pop("wwf-glw-1", None)
     layers.pop("wwf-glw-2", None)
     layers.pop("jrc-gsw", None)
+
+    # remove layers "marked for deletion"
+    for key in list(layers.keys()):
+        if not layers[key]:
+            del layers[key]
 
     return layers
