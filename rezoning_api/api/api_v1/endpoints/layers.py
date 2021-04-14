@@ -132,7 +132,7 @@ def get_layers():
         if matching_filters:
             mf = matching_filters[0]
             layer["description"] = mf.get("description", None)
-            layer["category"] = mf.get("category", None)
+            layer["category"] = mf.get("secondary_category", None)
             layer["title"] = mf.get("title", None)
         elif lkey in cfo_flat:
             cf_params = lkey.split("-")

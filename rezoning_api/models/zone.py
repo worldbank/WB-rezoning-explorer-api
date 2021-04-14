@@ -42,6 +42,15 @@ class Category(Enum):
     ADVANCED = "Advanced"
 
 
+class SecondaryCategory(Enum):
+    """options for secondary category"""
+
+    NATURAL = "Natural"
+    INFRASTRUCTURE = "Infrastructure"
+    ENVIRONMENT = "Environment"
+    CULTURAL = "Cultural"
+
+
 class RangeFilter(str):
     """custom validator for range filters"""
 
@@ -123,6 +132,7 @@ def FilterField(
     unit=None,
     energy_type: List = ["solar", "wind", "offshore"],
     category=None,
+    secondary_category=None,
     options=None,
     priority=False,
 ):
@@ -135,6 +145,7 @@ def FilterField(
         unit=unit,
         energy_type=energy_type,
         category=category,
+        secondary_category=secondary_category,
         options=options,
         priority=priority,
     )
@@ -258,6 +269,7 @@ class Filters(BaseModel):
         title="Population Density",
         unit="ppl/km²",
         category=Category.BASIC,
+        secondary_category=SecondaryCategory.NATURAL,
         description="Set a minimum and maximum value to the population density that will be in proximity to the suitable areas.",
         energy_type=["solar", "wind"],
     )
@@ -265,6 +277,7 @@ class Filters(BaseModel):
         title="Slope",
         unit="degrees",
         category=Category.BASIC,
+        secondary_category=SecondaryCategory.NATURAL,
         description="Set minimum and maximum slope to be included in the analysis.",
         energy_type=["solar", "wind"],
     )
@@ -272,6 +285,7 @@ class Filters(BaseModel):
         title="Land Cover",
         category=Category.ADVANCED,
         options=LAND_COVER_OPTIONS,
+        secondary_category=SecondaryCategory.NATURAL,
         description="Select land cover type(s) to include in zone analysis.",
         energy_type=["solar", "wind"],
     )
@@ -279,6 +293,7 @@ class Filters(BaseModel):
         title="Transmission Lines (Distance to)",
         unit="meters",
         category=Category.BASIC,
+        secondary_category=SecondaryCategory.INFRASTRUCTURE,
         description="Set a minimum and maximum distance to transmission lines from suitable areas.",
         energy_type=["solar", "wind"],
     )
@@ -286,12 +301,14 @@ class Filters(BaseModel):
         title="Airports (Distance to)",
         unit="meters",
         category=Category.ADVANCED,
+        secondary_category=SecondaryCategory.INFRASTRUCTURE,
         description="Set the minimum and maximum distance to airports from suitable areas",
     )
     f_ports: Optional[RangeFilter] = FilterField(
         title="Ports (Distance to)",
         unit="meters",
         category=Category.ADVANCED,
+        secondary_category=SecondaryCategory.INFRASTRUCTURE,
         energy_type=["offshore"],
         description="Set a minimum and maximum distance to ports from suitable areas.",
     )
@@ -299,6 +316,7 @@ class Filters(BaseModel):
         title="Anchorages (Distance to)",
         unit="meters",
         category=Category.BASIC,
+        secondary_category=SecondaryCategory.INFRASTRUCTURE,
         energy_type=["offshore"],
         description="Set a minimum and maximum distance to anchorages from suitable areas.",
     )
@@ -306,18 +324,21 @@ class Filters(BaseModel):
         title="Roads (Distance to)",
         unit="meters",
         category=Category.ADVANCED,
+        secondary_category=SecondaryCategory.INFRASTRUCTURE,
         description="Areas within a defined distance to roads.",
         energy_type=["solar", "wind"],
     )
     f_pp_whs: Optional[bool] = FilterField(
         title="Protected Areas",
         category=Category.ADVANCED,
+        secondary_category=SecondaryCategory.ENVIRONMENT,
         description="Unselect this option to exclude protected areas from the analysis.",
         energy_type=["solar", "wind"],
     )
     f_unep_coral: Optional[bool] = FilterField(
         title="Coral Reefs",
         category=Category.ADVANCED,
+        secondary_category=SecondaryCategory.ENVIRONMENT,
         description="Unselect this option to exclude coral reefs from the analysis.",
         energy_type=["offshore"],
     )
@@ -325,29 +346,34 @@ class Filters(BaseModel):
         title="UNESCO World Heritage Sites",
         unit="meters",
         category=Category.ADVANCED,
+        secondary_category=SecondaryCategory.CULTURAL,
         description="Set a minimum distance to World Heritage Sites from suitable areas.",
     )
     f_unesco_ramsar: Optional[bool] = FilterField(
         title="Ramsar Sites",
         category=Category.ADVANCED,
+        secondary_category=SecondaryCategory.ENVIRONMENT,
         description="Unselect this option to exclude RAMSAR sites from the analysis.",
         energy_type=["offshore"],
     )
     f_wwf_glw_3: Optional[bool] = FilterField(
         title="Wetlands",
         category=Category.ADVANCED,
+        secondary_category=SecondaryCategory.ENVIRONMENT,
         description="Unselect this option to exclude wetlands from the analysis.",
         energy_type=["offshore"],
     )
     f_pp_marine_protected: Optional[bool] = FilterField(
         title="Protected Areas",
         category=Category.ADVANCED,
+        secondary_category=SecondaryCategory.ENVIRONMENT,
         description="Unselect this option to exclude protected areas from the analysis.",
         energy_type=["offshore"],
     )
     f_unep_tidal: Optional[bool] = FilterField(
         title="Intertidal Areas",
         category=Category.ADVANCED,
+        secondary_category=SecondaryCategory.ENVIRONMENT,
         description="Unselect this option to exclude intertidal areas from the analysis.",
         energy_type=["offshore"],
     )
@@ -375,6 +401,7 @@ class Filters(BaseModel):
         title="Solar PVOut",
         unit="kWh/m2/y",
         category=Category.BASIC,
+        secondary_category=SecondaryCategory.NATURAL,
         energy_type=["solar"],
         description="Set mimumum and maximum solar generation potential to be included in the analysis.",
         priority=True,
@@ -383,6 +410,7 @@ class Filters(BaseModel):
         title="Elevation",
         unit="meters",
         category=Category.BASIC,
+        secondary_category=SecondaryCategory.NATURAL,
         energy_type=["solar", "wind"],
         description="Set minimum and maximum elevation to be included in the analysis.",
     )
@@ -390,18 +418,21 @@ class Filters(BaseModel):
         title="Bathymetry",
         unit="meters",
         category=Category.BASIC,
+        secondary_category=SecondaryCategory.NATURAL,
         energy_type=["offshore"],
         description="Set minimum and maximum water depth for floating foundation technology. Floating foundations begin at below 50 meters.",
     )
     f_waterbodies: Optional[bool] = FilterField(
         title="Water Bodies",
         category=Category.ADVANCED,
+        secondary_category=SecondaryCategory.NATURAL,
         description="Unselect this option to exclude water bodies from the analysis.",
         energy_type=["solar", "wind"],
     )
     f_gwa_speed_100: Optional[RangeFilter] = FilterField(
         title="Wind Speed",
         category=Category.BASIC,
+        secondary_category=SecondaryCategory.NATURAL,
         energy_type=["wind", "offshore"],
         unit="m/s",
         description="Set mimumum and maximum wind speed to be included in the analysis.",
