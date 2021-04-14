@@ -134,6 +134,8 @@ def get_layers():
             layer["description"] = mf.get("description", None)
             layer["category"] = mf.get("secondary_category", None)
             layer["title"] = mf.get("title", None)
+            layer["energy_type"] = mf.get("energy_type", None)
+            layer["units"] = mf.get("units", None)
         elif lkey in cfo_flat:
             # remove excess capacity factor layers
             layers[lkey] = {}
@@ -142,18 +144,32 @@ def get_layers():
             layer["description"] = None
             layer["category"] = "additional-wind"
             layer["title"] = f"Mean Wind {kind.capitalize()} @ {height}m "
+            layer["energy_type"] = ["offshore", "wind"]
+            layer["units"] = "m/s" if kind == "speed" else "W/m²"
         elif lkey == "gsa-gti":
             layer["description"] = None
             layer["category"] = "additional-solar"
             layer["title"] = "Global Titled Irradiation"
+            layer["energy_type"] = ["solar"]
+            layer["units"] = "kWh/m²"
         elif lkey == "gsa-ghi":
             layer["description"] = None
             layer["category"] = "additional-solar"
             layer["title"] = "Global Horizontal Irradiation"
+            layer["energy_type"] = ["solar"]
+            layer["units"] = "kWh/m²"
         elif lkey == "gsa-temp":
             layer["description"] = None
             layer["category"] = "additional-solar"
             layer["title"] = "Air Temperature"
+            layer["energy_type"] = ["solar"]
+            layer["units"] = "°C"
+        elif lkey == "air-density":
+            layer["description"] = None
+            layer["category"] = "additional-wind"
+            layer["title"] = "Air Density"
+            layer["energy_type"] = ["offshore", "wind"]
+            layer["units"] = "kg/m³"
         else:
             layer["description"] = None
             layer["category"] = "additional"
