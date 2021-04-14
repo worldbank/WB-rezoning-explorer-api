@@ -13,6 +13,7 @@ inst_reqs = [
     "aiofiles",
     "rio-tiler @ git+https://github.com/cogeotiff/rio-tiler.git",
     "mercantile",
+    "rasterio==1.1.8",
 ]
 
 extra_reqs = {
@@ -32,7 +33,7 @@ extra_reqs = {
         "aws-cdk.aws_elasticache==1.72.0",
         "aws-cdk.aws_logs==1.72.0",
         "aws-cdk.aws_ecr==1.72.0",
-        "aws-cdk.aws_s3==1.72.00",
+        "aws-cdk.aws_s3==1.72.0",
     ],
     "test": ["moto", "mock", "pytest", "pytest-cov", "pytest-asyncio", "requests"],
 }
