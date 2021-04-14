@@ -135,7 +135,7 @@ def FilterField(
     category=None,
     secondary_category=None,
     options=None,
-    priority=False,
+    priority=99,
 ):
     """filter field defaults"""
     # TODO: evaulate whether we need this now that everything gets passed straight down
@@ -275,6 +275,7 @@ class Filters(BaseModel):
         description="Set a minimum and maximum value to the population density that will be in proximity to the suitable areas.",
         secondary_description="A measurement of population per unit area",
         energy_type=["solar", "wind"],
+        priority=4,
     )
     f_slope: Optional[RangeFilter] = FilterField(
         title="Slope",
@@ -284,6 +285,7 @@ class Filters(BaseModel):
         description="Set minimum and maximum slope to be included in the analysis.",
         secondary_description="The steepness or angle considered with reference to the horizon.",
         energy_type=["solar", "wind"],
+        priority=3,
     )
     f_land_cover: Optional[CategorialFilter] = FilterField(
         title="Land Cover",
@@ -293,6 +295,7 @@ class Filters(BaseModel):
         description="Select land cover type(s) to include in zone analysis.",
         secondary_description="Land cover refers to the surface cover on the ground, whether vegetation, urban infrastructure, water, bare soil, etc.",
         energy_type=["solar", "wind"],
+        priority=12,
     )
     f_grid: Optional[RangeFilter] = FilterField(
         title="Transmission Lines (Distance to)",
@@ -301,6 +304,7 @@ class Filters(BaseModel):
         secondary_category=SecondaryCategory.INFRASTRUCTURE,
         description="Set a minimum and maximum distance to transmission lines from suitable areas.",
         energy_type=["solar", "wind"],
+        priority=5,
     )
     f_airports: Optional[RangeFilter] = FilterField(
         title="Airports (Distance to)",
@@ -308,6 +312,7 @@ class Filters(BaseModel):
         category=Category.ADVANCED,
         secondary_category=SecondaryCategory.INFRASTRUCTURE,
         description="Set the minimum and maximum distance to airports from suitable areas",
+        priority=14,
     )
     f_ports: Optional[RangeFilter] = FilterField(
         title="Ports (Distance to)",
@@ -316,6 +321,7 @@ class Filters(BaseModel):
         secondary_category=SecondaryCategory.INFRASTRUCTURE,
         energy_type=["offshore"],
         description="Set a minimum and maximum distance to ports from suitable areas.",
+        priority=10,
     )
     f_anchorages: Optional[RangeFilter] = FilterField(
         title="Anchorages (Distance to)",
@@ -324,6 +330,7 @@ class Filters(BaseModel):
         secondary_category=SecondaryCategory.INFRASTRUCTURE,
         energy_type=["offshore"],
         description="Set a minimum and maximum distance to anchorages from suitable areas.",
+        priority=6,
     )
     f_roads: Optional[RangeFilter] = FilterField(
         title="Roads (Distance to)",
@@ -332,6 +339,7 @@ class Filters(BaseModel):
         secondary_category=SecondaryCategory.INFRASTRUCTURE,
         description="Areas within a defined distance to roads.",
         energy_type=["solar", "wind"],
+        priority=13,
     )
     f_pp_whs: Optional[bool] = FilterField(
         title="Protected Areas",
@@ -340,6 +348,7 @@ class Filters(BaseModel):
         description="Unselect this option to exclude protected areas from the analysis.",
         secondary_description="An area recognised, dedicated and managed, through legal or other effective means, to achieve the long term conservation of nature with associated ecosystem services and cultural value.",
         energy_type=["solar", "wind"],
+        priority=15,
     )
     f_unep_coral: Optional[bool] = FilterField(
         title="Coral Reefs",
@@ -348,6 +357,7 @@ class Filters(BaseModel):
         description="Unselect this option to exclude coral reefs from the analysis.",
         secondary_description="Areas containing underwater ecosystems characterized by reef-building corals.",
         energy_type=["offshore"],
+        priority=18,
     )
     f_unesco: Optional[RangeFilter] = FilterField(
         title="UNESCO World Heritage Sites",
@@ -356,6 +366,7 @@ class Filters(BaseModel):
         secondary_category=SecondaryCategory.CULTURAL,
         description="Set a minimum distance to World Heritage Sites from suitable areas.",
         secondary_description="A landmark or area with legal protection by an international convention for having cultural, historical, scientific or other form of significance.",
+        priority=20,
     )
     f_unesco_ramsar: Optional[bool] = FilterField(
         title="Ramsar Sites",
@@ -364,6 +375,7 @@ class Filters(BaseModel):
         description="Unselect this option to exclude RAMSAR sites from the analysis.",
         secondary_description="Wetland sites designated to be of international importance under the Ramsar Convention.",
         energy_type=["offshore"],
+        priority=16,
     )
     f_wwf_glw_3: Optional[bool] = FilterField(
         title="Wetlands",
@@ -372,6 +384,7 @@ class Filters(BaseModel):
         description="Unselect this option to exclude wetlands from the analysis.",
         secondary_description="Areas where water covers the soil, or is near the surface of the soil for all or part of the year, and supports both aquatic and terrestrial species.",
         energy_type=["offshore"],
+        priority=17,
     )
     f_pp_marine_protected: Optional[bool] = FilterField(
         title="Protected Areas",
@@ -380,6 +393,7 @@ class Filters(BaseModel):
         description="Unselect this option to exclude protected areas from the analysis.",
         secondary_description="Areas in need of protection in open-ocean waters and deep-sea habitats as designated by the Conference of the Parties to the Convention on Biological Diversity (COP 9).",
         energy_type=["offshore"],
+        priority=15,
     )
     f_unep_tidal: Optional[bool] = FilterField(
         title="Intertidal Areas",
@@ -388,6 +402,7 @@ class Filters(BaseModel):
         description="Unselect this option to exclude intertidal areas from the analysis.",
         secondary_description="Areas where the ocean meets the land between high and low tides.",
         energy_type=["offshore"],
+        priority=19,
     )
     # f_capacity_value: Optional[RangeFilter] = FilterField(
     #     title="Capacity Value", category=Category.ZONE_PARAMETERS
@@ -417,7 +432,7 @@ class Filters(BaseModel):
         energy_type=["solar"],
         description="Set mimumum and maximum solar generation potential to be included in the analysis.",
         secondary_description="The solar photovoltaic (PV) generation potential in a geographic location.",
-        priority=True,
+        priority=1,
     )
     f_srtm90: Optional[RangeFilter] = FilterField(
         title="Elevation",
@@ -427,6 +442,7 @@ class Filters(BaseModel):
         energy_type=["solar", "wind"],
         description="Set minimum and maximum elevation to be included in the analysis.",
         secondary_description="The height above mean sea level (MSL).",
+        priority=2,
     )
     f_gebco: Optional[RangeFilter] = FilterField(
         title="Bathymetry",
@@ -436,6 +452,7 @@ class Filters(BaseModel):
         energy_type=["offshore"],
         description="Set minimum and maximum water depth for floating foundation technology. Floating foundations begin at below 50 meters.",
         secondary_description="A measurement of depth of water in oceans, seas, or lakes.",
+        priority=2,
     )
     f_waterbodies: Optional[bool] = FilterField(
         title="Water Bodies",
@@ -444,6 +461,7 @@ class Filters(BaseModel):
         description="Unselect this option to exclude water bodies from the analysis.",
         secondary_description="Natural or artificial water bodies with the presence of a water surface during most of the year, including both fresh and salt water resources.",
         energy_type=["solar", "wind"],
+        priority=11,
     )
     f_gwa_speed_100: Optional[RangeFilter] = FilterField(
         title="Wind Speed",
@@ -453,7 +471,7 @@ class Filters(BaseModel):
         unit="m/s",
         description="Set mimumum and maximum wind speed to be included in the analysis.",
         secondary_description="The wind resource, or wind energy, potential generated through wind turbines",
-        priority=True,
+        priority=1,
     )
     # f_air_density: Optional[RangeFilter] = FilterField(
     #     title="Air Density",
