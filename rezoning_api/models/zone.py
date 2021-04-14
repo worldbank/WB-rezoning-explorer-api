@@ -197,67 +197,67 @@ class LCOE(BaseModel):
     # )
     cg: int = Field(
         2000,
-        title="Generation – capital [USD/kW] (Cg)",
+        title="Generation – capital [USD/kW]",
         description="Capital expenditure for generation, per unit of capacity.",
         category=Category.BASIC,
     )
     omfg: int = Field(
         40,
-        title="Generation – fixed O&M [USD/kW/y] (OMf,g)",
+        title="Generation – fixed O&M [USD/kW/y]",
         description="Fixed Operation and Maintenance costs for the generation part of the system, per unit of capacity, per year.",
         category=Category.BASIC,
     )
     omvg: float = Field(
         4,
-        title="Generation – variable O&M [USD/MWh] (OMv,g)",
+        title="Generation – variable O&M [USD/MWh]",
         description="Variable Operation and Maintenance costs for generation, per unit of energy produced.",
         category=Category.ADVANCED,
     )
     ct: int = Field(
         1000,
-        title="Transmission (land cabling) – capital [USD/MW/km] (Ct)",
+        title="Transmission (land cabling) – capital [USD/MW/km]",
         description="Capital expenditure for transmission (land cabling), per unit of capacity and distance.",
         category=Category.ADVANCED,
     )
     omft: int = Field(
         0,
-        title="Transmission – fixed O&M [USD/MW/km] (OMf,t)",
+        title="Transmission – fixed O&M [USD/MW/km]",
         description="Fixed Operation and Maintenance costs for the transmission, per unit of distance, per year.",
         category=Category.ADVANCED,
     )
     cs: float = Field(
         70000,
-        title="Substation – capital [USD / MW / two substations (per new transmission connection) ] (Cs)",
+        title="Substation – capital [USD / MW / two substations (per new transmission connection) ]",
         description="Capital expenditure for new substations or upgrades per transmission connection.",
         category=Category.ADVANCED,
     )
     cr: float = Field(
         407000,
-        title="Road – capital [USD/km] (Cr)",
+        title="Road – capital [USD/km]",
         description="Capital expenditure for road infrastructure, per unit of distance. One road assumed for every 50 MW of installed capacity",
         category=Category.ADVANCED,
     )
     omfr: float = Field(
         0,
-        title="Road – fixed O&M [USD/km] (OMf,r)",
+        title="Road – fixed O&M [USD/km]",
         description="Fixed Operation and Maintenance costs for road infrastructure, per unit of distance, per year.",
         category=Category.ADVANCED,
     )
     decom: float = Field(
         0,
-        title="Decommission % rate (Decom)",
+        title="Decommission % rate",
         description="Decommissioning costs incurred at end of lifetime as a share of capital costs of generation.",
         category=Category.ADVANCED,
     )
     i: float = Field(
         0.1,
-        title="Economic discount rate [%] (i)",
+        title="Economic discount rate [%]",
         description="Rate of return used to discount future cash flows back to their present value. This rate is often a company’s Weighted Average Cost of Capital (WACC), required rate of return, or the hurdle rate that investors expect to earn relative to the risk of the investment.",
         category=Category.BASIC,
     )
     n: float = Field(
         25,
-        title="Lifetime [years] (N)",
+        title="Lifetime [years]",
         description="Lifetime of the power plant",
         category=Category.ADVANCED,
     )
