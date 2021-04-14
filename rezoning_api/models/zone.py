@@ -38,8 +38,8 @@ LAND_COVER_OPTIONS = [
 class Category(Enum):
     """options for category"""
 
-    BASIC = "BASIC"
-    ADVANCED = "ADVANCED"
+    BASIC = "Basic"
+    ADVANCED = "Advanced"
 
 
 class RangeFilter(str):
