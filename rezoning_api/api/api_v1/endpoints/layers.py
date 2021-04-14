@@ -131,7 +131,7 @@ def get_layers():
         ]
         if matching_filters:
             mf = matching_filters[0]
-            layer["description"] = mf.get("description", None)
+            layer["description"] = mf.get("secondary_description", None)
             layer["category"] = mf.get("secondary_category", None)
             layer["title"] = mf.get("title", None)
             layer["energy_type"] = mf.get("energy_type", None)
@@ -165,7 +165,9 @@ def get_layers():
             layer["energy_type"] = ["solar"]
             layer["units"] = "°C"
         elif lkey == "air-density":
-            layer["description"] = None
+            layer[
+                "description"
+            ] = "The density of air, or atmospheric density, is the mass per unit volume of Earth's atmosphere."
             layer["category"] = "additional-wind"
             layer["title"] = "Air Density"
             layer["energy_type"] = ["offshore", "wind"]

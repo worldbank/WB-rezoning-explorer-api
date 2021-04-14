@@ -129,6 +129,7 @@ def FilterField(
     default=None,
     title=None,
     description=None,
+    secondary_description=None,
     unit=None,
     energy_type: List = ["solar", "wind", "offshore"],
     category=None,
@@ -141,6 +142,7 @@ def FilterField(
     return Field(
         default,
         description=description,
+        secondary_description=secondary_description,
         title=title,
         unit=unit,
         energy_type=energy_type,
@@ -271,6 +273,7 @@ class Filters(BaseModel):
         category=Category.BASIC,
         secondary_category=SecondaryCategory.NATURAL,
         description="Set a minimum and maximum value to the population density that will be in proximity to the suitable areas.",
+        secondary_description="A measurement of population per unit area",
         energy_type=["solar", "wind"],
     )
     f_slope: Optional[RangeFilter] = FilterField(
@@ -279,6 +282,7 @@ class Filters(BaseModel):
         category=Category.BASIC,
         secondary_category=SecondaryCategory.NATURAL,
         description="Set minimum and maximum slope to be included in the analysis.",
+        secondary_description="The steepness or angle considered with reference to the horizon.",
         energy_type=["solar", "wind"],
     )
     f_land_cover: Optional[CategorialFilter] = FilterField(
@@ -287,6 +291,7 @@ class Filters(BaseModel):
         options=LAND_COVER_OPTIONS,
         secondary_category=SecondaryCategory.NATURAL,
         description="Select land cover type(s) to include in zone analysis.",
+        secondary_description="Land cover refers to the surface cover on the ground, whether vegetation, urban infrastructure, water, bare soil, etc.",
         energy_type=["solar", "wind"],
     )
     f_grid: Optional[RangeFilter] = FilterField(
@@ -333,6 +338,7 @@ class Filters(BaseModel):
         category=Category.ADVANCED,
         secondary_category=SecondaryCategory.ENVIRONMENT,
         description="Unselect this option to exclude protected areas from the analysis.",
+        secondary_description="An area recognised, dedicated and managed, through legal or other effective means, to achieve the long term conservation of nature with associated ecosystem services and cultural value.",
         energy_type=["solar", "wind"],
     )
     f_unep_coral: Optional[bool] = FilterField(
@@ -340,6 +346,7 @@ class Filters(BaseModel):
         category=Category.ADVANCED,
         secondary_category=SecondaryCategory.ENVIRONMENT,
         description="Unselect this option to exclude coral reefs from the analysis.",
+        secondary_description="Areas containing underwater ecosystems characterized by reef-building corals.",
         energy_type=["offshore"],
     )
     f_unesco: Optional[RangeFilter] = FilterField(
@@ -348,12 +355,14 @@ class Filters(BaseModel):
         category=Category.ADVANCED,
         secondary_category=SecondaryCategory.CULTURAL,
         description="Set a minimum distance to World Heritage Sites from suitable areas.",
+        secondary_description="A landmark or area with legal protection by an international convention for having cultural, historical, scientific or other form of significance.",
     )
     f_unesco_ramsar: Optional[bool] = FilterField(
         title="Ramsar Sites",
         category=Category.ADVANCED,
         secondary_category=SecondaryCategory.ENVIRONMENT,
         description="Unselect this option to exclude RAMSAR sites from the analysis.",
+        secondary_description="Wetland sites designated to be of international importance under the Ramsar Convention.",
         energy_type=["offshore"],
     )
     f_wwf_glw_3: Optional[bool] = FilterField(
@@ -361,6 +370,7 @@ class Filters(BaseModel):
         category=Category.ADVANCED,
         secondary_category=SecondaryCategory.ENVIRONMENT,
         description="Unselect this option to exclude wetlands from the analysis.",
+        secondary_description="Areas where water covers the soil, or is near the surface of the soil for all or part of the year, and supports both aquatic and terrestrial species.",
         energy_type=["offshore"],
     )
     f_pp_marine_protected: Optional[bool] = FilterField(
@@ -368,6 +378,7 @@ class Filters(BaseModel):
         category=Category.ADVANCED,
         secondary_category=SecondaryCategory.ENVIRONMENT,
         description="Unselect this option to exclude protected areas from the analysis.",
+        secondary_description="Areas in need of protection in open-ocean waters and deep-sea habitats as designated by the Conference of the Parties to the Convention on Biological Diversity (COP 9).",
         energy_type=["offshore"],
     )
     f_unep_tidal: Optional[bool] = FilterField(
@@ -375,6 +386,7 @@ class Filters(BaseModel):
         category=Category.ADVANCED,
         secondary_category=SecondaryCategory.ENVIRONMENT,
         description="Unselect this option to exclude intertidal areas from the analysis.",
+        secondary_description="Areas where the ocean meets the land between high and low tides.",
         energy_type=["offshore"],
     )
     # f_capacity_value: Optional[RangeFilter] = FilterField(
@@ -404,6 +416,7 @@ class Filters(BaseModel):
         secondary_category=SecondaryCategory.NATURAL,
         energy_type=["solar"],
         description="Set mimumum and maximum solar generation potential to be included in the analysis.",
+        secondary_description="The solar photovoltaic (PV) generation potential in a geographic location.",
         priority=True,
     )
     f_srtm90: Optional[RangeFilter] = FilterField(
@@ -413,6 +426,7 @@ class Filters(BaseModel):
         secondary_category=SecondaryCategory.NATURAL,
         energy_type=["solar", "wind"],
         description="Set minimum and maximum elevation to be included in the analysis.",
+        secondary_description="The height above mean sea level (MSL).",
     )
     f_gebco: Optional[RangeFilter] = FilterField(
         title="Bathymetry",
@@ -421,12 +435,14 @@ class Filters(BaseModel):
         secondary_category=SecondaryCategory.NATURAL,
         energy_type=["offshore"],
         description="Set minimum and maximum water depth for floating foundation technology. Floating foundations begin at below 50 meters.",
+        secondary_description="A measurement of depth of water in oceans, seas, or lakes.",
     )
     f_waterbodies: Optional[bool] = FilterField(
         title="Water Bodies",
         category=Category.ADVANCED,
         secondary_category=SecondaryCategory.NATURAL,
         description="Unselect this option to exclude water bodies from the analysis.",
+        secondary_description="Natural or artificial water bodies with the presence of a water surface during most of the year, including both fresh and salt water resources.",
         energy_type=["solar", "wind"],
     )
     f_gwa_speed_100: Optional[RangeFilter] = FilterField(
@@ -436,6 +452,7 @@ class Filters(BaseModel):
         energy_type=["wind", "offshore"],
         unit="m/s",
         description="Set mimumum and maximum wind speed to be included in the analysis.",
+        secondary_description="The wind resource, or wind energy, potential generated through wind turbines",
         priority=True,
     )
     # f_air_density: Optional[RangeFilter] = FilterField(
