@@ -42,6 +42,15 @@ class Category(Enum):
     ADVANCED = "Advanced"
 
 
+class SecondaryCategory(Enum):
+    """options for secondary category"""
+
+    NATURAL = "Natural"
+    INFRASTRUCTURE = "Infrastructure"
+    ENVIRONMENT = "Environment"
+    CULTURAL = "Cultural"
+
+
 class RangeFilter(str):
     """custom validator for range filters"""
 
@@ -120,21 +129,25 @@ def FilterField(
     default=None,
     title=None,
     description=None,
+    secondary_description=None,
     unit=None,
     energy_type: List = ["solar", "wind", "offshore"],
     category=None,
+    secondary_category=None,
     options=None,
-    priority=False,
+    priority=99,
 ):
     """filter field defaults"""
     # TODO: evaulate whether we need this now that everything gets passed straight down
     return Field(
         default,
         description=description,
+        secondary_description=secondary_description,
         title=title,
         unit=unit,
         energy_type=energy_type,
         category=category,
+        secondary_category=secondary_category,
         options=options,
         priority=priority,
     )
@@ -143,29 +156,29 @@ def FilterField(
 class Weights(BaseModel):
     """User provided weights"""
 
-    lcoe_gen: float = WeightField(0.4, title="LCOE Generation")
-    lcoe_transmission: float = WeightField(0.05, title="LCOE Transmission")
-    lcoe_road: float = WeightField(0.02, title="LCOE Road")
-    grid: float = WeightField(0.15, title="Distance to Grid")
-    worldpop: float = WeightField(0.05, title="Population Density")
-    slope: float = WeightField(0.08, title="Slope")
+    lcoe_gen: float = WeightField(0.5, title="LCOE Generation")
+    # lcoe_transmission: float = WeightField(0.05, title="LCOE Transmission")
+    # lcoe_road: float = WeightField(0.02, title="LCOE Road")
+    grid: float = WeightField(0.5, title="Distance to Grid")
+    worldpop: float = WeightField(title="Population Density")
+    slope: float = WeightField(title="Slope")
     # capacity_value: float = WeightField(title="Capacity Value")
     airports: float = WeightField(title="Distance to Airports")
     ports: float = WeightField(title="Distance to Ports")
-    anchorages: float = WeightField(title="Distance to Anchorages")
+    # anchorages: float = WeightField(title="Distance to Anchorages")
     roads: float = WeightField(title="Distance to Roads")
-    pp_whs: float = WeightField(title="Protected Areas")
-    unep_coral: float = WeightField(title="Coral")
-    unesco: float = WeightField(title="UNESCO")
-    unesco_ramsar: float = WeightField(title="Ramsar")
-    wwf_glw_3: float = WeightField(title="Wetlands")
-    pp_marine_protected: float = WeightField(title="Marine Protected")
-    unep_tidal: float = WeightField(title="UNEP Tidal")
-    gsa_gti: float = WeightField(title="GSA GTI")
-    gsa_pvout: float = WeightField(title="GSA PVOUT")
-    srtm90: float = WeightField(title="Elevation")
-    gebco: float = WeightField(title="Bathymetry")
-    waterbodies: float = WeightField(title="Waterbodies")
+    # pp_whs: float = WeightField(title="Protected Areas")
+    # unep_coral: float = WeightField(title="Coral")
+    # unesco: float = WeightField(title="UNESCO")
+    # unesco_ramsar: float = WeightField(title="Ramsar")
+    # wwf_glw_3: float = WeightField(title="Wetlands")
+    # pp_marine_protected: float = WeightField(title="Marine Protected")
+    # unep_tidal: float = WeightField(title="UNEP Tidal")
+    # gsa_gti: float = WeightField(title="GSA GTI")
+    # gsa_pvout: float = WeightField(title="GSA PVOUT")
+    # srtm90: float = WeightField(title="Elevation")
+    # gebco: float = WeightField(title="Bathymetry")
+    # waterbodies: float = WeightField(title="Waterbodies")
 
 
 class LCOE(BaseModel):
@@ -175,79 +188,96 @@ class LCOE(BaseModel):
         None,
         title="Turbine Type or Solar Unit Type",
         description="Annual capacity factor is a unitless ratio of the actual electrical energy output over a given period of time to the maximum possible electrical energy output over that period.",
+        category=Category.BASIC,
     )
-    crf: float = Field(
-        1,
-        title="Capital Recovery Factor (CRF)",
-        description="A capital recovery factor is the ratio of a constant annuity to the present value of receiving that annuity for a given length of time.",
-    )
+    # crf: float = Field(
+    #     1,
+    #     title="Capital Recovery Factor (CRF)",
+    #     description="A capital recovery factor is the ratio of a constant annuity to the present value of receiving that annuity for a given length of time.",
+    # )
     cg: int = Field(
         2000,
-        title="Generation – capital [USD/kW] (Cg)",
+        title="Generation – capital [USD/kW]",
         description="Capital expenditure for generation, per unit of capacity.",
+        category=Category.BASIC,
     )
     omfg: int = Field(
         40,
-        title="Generation – fixed O&M [USD/kW/y] (OMf,g)",
+        title="Generation – fixed O&M [USD/kW/y]",
         description="Fixed Operation and Maintenance costs for the generation part of the system, per unit of capacity, per year.",
+        category=Category.BASIC,
     )
     omvg: float = Field(
         4,
-        title="Generation – variable O&M [USD/MWh] (OMv,g)",
+        title="Generation – variable O&M [USD/MWh]",
         description="Variable Operation and Maintenance costs for generation, per unit of energy produced.",
+        category=Category.ADVANCED,
     )
     ct: int = Field(
         1000,
-        title="Transmission (land cabling) – capital [USD/MW/km] (Ct)",
+        title="Transmission (land cabling) – capital [USD/MW/km]",
         description="Capital expenditure for transmission (land cabling), per unit of capacity and distance.",
+        category=Category.ADVANCED,
     )
     omft: int = Field(
         0,
-        title="Transmission – fixed O&M [USD/MW/km] (OMf,t)",
+        title="Transmission – fixed O&M [USD/MW/km]",
         description="Fixed Operation and Maintenance costs for the transmission, per unit of distance, per year.",
+        category=Category.ADVANCED,
     )
     cs: float = Field(
         70000,
-        title="Substation – capital [USD / MW / two substations (per new transmission connection) ] (Cs)",
+        title="Substation – capital [USD / MW / two substations (per new transmission connection) ]",
         description="Capital expenditure for new substations or upgrades per transmission connection.",
+        category=Category.ADVANCED,
     )
     cr: float = Field(
         407000,
-        title="Road – capital [USD/km] (Cr)",
+        title="Road – capital [USD/km]",
         description="Capital expenditure for road infrastructure, per unit of distance. One road assumed for every 50 MW of installed capacity",
+        category=Category.ADVANCED,
     )
     omfr: float = Field(
         0,
-        title="Road – fixed O&M [USD/km] (OMf,r)",
+        title="Road – fixed O&M [USD/km]",
         description="Fixed Operation and Maintenance costs for road infrastructure, per unit of distance, per year.",
+        category=Category.ADVANCED,
     )
     decom: float = Field(
         0,
-        title="Decommission % rate (Decom)",
+        title="Decommission % rate",
         description="Decommissioning costs incurred at end of lifetime as a share of capital costs of generation.",
+        category=Category.ADVANCED,
     )
     i: float = Field(
         0.1,
-        title="Economic discount rate [%] (i)",
+        title="Economic discount rate [%]",
         description="Rate of return used to discount future cash flows back to their present value. This rate is often a company’s Weighted Average Cost of Capital (WACC), required rate of return, or the hurdle rate that investors expect to earn relative to the risk of the investment.",
+        category=Category.BASIC,
     )
     n: float = Field(
-        25, title="Lifetime [years] (N)", description="Lifetime of the power plant"
+        25,
+        title="Lifetime [years]",
+        description="Lifetime of the power plant",
+        category=Category.ADVANCED,
     )
     landuse: float = Field(
         0,
         title="Land Use Factor [MW/km2]",
         description="Land use factor is the average land area occupied by a power plant. More information: https://www.nrel.gov/analysis/tech-size.html ",
+        category=Category.BASIC,
     )
     tlf: float = Field(
         0,
         title="Technical Loss Factor",
         description="Percentage of gross energy generation lost due to technical losses (e.g. wake effects for wind turbines; wiring and inverter losses for solar PV systems)",
+        category=Category.ADVANCED,
     )
     af: float = Field(
         1,
         title="Unavailability Factor",
         description="Percentage of energy generation lost due to forced or scheduled outages (Applied after technical losses).",
+        category=Category.ADVANCED,
     )
 
 
@@ -258,98 +288,138 @@ class Filters(BaseModel):
         title="Population Density",
         unit="ppl/km²",
         category=Category.BASIC,
+        secondary_category=SecondaryCategory.NATURAL,
         description="Set a minimum and maximum value to the population density that will be in proximity to the suitable areas.",
+        secondary_description="A measurement of population per unit area",
         energy_type=["solar", "wind"],
+        priority=4,
     )
     f_slope: Optional[RangeFilter] = FilterField(
         title="Slope",
         unit="degrees",
         category=Category.BASIC,
+        secondary_category=SecondaryCategory.NATURAL,
         description="Set minimum and maximum slope to be included in the analysis.",
+        secondary_description="The steepness or angle considered with reference to the horizon.",
         energy_type=["solar", "wind"],
+        priority=3,
     )
     f_land_cover: Optional[CategorialFilter] = FilterField(
         title="Land Cover",
         category=Category.ADVANCED,
         options=LAND_COVER_OPTIONS,
+        secondary_category=SecondaryCategory.NATURAL,
         description="Select land cover type(s) to include in zone analysis.",
+        secondary_description="Land cover refers to the surface cover on the ground, whether vegetation, urban infrastructure, water, bare soil, etc.",
         energy_type=["solar", "wind"],
+        priority=12,
     )
     f_grid: Optional[RangeFilter] = FilterField(
         title="Transmission Lines (Distance to)",
         unit="meters",
         category=Category.BASIC,
+        secondary_category=SecondaryCategory.INFRASTRUCTURE,
         description="Set a minimum and maximum distance to transmission lines from suitable areas.",
         energy_type=["solar", "wind"],
+        priority=5,
     )
     f_airports: Optional[RangeFilter] = FilterField(
         title="Airports (Distance to)",
         unit="meters",
         category=Category.ADVANCED,
+        secondary_category=SecondaryCategory.INFRASTRUCTURE,
         description="Set the minimum and maximum distance to airports from suitable areas",
+        priority=14,
     )
     f_ports: Optional[RangeFilter] = FilterField(
         title="Ports (Distance to)",
         unit="meters",
         category=Category.ADVANCED,
+        secondary_category=SecondaryCategory.INFRASTRUCTURE,
         energy_type=["offshore"],
         description="Set a minimum and maximum distance to ports from suitable areas.",
+        priority=10,
     )
     f_anchorages: Optional[RangeFilter] = FilterField(
         title="Anchorages (Distance to)",
         unit="meters",
         category=Category.BASIC,
+        secondary_category=SecondaryCategory.INFRASTRUCTURE,
         energy_type=["offshore"],
         description="Set a minimum and maximum distance to anchorages from suitable areas.",
+        priority=6,
     )
     f_roads: Optional[RangeFilter] = FilterField(
         title="Roads (Distance to)",
         unit="meters",
         category=Category.ADVANCED,
+        secondary_category=SecondaryCategory.INFRASTRUCTURE,
         description="Areas within a defined distance to roads.",
         energy_type=["solar", "wind"],
+        priority=13,
     )
     f_pp_whs: Optional[bool] = FilterField(
         title="Protected Areas",
         category=Category.ADVANCED,
+        secondary_category=SecondaryCategory.ENVIRONMENT,
         description="Unselect this option to exclude protected areas from the analysis.",
+        secondary_description="An area recognised, dedicated and managed, through legal or other effective means, to achieve the long term conservation of nature with associated ecosystem services and cultural value.",
         energy_type=["solar", "wind"],
+        priority=15,
     )
     f_unep_coral: Optional[bool] = FilterField(
         title="Coral Reefs",
         category=Category.ADVANCED,
+        secondary_category=SecondaryCategory.ENVIRONMENT,
         description="Unselect this option to exclude coral reefs from the analysis.",
+        secondary_description="Areas containing underwater ecosystems characterized by reef-building corals.",
         energy_type=["offshore"],
+        priority=18,
     )
     f_unesco: Optional[RangeFilter] = FilterField(
         title="UNESCO World Heritage Sites",
         unit="meters",
         category=Category.ADVANCED,
+        secondary_category=SecondaryCategory.CULTURAL,
         description="Set a minimum distance to World Heritage Sites from suitable areas.",
+        secondary_description="A landmark or area with legal protection by an international convention for having cultural, historical, scientific or other form of significance.",
+        priority=20,
     )
     f_unesco_ramsar: Optional[bool] = FilterField(
         title="Ramsar Sites",
         category=Category.ADVANCED,
+        secondary_category=SecondaryCategory.ENVIRONMENT,
         description="Unselect this option to exclude RAMSAR sites from the analysis.",
+        secondary_description="Wetland sites designated to be of international importance under the Ramsar Convention.",
         energy_type=["offshore"],
+        priority=16,
     )
     f_wwf_glw_3: Optional[bool] = FilterField(
         title="Wetlands",
         category=Category.ADVANCED,
+        secondary_category=SecondaryCategory.ENVIRONMENT,
         description="Unselect this option to exclude wetlands from the analysis.",
+        secondary_description="Areas where water covers the soil, or is near the surface of the soil for all or part of the year, and supports both aquatic and terrestrial species.",
         energy_type=["offshore"],
+        priority=17,
     )
     f_pp_marine_protected: Optional[bool] = FilterField(
         title="Protected Areas",
         category=Category.ADVANCED,
+        secondary_category=SecondaryCategory.ENVIRONMENT,
         description="Unselect this option to exclude protected areas from the analysis.",
+        secondary_description="Areas in need of protection in open-ocean waters and deep-sea habitats as designated by the Conference of the Parties to the Convention on Biological Diversity (COP 9).",
         energy_type=["offshore"],
+        priority=15,
     )
     f_unep_tidal: Optional[bool] = FilterField(
         title="Intertidal Areas",
         category=Category.ADVANCED,
+        secondary_category=SecondaryCategory.ENVIRONMENT,
         description="Unselect this option to exclude intertidal areas from the analysis.",
+        secondary_description="Areas where the ocean meets the land between high and low tides.",
         energy_type=["offshore"],
+        priority=19,
     )
     # f_capacity_value: Optional[RangeFilter] = FilterField(
     #     title="Capacity Value", category=Category.ZONE_PARAMETERS
@@ -375,37 +445,50 @@ class Filters(BaseModel):
         title="Solar PVOut",
         unit="kWh/m2/y",
         category=Category.BASIC,
+        secondary_category=SecondaryCategory.NATURAL,
         energy_type=["solar"],
         description="Set mimumum and maximum solar generation potential to be included in the analysis.",
-        priority=True,
+        secondary_description="The solar photovoltaic (PV) generation potential in a geographic location.",
+        priority=1,
     )
     f_srtm90: Optional[RangeFilter] = FilterField(
         title="Elevation",
         unit="meters",
         category=Category.BASIC,
+        secondary_category=SecondaryCategory.NATURAL,
         energy_type=["solar", "wind"],
         description="Set minimum and maximum elevation to be included in the analysis.",
+        secondary_description="The height above mean sea level (MSL).",
+        priority=2,
     )
     f_gebco: Optional[RangeFilter] = FilterField(
         title="Bathymetry",
         unit="meters",
         category=Category.BASIC,
+        secondary_category=SecondaryCategory.NATURAL,
         energy_type=["offshore"],
         description="Set minimum and maximum water depth for floating foundation technology. Floating foundations begin at below 50 meters.",
+        secondary_description="A measurement of depth of water in oceans, seas, or lakes.",
+        priority=2,
     )
     f_waterbodies: Optional[bool] = FilterField(
         title="Water Bodies",
         category=Category.ADVANCED,
+        secondary_category=SecondaryCategory.NATURAL,
         description="Unselect this option to exclude water bodies from the analysis.",
+        secondary_description="Natural or artificial water bodies with the presence of a water surface during most of the year, including both fresh and salt water resources.",
         energy_type=["solar", "wind"],
+        priority=11,
     )
     f_gwa_speed_100: Optional[RangeFilter] = FilterField(
         title="Wind Speed",
         category=Category.BASIC,
+        secondary_category=SecondaryCategory.NATURAL,
         energy_type=["wind", "offshore"],
         unit="m/s",
         description="Set mimumum and maximum wind speed to be included in the analysis.",
-        priority=True,
+        secondary_description="The wind resource, or wind energy, potential generated through wind turbines",
+        priority=1,
     )
     # f_air_density: Optional[RangeFilter] = FilterField(
     #     title="Air Density",
