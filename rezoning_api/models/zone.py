@@ -333,8 +333,8 @@ class Filters(BaseModel):
         energy_type=["solar", "wind"],
         priority=12,
         resource_defaults=[
-            lc
-            for lc in LAND_COVER_OPTIONS
+            idx
+            for idx, lc in enumerate(LAND_COVER_OPTIONS)
             if not ("Tree cover" in lc or "Water Bodies" in lc)
         ],
     )
