@@ -110,6 +110,8 @@ def filter(
 def get_country_layers(country_id: str):
     """Return min/max for country layers"""
     minmax = get_country_min_max(country_id)
+    # bathymetry data should never filter below -1000: https://github.com/developmentseed/rezoning-api/issues/91
+    minmax["gebco"]["min"] = max(minmax["gebco"]["min"], -1000)
     # keys = list(minmax.keys())
     # [minmax.pop(key) for key in keys if key.startswith(("gwa", "gsa"))]
     return minmax
