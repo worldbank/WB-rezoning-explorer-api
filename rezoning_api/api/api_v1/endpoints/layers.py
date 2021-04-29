@@ -74,6 +74,10 @@ def layers(
         layer_min = data.min()
         layer_max = data.max()
 
+    if id == "gebco":
+        # no bathymetry on land: https://github.com/developmentseed/rezoning-api/issues/103
+        mask[data.squeeze() > 0] = 0
+
     if id != "land-cover":
         data = linear_rescale(
             data, in_range=(layer_min, layer_max), out_range=(0, 255)

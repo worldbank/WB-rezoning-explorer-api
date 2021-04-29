@@ -59,6 +59,14 @@ def get_country_min_max(id):
     try:
         minmax = s3_get(BUCKET, f"api/minmax/{id}.json")
         mm = minmax.decode("utf-8").replace("Infinity", "1000000")
-        return json.loads(mm)
+        mm_obj = json.loads(mm)
+        # bathymetry data should never filter below -1000: https://github.com/developmentseed/rezoning-api/issues/91
+        # don't display on land: https://github.com/developmentseed/rezoning-api/issues/103
+        mm_obj["gebco"]["min"] = -1000
+        mm_obj["gebco"]["max"] = 0
+        return mm_obj
     except Exception:
-        return json.loads(s3_get(BUCKET, "api/minmax/AFG.json"))
+        mm_obj = json.loads(s3_get(BUCKET, "api/minmax/AFG.json"))
+        mm_obj["gebco"]["min"] = -1000
+        mm_obj["gebco"]["max"] = 0
+        return mm_obj
