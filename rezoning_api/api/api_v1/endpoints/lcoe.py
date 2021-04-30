@@ -1,4 +1,5 @@
 """LCOE endpoints."""
+from typing import Optional
 
 from rezoning_api.db.country import get_country_min_max
 from fastapi import APIRouter, Depends
@@ -71,8 +72,14 @@ def lcoe(
 
 
 @router.get("/lcoe/schema", name="lcoe_schema")
-def get_filter_schema():
+@router.get("/lcoe/{country_id}/schema", name="lcoe_country_schema")
+def get_filter_schema(country_id: Optional[str] = None):
     """Return lcoe schema"""
     schema = LCOE.schema()["properties"]
     schema["capacity_factor"]["options"] = get_capacity_factor_options()
+
+    if country_id:
+        # TODO: replace with IRENA data
+        pass
+
     return schema
