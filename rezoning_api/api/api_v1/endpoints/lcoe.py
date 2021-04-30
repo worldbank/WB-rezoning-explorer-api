@@ -12,6 +12,7 @@ from geojson_pydantic.geometries import Polygon
 from rezoning_api.models.tiles import TileResponse
 from rezoning_api.models.zone import LCOE, Filters
 from rezoning_api.db.cf import get_capacity_factor_options
+from rezoning_api.db.irena import get_irena_defaults
 from rezoning_api.core.config import LCOE_MAX
 from rezoning_api.utils import (
     lcoe_generation,
@@ -72,14 +73,19 @@ def lcoe(
 
 
 @router.get("/lcoe/schema", name="lcoe_schema")
-@router.get("/lcoe/{country_id}/schema", name="lcoe_country_schema")
-def get_filter_schema(country_id: Optional[str] = None):
+@router.get("/lcoe/{resource}/{country_id}/schema", name="lcoe_country_schema")
+def get_filter_schema(resource: Optional[str], country_id: Optional[str] = None):
     """Return lcoe schema"""
     schema = LCOE.schema()["properties"]
     schema["capacity_factor"]["options"] = get_capacity_factor_options()
 
-    if country_id:
-        # TODO: replace with IRENA data
-        pass
+    if resource and country_id:
+        # replace with IRENA data
+        try:
+            defaults = get_irena_defaults(resource, country_id)
+            schema["cg"]["default"] = defaults["cg"]
+            schema["omfg"]["default"] = defaults["omfg"]
+        except TypeError:
+            pass
 
     return schema
