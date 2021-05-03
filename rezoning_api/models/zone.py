@@ -314,7 +314,7 @@ class Filters(BaseModel):
     )
     f_slope: Optional[RangeFilter] = FilterField(
         title="Slope",
-        unit="degrees",
+        unit="%",
         category=Category.BASIC,
         secondary_category=SecondaryCategory.NATURAL,
         description="Set minimum and maximum slope to be included in the analysis.",
