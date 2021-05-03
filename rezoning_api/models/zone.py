@@ -277,21 +277,21 @@ class LCOE(BaseModel):
     )
     landuse: float = Field(
         0,
-        title="Land Use Factor [MW/km2]",
-        description="Land use factor is the average land area occupied by a power plant. More information: https://www.nrel.gov/analysis/tech-size.html ",
+        title="Installed Capacity Area Factor [MW/km2]",
+        description="Installed capacity area factor is the average land area occupied by a power plant. More information: https://www.nrel.gov/analysis/tech-size.html ",
         category=Category.BASIC,
         priority=2,
     )
     tlf: float = Field(
         0,
-        title="Technical Loss Factor",
+        title="Technical Loss Factor [%]",
         description="Percentage of gross energy generation lost due to technical losses (e.g. wake effects for wind turbines; wiring and inverter losses for solar PV systems)",
         category=Category.ADVANCED,
         priority=6,
     )
     af: float = Field(
         1,
-        title="Unavailability Factor",
+        title="Unavailability Factor [%]",
         description="Percentage of energy generation lost due to forced or scheduled outages (Applied after technical losses).",
         category=Category.ADVANCED,
         priority=7,
@@ -321,7 +321,7 @@ class Filters(BaseModel):
         secondary_description="The steepness or angle considered with reference to the horizon.",
         energy_type=["solar", "wind"],
         priority=3,
-        resource_defaults=dict(solar=[None, 0.05], wind=[None, 0.2]),
+        resource_defaults=dict(solar=[None, 5], wind=[None, 20]),
     )
     f_land_cover: Optional[CategorialFilter] = FilterField(
         title="Land Cover",
