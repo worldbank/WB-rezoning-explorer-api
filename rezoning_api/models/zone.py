@@ -227,7 +227,7 @@ class LCOE(BaseModel):
         priority=9,
     )
     omft: int = Field(
-        0,
+        1,
         title="Transmission – fixed O&M [USD/MW/km]",
         description="Fixed Operation and Maintenance costs for the transmission, per unit of distance, per year.",
         category=Category.ADVANCED,
@@ -241,28 +241,28 @@ class LCOE(BaseModel):
         priority=11,
     )
     cr: float = Field(
-        407000,
+        40000,
         title="Road – capital [USD/km]",
         description="Capital expenditure for road infrastructure, per unit of distance. One road assumed for every 50 MW of installed capacity",
         category=Category.ADVANCED,
         priority=12,
     )
     omfr: float = Field(
-        0,
+        1,
         title="Road – fixed O&M [USD/km]",
         description="Fixed Operation and Maintenance costs for road infrastructure, per unit of distance, per year.",
         category=Category.ADVANCED,
         priority=13,
     )
     decom: float = Field(
-        0,
-        title="Decommission % rate",
+        1,
+        title="Decommission rate [%]",
         description="Decommissioning costs incurred at end of lifetime as a share of capital costs of generation.",
         category=Category.ADVANCED,
         priority=14,
     )
     i: float = Field(
-        0.1,
+        10,
         title="Economic discount rate [%]",
         description="Rate of return used to discount future cash flows back to their present value. This rate is often a company’s Weighted Average Cost of Capital (WACC), required rate of return, or the hurdle rate that investors expect to earn relative to the risk of the investment.",
         category=Category.BASIC,
@@ -283,14 +283,14 @@ class LCOE(BaseModel):
         priority=2,
     )
     tlf: float = Field(
-        0,
+        10,
         title="Technical Loss Factor [%]",
         description="Percentage of gross energy generation lost due to technical losses (e.g. wake effects for wind turbines; wiring and inverter losses for solar PV systems)",
         category=Category.ADVANCED,
         priority=6,
     )
     af: float = Field(
-        1,
+        5,
         title="Unavailability Factor [%]",
         description="Percentage of energy generation lost due to forced or scheduled outages (Applied after technical losses).",
         category=Category.ADVANCED,
