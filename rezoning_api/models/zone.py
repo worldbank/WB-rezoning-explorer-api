@@ -385,7 +385,7 @@ class Filters(BaseModel):
         description="Areas within a defined distance to roads.",
         energy_type=["solar", "wind"],
         priority=13,
-        resource_defaults=[0, 50],
+        resource_defaults=[0, 50000],
     )
     f_pp_whs: Optional[bool] = FilterField(
         title="Protected Areas",
