@@ -123,6 +123,7 @@ def get_layers():
     # for later matching
     cfo = get_capacity_factor_options()
     cfo_flat = cfo["solar"] + cfo["wind"] + cfo["offshore"]
+    cfo_ids = [cf["id"] for cf in cfo_flat]
 
     for lkey, layer in layers.items():
         # everything starts as a raster
@@ -140,7 +141,7 @@ def get_layers():
             layer["title"] = mf.get("title", None)
             layer["energy_type"] = mf.get("energy_type", None)
             layer["units"] = mf.get("units", None)
-        elif lkey in cfo_flat:
+        elif lkey in cfo_ids:
             # remove excess capacity factor layers
             layers[lkey] = {}
         elif lkey.startswith("gwa"):
