@@ -335,7 +335,7 @@ class Filters(BaseModel):
         resource_defaults=[
             idx
             for idx, lc in enumerate(LAND_COVER_OPTIONS)
-            if not ("Tree cover" in lc or "Water Bodies" in lc)
+            if not ("Tree cover" in lc or "Water bodies" in lc)
         ],
     )
     f_grid: Optional[RangeFilter] = FilterField(
