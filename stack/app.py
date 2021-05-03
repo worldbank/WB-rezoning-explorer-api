@@ -151,7 +151,8 @@ class rezoningApiLambdaStack(core.Stack):
                 VARIABLE_NAME="app",
                 WORKERS_PER_CORE="1",
                 LOG_LEVEL="error",
-                QUEUE_URL=queue_processor.sqs_queue.queue_url
+                QUEUE_URL=queue_processor.sqs_queue.queue_url,
+                AIRTABLE_KEY=os.environ["AIRTABLE_KEY"],
                 # MEMCACHE_HOST=cache.attr_configuration_endpoint_address,
                 # MEMCACHE_PORT=cache.attr_configuration_endpoint_port,
             )
