@@ -346,7 +346,7 @@ class Filters(BaseModel):
         description="Set a minimum and maximum distance to transmission lines from suitable areas.",
         energy_type=["solar", "wind"],
         priority=5,
-        resource_defaults=[None, 100],
+        resource_defaults=[None, 100000],
     )
     f_airports: Optional[RangeFilter] = FilterField(
         title="Airports (Distance to)",
@@ -355,7 +355,7 @@ class Filters(BaseModel):
         secondary_category=SecondaryCategory.INFRASTRUCTURE,
         description="Set the minimum and maximum distance to airports from suitable areas",
         priority=14,
-        resource_defaults=[5000, None],
+        resource_defaults=dict(wind=[5000, None], offshore=[10000, None]),
     )
     f_ports: Optional[RangeFilter] = FilterField(
         title="Ports (Distance to)",
@@ -385,7 +385,7 @@ class Filters(BaseModel):
         description="Areas within a defined distance to roads.",
         energy_type=["solar", "wind"],
         priority=13,
-        resource_defaults=[0, 50],
+        resource_defaults=[0, 50000],
     )
     f_pp_whs: Optional[bool] = FilterField(
         title="Protected Areas",
@@ -413,7 +413,9 @@ class Filters(BaseModel):
         description="Set a minimum distance to World Heritage Sites from suitable areas.",
         secondary_description="A landmark or area with legal protection by an international convention for having cultural, historical, scientific or other form of significance.",
         priority=20,
-        resource_defaults=[5, None],
+        resource_defaults=dict(
+            solar=[1000, None], wind=[5000, None], offshore=[5000, None]
+        ),
     )
     f_unesco_ramsar: Optional[bool] = FilterField(
         title="Ramsar Sites",
