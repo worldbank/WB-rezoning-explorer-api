@@ -413,7 +413,9 @@ class Filters(BaseModel):
         description="Set a minimum distance to World Heritage Sites from suitable areas.",
         secondary_description="A landmark or area with legal protection by an international convention for having cultural, historical, scientific or other form of significance.",
         priority=20,
-        resource_defaults=dict(solar=[1000, None], wind=[5000, None], offshore=[5000, None]),
+        resource_defaults=dict(
+            solar=[1000, None], wind=[5000, None], offshore=[5000, None]
+        ),
     )
     f_unesco_ramsar: Optional[bool] = FilterField(
         title="Ramsar Sites",
