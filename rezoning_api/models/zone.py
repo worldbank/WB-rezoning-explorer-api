@@ -255,14 +255,14 @@ class LCOE(BaseModel):
         priority=13,
     )
     decom: float = Field(
-        1,
+        0.01,
         title="Decommission rate [%]",
         description="Decommissioning costs incurred at end of lifetime as a share of capital costs of generation.",
         category=Category.ADVANCED,
         priority=14,
     )
     i: float = Field(
-        10,
+        0.1,
         title="Economic discount rate [%]",
         description="Rate of return used to discount future cash flows back to their present value. This rate is often a company’s Weighted Average Cost of Capital (WACC), required rate of return, or the hurdle rate that investors expect to earn relative to the risk of the investment.",
         category=Category.BASIC,
@@ -283,14 +283,14 @@ class LCOE(BaseModel):
         priority=2,
     )
     tlf: float = Field(
-        10,
+        0.1,
         title="Technical Loss Factor [%]",
         description="Percentage of gross energy generation lost due to technical losses (e.g. wake effects for wind turbines; wiring and inverter losses for solar PV systems)",
         category=Category.ADVANCED,
         priority=6,
     )
     af: float = Field(
-        5,
+        0.05,
         title="Unavailability Factor [%]",
         description="Percentage of energy generation lost due to forced or scheduled outages (Applied after technical losses).",
         category=Category.ADVANCED,
