@@ -2,6 +2,7 @@
 import xml.etree.ElementTree as ET
 import boto3
 import rasterio
+import math
 import hashlib
 import json
 from typing import Union, List, Optional, Any
@@ -231,9 +232,16 @@ def _filter(array, filters):
             layer_name = filter_to_layer_name(f_layer)
             single_layer = array.sel(layer=layer_name).values.squeeze()
             if filter_type == "range_filter":
+                lower_bound = float(filt.split(",")[0])
+                upper_bound = float(filt.split(",")[1])
+                if layer_name == "slope":
+                    # convert slope from % values to degrees
+                    lower_bound = math.atan(lower_bound / 100) * 180 / math.pi
+                    upper_bound = math.atan(upper_bound / 100) * 180 / math.pi
+
                 tmp = np.logical_and(
-                    single_layer >= float(filt.split(",")[0]),
-                    single_layer <= float(filt.split(",")[1]),
+                    single_layer >= lower_bound,
+                    single_layer <= upper_bound,
                 )
             elif filter_type == "categorical_filter":
                 # multiply by ten to get land cover class
@@ -249,6 +257,9 @@ def _filter(array, filters):
                 elif layer_name == "waterbodies":
                     # booleans are only sent when false, match non values
                     tmp = single_layer != 2
+                elif layer_name in ["pp_whs", "unep_coral", "unesco_ramsar"]:
+                    # these are really distance layers that we treat as boolean
+                    tmp = single_layer < 1
                 else:
                     # booleans are only sent when false, match non values
                     tmp = single_layer > 0

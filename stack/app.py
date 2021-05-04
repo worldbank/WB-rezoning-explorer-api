@@ -1,6 +1,6 @@
 """Construct App."""
 
-from typing import Any, Union
+from typing import Any
 
 import os
 
@@ -49,17 +49,21 @@ class rezoningApiLambdaStack(core.Stack):
         memory: int = 1024,
         timeout: int = 30,
         concurrent: int = 100,
-        env: dict = {},
         code_dir: str = "./",
         **kwargs: Any,
     ) -> None:
         """Define stack."""
-        super().__init__(scope, id, *kwargs)
+        super().__init__(scope, id, **kwargs)
 
-        vpc = ec2.Vpc(self, f"{id}-vpc")
+        if config.STAGE != "staging":
+            vpc = ec2.Vpc(self, f"{id}-vpc")
+        else:
+            vpc = ec2.Vpc.from_lookup(self, f"{id}-vpc", vpc_id="vpc-069463d1ae9818e53")
 
         bucket = s3.Bucket(
-            self, id=f"{id}-export-bucket", bucket_name=config.EXPORT_BUCKET
+            self,
+            id=f"{id}-export-bucket",
+            bucket_name=f"{config.EXPORT_BUCKET}-{config.STAGE}",
         )
 
         s3_access_policy = iam.PolicyStatement(
@@ -76,7 +80,7 @@ class rezoningApiLambdaStack(core.Stack):
             self,
             f"{id}-ExportProcessingCluster",
             vpc=vpc,
-            cluster_name=config.CLUSTER_NAME,
+            cluster_name=f"{config.CLUSTER_NAME}-{config.STAGE}",
         )
 
         cluster.add_capacity(
@@ -147,7 +151,8 @@ class rezoningApiLambdaStack(core.Stack):
                 VARIABLE_NAME="app",
                 WORKERS_PER_CORE="1",
                 LOG_LEVEL="error",
-                QUEUE_URL=queue_processor.sqs_queue.queue_url
+                QUEUE_URL=queue_processor.sqs_queue.queue_url,
+                AIRTABLE_KEY=os.environ["AIRTABLE_KEY"],
                 # MEMCACHE_HOST=cache.attr_configuration_endpoint_address,
                 # MEMCACHE_PORT=cache.attr_configuration_endpoint_port,
             )
@@ -178,7 +183,7 @@ class rezoningApiLambdaStack(core.Stack):
 
     def create_package(self, code_dir: str) -> aws_lambda.Code:
         """Build docker image and create package."""
-        # print('building lambda package via docker')
+        print("building lambda package via docker")
         print(f"code dir: {code_dir}")
         client = docker.from_env()
         print("docker client up")
@@ -199,86 +204,6 @@ class rezoningApiLambdaStack(core.Stack):
         return aws_lambda.Code.asset(os.path.join(code_dir, "package.zip"))
 
 
-class rezoningApiECSStack(core.Stack):
-    """rezoning API ECS Fargate Stack."""
-
-    def __init__(
-        self,
-        scope: core.Construct,
-        id: str,
-        cpu: Union[int, float] = 256,
-        memory: Union[int, float] = 512,
-        mincount: int = 1,
-        maxcount: int = 50,
-        env: dict = {},
-        code_dir: str = "./",
-        **kwargs: Any,
-    ) -> None:
-        """Define stack."""
-        super().__init__(scope, id, *kwargs)
-
-        vpc = ec2.Vpc(self, f"{id}-vpc", max_azs=2)
-
-        cluster = ecs.Cluster(self, f"{id}-cluster", vpc=vpc)
-
-        task_env = DEFAULT_ENV.copy()
-        task_env.update(
-            dict(
-                MODULE_NAME="rezoning_api.main",
-                VARIABLE_NAME="app",
-                WORKERS_PER_CORE="1",
-                LOG_LEVEL="error",
-            )
-        )
-        task_env.update(env)
-
-        fargate_service = ecs_patterns.ApplicationLoadBalancedFargateService(
-            self,
-            f"{id}-service",
-            cluster=cluster,
-            cpu=cpu,
-            memory_limit_mib=memory,
-            desired_count=mincount,
-            public_load_balancer=True,
-            listener_port=80,
-            task_image_options=dict(
-                image=ecs.ContainerImage.from_asset(
-                    code_dir,
-                    exclude=["cdk.out", ".git"],
-                    file="Dockerfiles/ecs/Dockerfile",
-                ),
-                container_port=80,
-                environment=task_env,
-            ),
-        )
-
-        scalable_target = fargate_service.service.auto_scale_task_count(
-            min_capacity=mincount, max_capacity=maxcount
-        )
-
-        # https://github.com/awslabs/aws-rails-provisioner/blob/263782a4250ca1820082bfb059b163a0f2130d02/lib/aws-rails-provisioner/scaling.rb#L343-L387
-        scalable_target.scale_on_request_count(
-            "RequestScaling",
-            requests_per_target=50,
-            scale_in_cooldown=core.Duration.seconds(240),
-            scale_out_cooldown=core.Duration.seconds(30),
-            target_group=fargate_service.target_group,
-        )
-
-        # scalable_target.scale_on_cpu_utilization(
-        #     "CpuScaling", target_utilization_percent=70,
-        # )
-
-        fargate_service.service.connections.allow_from_any_ipv4(
-            port_range=ec2.Port(
-                protocol=ec2.Protocol.ALL,
-                string_representation="All port 80",
-                from_port=80,
-            ),
-            description="Allows traffic on port 80 from NLB",
-        )
-
-
 app = core.App()
 
 # Tag infrastructure
@@ -291,17 +216,6 @@ for key, value in {
     if value:
         core.Tag.add(app, key, value)
 
-ecs_stackname = f"{config.PROJECT_NAME}-ecs-{config.STAGE}"
-rezoningApiECSStack(
-    app,
-    ecs_stackname,
-    cpu=config.TASK_CPU,
-    memory=config.TASK_MEMORY,
-    mincount=config.MIN_ECS_INSTANCES,
-    maxcount=config.MAX_ECS_INSTANCES,
-    env=config.ENV,
-)
-
 lambda_stackname = f"{config.PROJECT_NAME}-lambda-{config.STAGE}"
 rezoningApiLambdaStack(
     app,
@@ -309,7 +223,10 @@ rezoningApiLambdaStack(
     memory=config.MEMORY,
     timeout=config.TIMEOUT,
     concurrent=config.MAX_CONCURRENT,
-    env=config.ENV,
+    env=dict(
+        account=os.environ["CDK_DEFAULT_ACCOUNT"],
+        region=os.environ["CDK_DEFAULT_REGION"],
+    ),
 )
 
 app.synth()

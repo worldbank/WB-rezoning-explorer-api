@@ -74,6 +74,10 @@ def layers(
         layer_min = data.min()
         layer_max = data.max()
 
+    if id == "gebco":
+        # no bathymetry on land: https://github.com/developmentseed/rezoning-api/issues/103
+        mask[data.squeeze() > 0] = 0
+
     if id != "land-cover":
         data = linear_rescale(
             data, in_range=(layer_min, layer_max), out_range=(0, 255)
@@ -119,6 +123,7 @@ def get_layers():
     # for later matching
     cfo = get_capacity_factor_options()
     cfo_flat = cfo["solar"] + cfo["wind"] + cfo["offshore"]
+    cfo_ids = [cf["id"] for cf in cfo_flat]
 
     for lkey, layer in layers.items():
         # everything starts as a raster
@@ -131,45 +136,54 @@ def get_layers():
         ]
         if matching_filters:
             mf = matching_filters[0]
-            layer["description"] = mf.get("description", None)
-            layer["category"] = mf.get("category", None)
+            layer["description"] = mf.get("secondary_description", None)
+            layer["category"] = mf.get("secondary_category", None)
             layer["title"] = mf.get("title", None)
-        elif lkey in cfo_flat:
-            cf_params = lkey.split("-")
-            if len(cf_params) == 2:
-                title = f"IEC Class {'I' * int(cf_params[1][3])}"
-            else:
-                main = f"{' '.join([s.capitalize() if len(s) > 4 else s.upper() for s in cf_params[1:-1]])}"
-                height = cf_params[-1]
-                title = f"{main} @ {height}m"
-                title = title.replace("Mode0", "Mode 0")
-            layer["description"] = f"Capacity Factor derived from {title} input"
-            layer["category"] = "capacity-factor"
-            layer["title"] = title
+            layer["energy_type"] = mf.get("energy_type", None)
+            layer["units"] = mf.get("units", None)
+        elif lkey in cfo_ids:
+            # remove excess capacity factor layers
+            layers[lkey] = {}
         elif lkey.startswith("gwa"):
             _, kind, height = lkey.split("-")
             layer["description"] = None
             layer["category"] = "additional-wind"
             layer["title"] = f"Mean Wind {kind.capitalize()} @ {height}m "
+            layer["energy_type"] = ["offshore", "wind"]
+            layer["units"] = "m/s" if kind == "speed" else "W/m²"
         elif lkey == "gsa-gti":
             layer["description"] = None
             layer["category"] = "additional-solar"
             layer["title"] = "Global Titled Irradiation"
+            layer["energy_type"] = ["solar"]
+            layer["units"] = "kWh/m²"
         elif lkey == "gsa-ghi":
             layer["description"] = None
             layer["category"] = "additional-solar"
             layer["title"] = "Global Horizontal Irradiation"
+            layer["energy_type"] = ["solar"]
+            layer["units"] = "kWh/m²"
         elif lkey == "gsa-temp":
             layer["description"] = None
             layer["category"] = "additional-solar"
             layer["title"] = "Air Temperature"
+            layer["energy_type"] = ["solar"]
+            layer["units"] = "°C"
+        elif lkey == "air-density":
+            layer[
+                "description"
+            ] = "The density of air, or atmospheric density, is the mass per unit volume of Earth's atmosphere."
+            layer["category"] = "additional-wind"
+            layer["title"] = "Air Density"
+            layer["energy_type"] = ["offshore", "wind"]
+            layer["units"] = "kg/m³"
         else:
             layer["description"] = None
             layer["category"] = "additional"
             layer["title"] = lkey
         # rename vector layers
         if lkey in ["grid", "anchorages", "airports", "ports", "roads"]:
-            layer["title"] = layer["title"].replace("Distance to ", "")
+            layer["title"] = layer["title"].replace(" (Distance to)", "")
             layer["description"] = f"Location of {lkey.lower()}"
 
     # add some non-raster layers
@@ -200,5 +214,10 @@ def get_layers():
     layers.pop("wwf-glw-1", None)
     layers.pop("wwf-glw-2", None)
     layers.pop("jrc-gsw", None)
+
+    # remove layers "marked for deletion"
+    for key in list(layers.keys()):
+        if not layers[key]:
+            del layers[key]
 
     return layers
