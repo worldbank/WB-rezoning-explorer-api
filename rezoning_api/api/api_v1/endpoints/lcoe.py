@@ -1,6 +1,6 @@
 """LCOE endpoints."""
 from typing import Optional
-
+import copy
 from rezoning_api.db.country import get_country_min_max
 from fastapi import APIRouter, Depends
 from mercantile import feature, Tile
@@ -79,7 +79,7 @@ def lcoe(
 @router.get("/lcoe/{resource}/{country_id}/schema", name="lcoe_country_schema")
 def get_filter_schema(resource: Optional[str], country_id: Optional[str] = None):
     """Return lcoe schema"""
-    schema = LCOE.schema()["properties"]
+    schema = copy.deepcopy(LCOE.schema()["properties"])
     schema["capacity_factor"]["options"] = get_capacity_factor_options()
 
     if resource and country_id:
