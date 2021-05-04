@@ -1,6 +1,7 @@
 """functions for gathering data on countries"""
 from os import path as op
 import json
+import math
 from geojson_pydantic.features import Feature
 from shapely.geometry import shape, mapping, box
 import boto3
@@ -60,13 +61,20 @@ def get_country_min_max(id):
         minmax = s3_get(BUCKET, f"api/minmax/{id}.json")
         mm = minmax.decode("utf-8").replace("Infinity", "1000000")
         mm_obj = json.loads(mm)
-        # bathymetry data should never filter below -1000: https://github.com/developmentseed/rezoning-api/issues/91
-        # don't display on land: https://github.com/developmentseed/rezoning-api/issues/103
-        mm_obj["gebco"]["min"] = -1000
-        mm_obj["gebco"]["max"] = 0
-        return mm_obj
     except Exception:
         mm_obj = json.loads(s3_get(BUCKET, "api/minmax/AFG.json"))
-        mm_obj["gebco"]["min"] = -1000
-        mm_obj["gebco"]["max"] = 0
-        return mm_obj
+
+    # bathymetry data should never filter below -1000: https://github.com/developmentseed/rezoning-api/issues/91
+    # don't display on land: https://github.com/developmentseed/rezoning-api/issues/103
+    mm_obj["gebco"]["min"] = -1000
+    mm_obj["gebco"]["max"] = 0
+
+    # slope is converted from degrees to slope on the frontend
+    mm_obj["slope"]["min"] = round(
+        math.tan(mm_obj["slope"]["min"] / 180 * math.pi) * 100
+    )
+    mm_obj["slope"]["max"] = round(
+        math.tan(mm_obj["slope"]["max"] / 180 * math.pi) * 100
+    )
+
+    return mm_obj
