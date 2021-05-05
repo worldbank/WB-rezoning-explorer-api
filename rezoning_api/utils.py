@@ -194,9 +194,7 @@ def get_distances(
         data.sel(layer="roads"),
         data,
         # filter_mask,
-        np.logical_and(
-            ~mask, filter_mask
-        ),  # NOTE: we flip to a "true mask" here (True is valid)
+        np.logical_and(mask, filter_mask),
     )
 
 
