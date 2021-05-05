@@ -4,8 +4,6 @@ from rezoning_api.utils import read_dataset
 from fastapi import APIRouter, Depends
 from rio_tiler.utils import render
 import numpy as np
-from mercantile import feature, Tile
-from geojson_pydantic.geometries import Polygon
 import xarray as xr
 from typing import Optional
 
@@ -54,23 +52,22 @@ def filter(
         k for k, v in LAYERS.items() if any([layer in sent_filters for layer in v])
     ]
 
-    # find the tile
-    aoi = Polygon(**feature(Tile(x, y, z))["geometry"]).dict()
-
     # potentially mask by country
-    extra_mask_geometry = None
+    geometry = None
     if country_id:
         # TODO: early return for tiles outside country bounds
         feat = get_country_geojson(country_id, offshore)
-        extra_mask_geometry = feat.geometry.dict()
+        geometry = feat.geometry.dict()
+
     arrays = []
     for dataset in datasets:
         data, mask = read_dataset(
             f"s3://{BUCKET}/{dataset}.tif",
             LAYERS[dataset],
-            aoi=aoi,
-            tilesize=256,
-            extra_mask_geometry=extra_mask_geometry,
+            x=x,
+            y=y,
+            z=z,
+            geometry=geometry,
         )
         arrays.append(data)
     if arrays:
@@ -82,9 +79,10 @@ def filter(
         data, mask = read_dataset(
             f"s3://{BUCKET}/raster/gebco/gebco_combined.tif",
             ["gebco"],
-            aoi=aoi,
-            tilesize=256,
-            extra_mask_geometry=extra_mask_geometry,
+            x=x,
+            y=y,
+            z=z,
+            geometry=geometry,
         )
         arrays.append(data)
         arr = xr.concat(arrays, dim="layer")
@@ -98,7 +96,7 @@ def filter(
             tile * color_list[0],
             tile * color_list[1],
             tile * color_list[2],
-            (~mask.squeeze() * new_mask * color_list[3]).astype(np.uint8),  # type: ignore
+            (mask.squeeze() * new_mask * color_list[3]).astype(np.uint8),  # type: ignore
         ]
     )
 
