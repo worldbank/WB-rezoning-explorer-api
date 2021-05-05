@@ -559,3 +559,8 @@ class ZoneResponse(BaseModel):
     zone_score: float = Field(..., title="Zone Score")
     zone_output: float = Field(..., title="Zone Output (GWh)")
     zone_output_density: float = Field(..., title="Zone Output Density (kWh / m2)")
+    icp: float = Field(..., title="Installed Capacity Potential")
+    generation_potential: float = Field(
+        ..., title="Annual Energy Generation Potential (GWh)"
+    )
+    cf: float = Field(..., title="Capacity Factor")
