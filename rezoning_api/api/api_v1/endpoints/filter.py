@@ -77,18 +77,18 @@ def filter(
         arr = xr.concat(arrays, dim="layer")
         tile, new_mask = _filter(arr, filters)
     else:
-        # if we didn't have anything to read, read air-density so we can mask
+        # if we didn't have anything to read, read gebco so we can mask
         # TODO: improve this
         data, mask = read_dataset(
-            f"s3://{BUCKET}/raster/gwa-density-100/gwa-density-100.tif",
-            ["air-density"],
+            f"s3://{BUCKET}/raster/gebco/gebco_combined.tif",
+            ["gebco"],
             aoi=aoi,
             tilesize=256,
             extra_mask_geometry=extra_mask_geometry,
         )
         arrays.append(data)
         arr = xr.concat(arrays, dim="layer")
-        filters.f_air_density = RangeFilter("0,100000")
+        filters.f_gebco = RangeFilter("0,10000000")
         tile, new_mask = _filter(arr, filters)
 
     # color like 45,39,88,178 (RGBA)
