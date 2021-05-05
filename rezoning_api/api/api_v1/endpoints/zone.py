@@ -53,6 +53,7 @@ def zone(query: ZoneRequest, country_id: str = "AFG", filters: Filters = Depends
         generation_potential=generation_potential,
         zone_output=generation_potential,
         icp=icp,
+        cf=cf.mean(),
         zone_output_density=cf.sum() / (500 ** 2),
     )
 
