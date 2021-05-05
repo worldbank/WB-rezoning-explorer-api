@@ -395,23 +395,24 @@ def calc_score(id, aoi, lcoe, weights, filters, tilesize=None, ret_extras=False)
             * weights.lcoe_gen
         )
 
-        score_array += (
-            min_max_scale(
-                li,
-                cmm["lcoe"][lcoe.capacity_factor]["li"]["min"],
-                cmm["lcoe"][lcoe.capacity_factor]["li"]["max"],
-            )
-            * weights.lcoe_transmission
-        )
+        # these weights are no longer in use
+        # score_array += (
+        #     min_max_scale(
+        #         li,
+        #         cmm["lcoe"][lcoe.capacity_factor]["li"]["min"],
+        #         cmm["lcoe"][lcoe.capacity_factor]["li"]["max"],
+        #     )
+        #     * weights.lcoe_transmission
+        # )
 
-        score_array += (
-            min_max_scale(
-                lr,
-                cmm["lcoe"][lcoe.capacity_factor]["lr"]["min"],
-                cmm["lcoe"][lcoe.capacity_factor]["lr"]["max"],
-            )
-            * weights.lcoe_road
-        )
+        # score_array += (
+        #     min_max_scale(
+        #         lr,
+        #         cmm["lcoe"][lcoe.capacity_factor]["lr"]["min"],
+        #         cmm["lcoe"][lcoe.capacity_factor]["lr"]["max"],
+        #     )
+        #     * weights.lcoe_road
+        # )
 
     lcoe = lg + li + lr
     lcoe = ma.masked_invalid(lcoe)
