@@ -276,7 +276,7 @@ class LCOE(BaseModel):
         priority=15,
     )
     landuse: float = Field(
-        0,
+        3,
         title="Installed Capacity Area Factor [MW/km2]",
         description="Installed capacity area factor is the average land area occupied by a power plant. More information: https://www.nrel.gov/analysis/tech-size.html ",
         category=Category.BASIC,
