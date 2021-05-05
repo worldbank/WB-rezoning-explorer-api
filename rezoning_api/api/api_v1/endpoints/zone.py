@@ -41,10 +41,12 @@ def zone(query: ZoneRequest, country_id: str = "AFG", filters: Filters = Depends
     # annual energy generation potential (divide by 1000 for GWh)
     generation_potential = query.lcoe.landuse * cf.sum() * 8760 / 1000
 
-    zs = data.mean()
+    # TODO: we are incorrectly masking something, so just take the full data mean for now
+    print(data.data.mean())
+    zs = data.data.mean()
     zs = 0.01 if np.isnan(zs) else zs
 
-    print(lcoe, zs, generation_potential, icp, cf.sum())
+    # print(lcoe, zs, generation_potential, icp, cf.sum())
     return dict(
         lcoe=lcoe.mean(),
         zone_score=zs,
