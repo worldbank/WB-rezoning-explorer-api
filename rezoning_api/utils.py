@@ -18,6 +18,9 @@ import numpy.ma as ma
 import xarray as xr
 from pydantic import create_model
 
+# from rio_tiler.io import COGReader
+# from rio_tiler.utils import create_cutline
+
 
 from rezoning_api.core.config import BUCKET
 from rezoning_api.models.zone import LCOE, Weights
@@ -173,7 +176,7 @@ def get_capacity_factor(
     # apply loss factor and availability factor
     sel_cf = sel_cf * (1 - loss_factor) * (1 - availabity_factor)
 
-    return cf.sel(layer=LAYERS[dataset][cf_idx])
+    return sel_cf
 
 
 def get_distances(aoi: Union[Polygon, MultiPolygon], filters, tilesize=None):
