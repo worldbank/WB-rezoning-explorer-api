@@ -134,7 +134,7 @@ def single_country_lcoe(dest_file: str, country_id, lcoe=LCOE(), filters=Filters
 
     # spatial temporal inputs
     ds, dr, _calc, _mask = get_distances(filters, geometry=aoi)
-    cf = get_capacity_factor(aoi, lcoe.capacity_factor, lcoe.tlf, lcoe.af)
+    cf = get_capacity_factor(lcoe.capacity_factor, lcoe.tlf, lcoe.af, geometry=aoi)
 
     # lcoe component calculation
     lg = lcoe_generation(lcoe, cf)
