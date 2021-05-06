@@ -205,7 +205,7 @@ class LCOE(BaseModel):
         category=Category.BASIC,
         priority=3,
     )
-    omfg: int = Field(
+    omfg: float = Field(
         40,
         title="Generation – fixed O&M [USD/kW/y]",
         description="Fixed Operation and Maintenance costs for the generation part of the system, per unit of capacity, per year.",
