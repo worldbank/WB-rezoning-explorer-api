@@ -24,11 +24,13 @@ def zone(query: ZoneRequest, country_id: str = "AFG", filters: Filters = Depends
     """calculate LCOE and weight for zone score"""
     data, mask, extras = calc_score(
         country_id,
-        query.aoi.dict(),
         query.lcoe,
         query.weights,
         filters,
-        tilesize=256,
+        x=None,
+        y=None,
+        z=None,
+        geometry=query.aoi.dict(),
         ret_extras=True,
     )
 
@@ -41,9 +43,8 @@ def zone(query: ZoneRequest, country_id: str = "AFG", filters: Filters = Depends
     # annual energy generation potential (divide by 1000 for GWh)
     generation_potential = query.lcoe.landuse * cf.sum() * 8760 / 1000
 
-    # TODO: we are incorrectly masking something, so just take the full data mean for now
-    print(data.data.mean())
-    zs = data.data.mean()
+    # zone score
+    zs = data.mean()
     zs = 0.01 if np.isnan(zs) else zs
 
     # print(lcoe, zs, generation_potential, icp, cf.sum())

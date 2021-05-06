@@ -63,7 +63,7 @@ def read_dataset(
                 x, y, z, tilesize=256, indexes=indexes, vrt_options=vrt_options
             )
         else:
-            data, mask = cog.feature(geometry, indexes=indexes)
+            data, mask = cog.feature(geometry, indexes=indexes, max_size=None)
 
         # return as xarray + mask
         return (
