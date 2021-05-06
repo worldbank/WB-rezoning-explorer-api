@@ -2,6 +2,7 @@
 from enum import Enum
 import json
 import boto3
+from botocore.client import Config
 
 from fastapi import APIRouter, status, HTTPException
 from fastapi.responses import Response
@@ -12,7 +13,7 @@ from rezoning_api.models.zone import ExportRequest
 
 router = APIRouter()
 
-s3 = boto3.client("s3")
+s3 = boto3.client("s3", config=Config(signature_version="s3v4"))
 
 
 class Operation(str, Enum):

@@ -58,10 +58,9 @@ class rezoningApiLambdaStack(core.Stack):
         # hardcoded VPC
         vpc = ec2.Vpc.from_lookup(self, f"{id}-vpc", vpc_id="vpc-dfff4bb4")
 
-        bucket = s3.Bucket(
-            self,
-            id=f"{id}-export-bucket",
-            bucket_name=f"{config.EXPORT_BUCKET}-{config.STAGE}",
+        # hardcode bucket (shared across env)
+        bucket = s3.Bucket.from_bucket_name(
+            self, f"{id}-export-bucket", "rezoning-exports"
         )
 
         s3_access_policy = iam.PolicyStatement(
