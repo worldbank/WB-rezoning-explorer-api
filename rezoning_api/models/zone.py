@@ -557,7 +557,6 @@ class ZoneResponse(BaseModel):
 
     lcoe: float = Field(..., title="Levelized Cost of Electrification ($USD / GWh)")
     zone_score: float = Field(..., title="Zone Score")
-    zone_output: float = Field(..., title="Zone Output (GWh)")
     zone_output_density: float = Field(..., title="Zone Output Density (kWh / m2)")
     icp: float = Field(..., title="Installed Capacity Potential")
     generation_potential: float = Field(
