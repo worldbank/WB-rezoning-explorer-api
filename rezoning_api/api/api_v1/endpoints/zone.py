@@ -27,9 +27,6 @@ def zone(query: ZoneRequest, country_id: str = "AFG", filters: Filters = Depends
         query.lcoe,
         query.weights,
         filters,
-        x=None,
-        y=None,
-        z=None,
         geometry=query.aoi.dict(),
         ret_extras=True,
     )

@@ -41,10 +41,11 @@ def s3_head(bucket: str, key: str):
 def read_dataset(
     dataset: str,
     layers: List,
-    x: Optional[int],
-    y: Optional[int],
-    z: Optional[int],
-    geometry: Optional[Union[Polygon, MultiPolygon]],
+    x: Optional[int] = None,
+    y: Optional[int] = None,
+    z: Optional[int] = None,
+    geometry: Optional[Union[Polygon, MultiPolygon]] = None,
+    max_size=None,
 ):
     """read a dataset in a given area"""
     with COGReader(dataset) as cog:
@@ -63,7 +64,7 @@ def read_dataset(
                 x, y, z, tilesize=256, indexes=indexes, vrt_options=vrt_options
             )
         else:
-            data, mask = cog.feature(geometry, indexes=indexes, max_size=None)
+            data, mask = cog.feature(geometry, indexes=indexes, max_size=max_size)
 
         # return as xarray + mask
         return (
@@ -117,10 +118,11 @@ def get_capacity_factor(
     capacity_factor: str,
     loss_factor: float,
     availabity_factor: float,
-    x: Optional[int],
-    y: Optional[int],
-    z: Optional[int],
-    geometry: Union[Polygon, MultiPolygon],
+    x: Optional[int] = None,
+    y: Optional[int] = None,
+    z: Optional[int] = None,
+    geometry: Union[Polygon, MultiPolygon] = None,
+    max_size=None,
 ):
     """Calculate Capacity Factor"""
     # decide which capacity factor tif to pull from
@@ -137,6 +139,7 @@ def get_capacity_factor(
         y=y,
         z=z,
         geometry=geometry,
+        max_size=max_size,
     )
 
     # get our selected layer
@@ -156,10 +159,11 @@ def get_capacity_factor(
 
 def get_distances(
     filters,
-    x: Optional[int],
-    y: Optional[int],
-    z: Optional[int],
-    geometry: Optional[Union[Polygon, MultiPolygon]],
+    x: Optional[int] = None,
+    y: Optional[int] = None,
+    z: Optional[int] = None,
+    geometry: Optional[Union[Polygon, MultiPolygon]] = None,
+    max_size=None,
 ):
     """Get filtered masks and distance arrays"""
     # find the required datasets to open
@@ -182,6 +186,7 @@ def get_distances(
             y=y,
             z=z,
             geometry=geometry,
+            max_size=max_size,
         )
         arrays.append(data)
 
@@ -316,10 +321,11 @@ def calc_score(
     lcoe,
     weights,
     filters,
-    x: Optional[int],
-    y: Optional[int],
-    z: Optional[int],
-    geometry: Optional[Union[Polygon, MultiPolygon]],
+    x: Optional[int] = None,
+    y: Optional[int] = None,
+    z: Optional[int] = None,
+    geometry: Optional[Union[Polygon, MultiPolygon]] = None,
+    max_size=None,
     ret_extras=False,
 ):
     """
@@ -368,6 +374,7 @@ def calc_score(
                 y=y,
                 z=z,
                 geometry=geometry,
+                max_size=max_size,
             )
 
             scaled_array = min_max_scale(

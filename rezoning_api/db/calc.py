@@ -47,7 +47,13 @@ def refresh_country_extrema(partial=False):
             print(f"reading {dataset}")
             try:
                 ds, _ = read_dataset(
-                    f"s3://{BUCKET}/{dataset}.tif", layers[dataset], aoi, tilesize=64
+                    f"s3://{BUCKET}/{dataset}.tif",
+                    layers[dataset],
+                    x=None,
+                    y=None,
+                    z=None,
+                    geometry=aoi,
+                    max_size=1024,
                 )
                 for layer in layers[dataset]:
                     extrema[layer] = dict(
@@ -70,9 +76,13 @@ def refresh_country_extrema(partial=False):
             filters = Filters()
 
             # spatial temporal inputs
-            ds, dr, _calc, _mask = get_distances(aoi, filters, tilesize=64)
+            ds, dr, _calc, _mask = get_distances(filters, geometry=aoi, max_size=1024)
             cf = get_capacity_factor(
-                aoi, lcoe.capacity_factor, lcoe.tlf, lcoe.af, tilesize=64
+                lcoe.capacity_factor,
+                lcoe.tlf,
+                lcoe.af,
+                geometry=aoi,
+                max_size=1024,
             )
 
             # lcoe component calculation
@@ -123,7 +133,7 @@ def single_country_lcoe(dest_file: str, country_id, lcoe=LCOE(), filters=Filters
     aoi = get_country_geojson(country_id).geometry.dict()
 
     # spatial temporal inputs
-    ds, dr, _calc, _mask = get_distances(aoi, filters)
+    ds, dr, _calc, _mask = get_distances(filters, geometry=aoi)
     cf = get_capacity_factor(aoi, lcoe.capacity_factor, lcoe.tlf, lcoe.af)
 
     # lcoe component calculation
@@ -173,7 +183,7 @@ def single_country_score(
     t1 = time()
     aoi = get_country_geojson(country_id).geometry.dict()
 
-    data, _mask = calc_score(country_id, aoi, lcoe, weights, filters)
+    data, _mask = calc_score(country_id, lcoe, weights, filters, geometry=aoi)
 
     # match with filter for src profile
     match_data = f"s3://{BUCKET}/multiband/filter.tif"
