@@ -56,7 +56,7 @@ class rezoningApiLambdaStack(core.Stack):
         super().__init__(scope, id, **kwargs)
 
         # hardcoded VPC
-        vpc = ec2.Vpc.from_lookup(self, f"{id}-vpc", vpc_id="vpc-069463d1ae9818e53")
+        vpc = ec2.Vpc.from_lookup(self, f"{id}-vpc", vpc_id="vpc-dfff4bb4")
 
         bucket = s3.Bucket(
             self,
