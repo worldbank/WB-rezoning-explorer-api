@@ -55,10 +55,8 @@ class rezoningApiLambdaStack(core.Stack):
         """Define stack."""
         super().__init__(scope, id, **kwargs)
 
-        if config.STAGE != "staging":
-            vpc = ec2.Vpc(self, f"{id}-vpc")
-        else:
-            vpc = ec2.Vpc.from_lookup(self, f"{id}-vpc", vpc_id="vpc-069463d1ae9818e53")
+        # hardcoded VPC
+        vpc = ec2.Vpc.from_lookup(self, f"{id}-vpc", vpc_id="vpc-069463d1ae9818e53")
 
         bucket = s3.Bucket(
             self,
