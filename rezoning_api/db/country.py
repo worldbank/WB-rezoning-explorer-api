@@ -28,6 +28,11 @@ def s3_get(bucket: str, key: str, full_response=False):
     return response["Body"].read()
 
 
+def match_gsa_dailies(id):
+    """returns a boolean representing whether this is a GSA daily value"""
+    return "gsa" in id and id != "gsa-temp"
+
+
 def get_country_geojson(id, offshore=False):
     """get geojson for a single country or eez"""
     vector_data = eez if offshore else world
@@ -76,5 +81,11 @@ def get_country_min_max(id):
     mm_obj["slope"]["max"] = round(
         math.tan(mm_obj["slope"]["max"] / 180 * math.pi) * 100
     )
+
+    # GSA layers converted from daily (data layer) to annual for the front end
+    for key, mm in mm_obj.items():
+        if match_gsa_dailies(key):
+            mm["min"] = mm["min"] * 365
+            mm["max"] = mm["max"] * 365
 
     return mm_obj

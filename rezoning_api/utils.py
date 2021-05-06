@@ -17,7 +17,7 @@ from rio_tiler.utils import create_cutline
 from rezoning_api.core.config import BUCKET
 from rezoning_api.models.zone import LCOE, Weights
 from rezoning_api.db.layers import get_layers
-from rezoning_api.db.country import get_country_min_max
+from rezoning_api.db.country import get_country_min_max, match_gsa_dailies
 
 LAYERS = get_layers()
 MAX_DIST = 1000000  # meters
@@ -227,6 +227,9 @@ def _filter(array, filters):
                     # convert slope from % values to degrees
                     lower_bound = math.atan(lower_bound / 100) * 180 / math.pi
                     upper_bound = math.atan(upper_bound / 100) * 180 / math.pi
+                if match_gsa_dailies(layer_name):
+                    lower_bound = lower_bound / 365
+                    upper_bound = upper_bound / 365
 
                 tmp = np.logical_and(
                     single_layer >= lower_bound,

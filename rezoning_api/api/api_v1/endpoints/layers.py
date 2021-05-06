@@ -17,6 +17,7 @@ from rezoning_api.utils import (
 )
 from rezoning_api.core.config import BUCKET
 from rezoning_api.db.cf import get_capacity_factor_options
+from rezoning_api.db.country import match_gsa_dailies
 
 router = APIRouter()
 
@@ -77,6 +78,11 @@ def layers(
     if id == "gebco":
         # no bathymetry on land: https://github.com/developmentseed/rezoning-api/issues/103
         mask[data.squeeze() > 0] = 0
+
+    if match_gsa_dailies(id):
+        # annualize gsa layers to match min/max
+        data *= 365
+        print(layer_max, data.max())
 
     if id != "land-cover":
         data = linear_rescale(
