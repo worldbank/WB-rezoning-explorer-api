@@ -292,7 +292,7 @@ def min_max_scale(arr, scale_min=None, scale_max=None, flip=False):
         scale_min = temp
 
     # to prevent divide by zero errors
-    scale_max = max(scale_max, 1e5)
+    scale_max = max(scale_max, 1e-5)
 
     return (arr - scale_min) / (scale_max - scale_min)
 
@@ -365,63 +365,52 @@ def calc_score(
     # zone score
     shape = (256, 256) if x else cf.shape
     score_array = np.zeros(shape)
+
+    weight_count = 0
     for weight_name, weight_value in weights:
         layer = weight_name.replace("_", "-")
         loc, _idx = get_layer_location(layer)
+
         if loc and weight_value > 0:
+            # valid weight
+            weight_count += 1
+
             # flip min/max for certain weights
             flip = False
             if weight_name not in ["roads", "grid"]:
                 flip = True
 
-            dataset = loc.replace(f"s3://{BUCKET}/", "").replace(".tif", "")
-            data, _ = read_dataset(
-                f"s3://{BUCKET}/{dataset}.tif",
-                LAYERS[dataset],
-                x=x,
-                y=y,
-                z=z,
-                geometry=geometry,
-                max_size=max_size,
-            )
+            # handle LCOE generation differently
+            if weight_name == "lcoe_gen":
+                lcoe_gen_scaled = min_max_scale(
+                    lg,
+                    cmm["lcoe"][lcoe.capacity_factor]["lg"]["min"],
+                    cmm["lcoe"][lcoe.capacity_factor]["lg"]["max"],
+                    flip=True,
+                )
+                score_array += lcoe_gen_scaled * weights.lcoe_gen
+            else:
+                dataset = loc.replace(f"s3://{BUCKET}/", "").replace(".tif", "")
+                data, _ = read_dataset(
+                    f"s3://{BUCKET}/{dataset}.tif",
+                    LAYERS[dataset],
+                    x=x,
+                    y=y,
+                    z=z,
+                    geometry=geometry,
+                    max_size=max_size,
+                )
 
-            scaled_array = min_max_scale(
-                np.nan_to_num(data.sel(layer=layer).values, nan=0),
-                cmm[layer]["min"],
-                cmm[layer]["max"],
-                flip=flip,
-            )
-            score_array += weight_value * scaled_array
+                scaled_array = min_max_scale(
+                    np.nan_to_num(data.sel(layer=layer).values, nan=0),
+                    cmm[layer]["min"],
+                    cmm[layer]["max"],
+                    flip=flip,
+                )
+                score_array += weight_value * scaled_array
 
-        # non-layer zone score additions
-        score_array += (
-            min_max_scale(
-                lg,
-                cmm["lcoe"][lcoe.capacity_factor]["lg"]["min"],
-                cmm["lcoe"][lcoe.capacity_factor]["lg"]["max"],
-                flip=True,
-            )
-            * weights.lcoe_gen,
-        )
-
-        # these weights are no longer in use
-        # score_array += (
-        #     min_max_scale(
-        #         li,
-        #         cmm["lcoe"][lcoe.capacity_factor]["li"]["min"],
-        #         cmm["lcoe"][lcoe.capacity_factor]["li"]["max"],
-        #     )
-        #     * weights.lcoe_transmission
-        # )
-
-        # score_array += (
-        #     min_max_scale(
-        #         lr,
-        #         cmm["lcoe"][lcoe.capacity_factor]["lr"]["min"],
-        #         cmm["lcoe"][lcoe.capacity_factor]["lr"]["max"],
-        #     )
-        #     * weights.lcoe_road
-        # )
+    # final normalization
+    score_array /= weight_count
 
     lcoe = lg + li + lr
     lcoe = ma.masked_invalid(lcoe)
