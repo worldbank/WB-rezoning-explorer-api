@@ -13,6 +13,7 @@ from aws_cdk import (
     aws_ecs_patterns as ecs_patterns,
     aws_lambda,
     aws_apigatewayv2 as apigw,
+    aws_apigatewayv2_integrations as apigw_int,
     aws_ecr as ecr,
     # aws_elasticache as escache,
 )
@@ -92,6 +93,14 @@ class rezoningApiLambdaStack(core.Stack):
             )
         )
 
+        processor_env = DEFAULT_ENV.copy()
+        processor_env.update(
+            dict(
+                REGION="us-east-2",
+                GDAL_TIFF_INTERNAL_MASK="YES",
+            )
+        )
+
         queue_processor = ecs_patterns.QueueProcessingEc2Service(
             self,
             f"{id}-queue-processor",
@@ -99,7 +108,7 @@ class rezoningApiLambdaStack(core.Stack):
             memory_limit_mib=3600,
             image=image,
             cluster=cluster,
-            environment={"REGION": "us-east-2"},
+            environment=processor_env,
         )
 
         queue_processor.task_definition.task_role.add_to_policy(s3_access_policy)
@@ -169,13 +178,14 @@ class rezoningApiLambdaStack(core.Stack):
         )
         lambda_function.add_to_role_policy(s3_access_policy)
         lambda_function.add_to_role_policy(sqs_access_policy)
-        # lambda_function.add_to_role_policy(vpc_access_policy_statement)
 
-        # defines an API Gateway Http API resource backed by our "dynamoLambda" function.
+        # defines an API Gateway Http API resource backed by our lambda function.
         apigw.HttpApi(
             self,
             f"{id}-endpoint",
-            default_integration=apigw.LambdaProxyIntegration(handler=lambda_function),
+            default_integration=apigw_int.LambdaProxyIntegration(
+                handler=lambda_function
+            ),
         )
 
     def create_package(self, code_dir: str) -> aws_lambda.Code:
