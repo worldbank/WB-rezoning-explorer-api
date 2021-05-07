@@ -10,6 +10,7 @@ from shapely.geometry import shape
 from rasterio.windows import from_bounds
 from rasterio.warp import transform_geom
 from rasterio.crs import CRS
+from rio_tiler.utils import linear_rescale
 
 from rezoning_api.utils import read_dataset
 from rezoning_api.core.config import BUCKET, LCOE_MAX
@@ -185,13 +186,17 @@ def single_country_score(
 
     data, _mask = calc_score(country_id, lcoe, weights, filters, geometry=aoi)
 
+    # normalize to 0-1
+    data = linear_rescale(
+        data, in_range=(data.min(), data.max()), out_range=(0, 1)
+    ).astype(np.float32)
+
     # match with filter for src profile
     match_data = f"s3://{BUCKET}/multiband/filter.tif"
     with rasterio.open(match_data) as src:
         g2 = transform_geom(PLATE_CARREE, src.crs, aoi)
         bounds = shape(g2).bounds
         window = from_bounds(*bounds, transform=src.transform)
-        print(window)
         profile = src.profile
         profile.update(
             dtype=rasterio.float32,
