@@ -133,15 +133,18 @@ def single_country_lcoe(dest_file: str, country_id, lcoe=LCOE(), filters=Filters
     t1 = time()
     aoi = get_country_geojson(country_id).geometry.dict()
 
-    # spatial temporal inputs
+    # spatial inputs
+    print("getting spatial inputs")
     ds, dr, _calc, _mask = get_distances(filters, geometry=aoi)
     cf = get_capacity_factor(lcoe.capacity_factor, lcoe.tlf, lcoe.af, geometry=aoi)
+    print("capacity factor shape", cf.shape)
 
     # lcoe component calculation
     lg = lcoe_generation(lcoe, cf)
     li = lcoe_interconnection(lcoe, cf, ds)
     lr = lcoe_road(lcoe, cf, dr)
     lcoe_total = lg + li + lr
+    print("lcoe calculated", lcoe_total.min(), lcoe_total.max())
 
     # cap lcoe components + total
     lg = np.clip(lg, None, LCOE_MAX)
@@ -150,6 +153,7 @@ def single_country_lcoe(dest_file: str, country_id, lcoe=LCOE(), filters=Filters
     lcoe_total = np.clip(lcoe_total, None, LCOE_MAX)
 
     # match with filter for src profile
+    print("begin write out process")
     match_data = f"s3://{BUCKET}/multiband/filter.tif"
     with rasterio.open(match_data) as src:
         g2 = transform_geom(PLATE_CARREE, src.crs, aoi)

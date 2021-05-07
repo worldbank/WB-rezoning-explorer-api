@@ -369,6 +369,11 @@ def calc_score(
         layer = weight_name.replace("_", "-")
         loc, _idx = get_layer_location(layer)
         if loc and weight_value > 0:
+            # flip min/max for certain weights
+            flip = False
+            if weight_name not in ["roads", "grid"]:
+                flip = True
+
             dataset = loc.replace(f"s3://{BUCKET}/", "").replace(".tif", "")
             data, _ = read_dataset(
                 f"s3://{BUCKET}/{dataset}.tif",
@@ -384,6 +389,7 @@ def calc_score(
                 np.nan_to_num(data.sel(layer=layer).values, nan=0),
                 cmm[layer]["min"],
                 cmm[layer]["max"],
+                flip=flip,
             )
             score_array += weight_value * scaled_array
 
@@ -393,8 +399,9 @@ def calc_score(
                 lg,
                 cmm["lcoe"][lcoe.capacity_factor]["lg"]["min"],
                 cmm["lcoe"][lcoe.capacity_factor]["lg"]["max"],
+                flip=True,
             )
-            * weights.lcoe_gen
+            * weights.lcoe_gen,
         )
 
         # these weights are no longer in use

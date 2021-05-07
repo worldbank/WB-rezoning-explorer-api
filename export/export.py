@@ -10,6 +10,7 @@ from botocore.exceptions import ClientError
 
 from rezoning_api.db.calc import single_country_lcoe, single_country_score
 from rezoning_api.models.zone import Filters, Weights, LCOE
+from rezoning_api.utils import s3_head
 from rezoning_api.core.config import EXPORT_BUCKET
 
 logger = logging.getLogger("exporter")
@@ -41,6 +42,16 @@ def process(message):
         return
 
     file_path = f"export/{message['file_name']}"
+
+    # if the file has already been processed, stop
+    exists = False
+    try:
+        exists = s3_head(EXPORT_BUCKET, file_path)
+    except ClientError:
+        pass
+    if exists:
+        print(f"{file_path} has already been processed, skipping.")
+        return
 
     operations = ["lcoe", "score"]
     if message["operation"] not in operations:
