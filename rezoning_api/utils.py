@@ -211,7 +211,7 @@ def _filter(array, filters):
     # TODO: make this more readable
     # the condition is "no filter has a value which isn't none"
     if not any([True for filter in filters.dict().values() if filter is not None]):
-        trues = np.prod(array, axis=0) > 0
+        trues = np.prod(array.values, axis=0) > 0
         return (trues.astype(np.uint8), trues.astype(np.bool))
 
     np_filters = []
@@ -370,8 +370,7 @@ def calc_score(
     for weight_name, weight_value in weights:
         layer = weight_name.replace("_", "-")
         loc, _idx = get_layer_location(layer)
-
-        if loc and weight_value > 0:
+        if (loc and weight_value > 0) or weight_name == "lcoe_gen":
             # valid weight
             weight_count += 1
 

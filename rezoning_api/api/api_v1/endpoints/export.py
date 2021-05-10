@@ -24,7 +24,7 @@ class Operation(str, Enum):
 
 
 @router.post(
-    "/export/{operation}/{country_id}",
+    "/export/{operation}/{country_id}/{resource}",
     responses={201: dict(description="start export processing for a given country")},
     name="export",
 )
@@ -32,6 +32,7 @@ def export(
     query: ExportRequest,
     operation: Operation,
     country_id: str,
+    resource: str,
 ):
     """Return id of export operation and start it"""
     if not query.lcoe.capacity_factor:
@@ -46,11 +47,12 @@ def export(
     hash = get_hash(
         operation=operation,
         country_id=country_id,
+        resource=resource,
         **weights.dict(),
         **lcoe.dict(),
         **filters.dict(),
     )
-    id = f"{country_id}-{operation}-{hash}"
+    id = f"{country_id}-{operation}-{resource}-{hash}"
     file_name = f"WBG-REZoning-{id}.tif"
 
     # run export queue processing
@@ -62,6 +64,7 @@ def export(
                 file_name=file_name,
                 country_id=country_id,
                 operation=operation,
+                resource=resource,
                 weights=weights.json(),
                 lcoe=lcoe.json(),
                 filters=filters.json(),

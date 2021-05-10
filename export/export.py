@@ -44,26 +44,31 @@ def process(message):
     file_path = f"export/{message['file_name']}"
 
     # if the file has already been processed, stop
-    exists = False
     try:
-        exists = s3_head(EXPORT_BUCKET, file_path)
+        s3_head(EXPORT_BUCKET, file_path)
+        logger.info(f"{file_path} has already been processed, skipping.")
+        return
     except ClientError:
         pass
-    if exists:
-        print(f"{file_path} has already been processed, skipping.")
-        return
 
     operations = ["lcoe", "score"]
     if message["operation"] not in operations:
         logger.error(f"operation must be one of: {' '.join(operations)}")
         return
 
+    resources = ["solar", "wind", "offshore"]
+    if message["resource"] not in resources:
+        logger.error(f"resource must be one of {' '.join(resources)}")
+
     if message["operation"] == "lcoe":
-        single_country_lcoe(file_path, message["country_id"], lcoe, filters)
+        single_country_lcoe(
+            file_path, message["country_id"], message["resource"], lcoe, filters
+        )
     else:
         single_country_score(
             file_path,
             message["country_id"],
+            message["resource"],
             lcoe,
             filters,
             weights,

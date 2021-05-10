@@ -1,7 +1,8 @@
 """LCOE endpoints."""
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 import numpy as np
+import numpy.ma as ma
 from shapely.geometry import shape
 
 from rezoning_api.models.zone import ZoneRequest, ZoneResponse, Filters, Weights
@@ -34,24 +35,31 @@ def zone(query: ZoneRequest, country_id: str = "AFG", filters: Filters = Depends
     lcoe = extras["lcoe"]
     cf = extras["cf"]
 
+    # mask everything with filters
+    lcoe_m = ma.masked_array(lcoe, ~mask)
+    cf_m = ma.masked_array(cf, ~mask)
+    data_m = ma.masked_array(data, ~mask)
+
     # installed capacity potential
     icp = query.lcoe.landuse * shape(query.aoi.dict()).area
 
     # annual energy generation potential (divide by 1000 for GWh)
-    generation_potential = query.lcoe.landuse * cf.sum() * 8760 / 1000
+    generation_potential = query.lcoe.landuse * cf_m.sum() * 8760 / 1000
 
     # zone score
-    zs = data.mean()
-    zs = 0.01 if np.isnan(zs) else zs
+    zs = data_m.mean()
+    zs = 0.00001 if np.isnan(zs) else zs
 
-    # print(lcoe, zs, generation_potential, icp, cf.sum())
+    if not lcoe_m.mean():
+        raise HTTPException(status_code=404, detail="No suitable area after filtering")
+
     return dict(
-        lcoe=lcoe.mean(),
+        lcoe=lcoe_m.mean(),
         zone_score=zs,
         generation_potential=generation_potential,
         icp=icp,
-        cf=cf.mean(),
-        zone_output_density=cf.sum() / (500 ** 2),
+        cf=cf_m.mean(),
+        zone_output_density=cf_m.sum() / (500 ** 2),
     )
 
 
