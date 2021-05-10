@@ -245,11 +245,11 @@ def _filter(array, filters):
                 # for wwf-glw-3 (wetlands), we have special handling
                 # https://www.worldwildlife.org/publications/global-lakes-and-wetlands-database-lakes-and-wetlands-grid-level-3
                 if layer_name == "wwf-glw-3":
-                    tmp = ~np.logical_and(single_layer > 4, single_layer < 10)
+                    tmp = ~np.logical_and(single_layer >= 4, single_layer <= 10)
                 elif layer_name == "waterbodies":
                     # booleans are only sent when false, match non values
                     tmp = single_layer != 2
-                elif layer_name in ["pp_whs", "unep_coral", "unesco_ramsar"]:
+                elif layer_name in ["pp-whs", "unep-coral", "unesco-ramsar"]:
                     # these are really distance layers that we treat as boolean
                     tmp = single_layer < 1
                 else:
