@@ -1,31 +1,25 @@
 """utility functions"""
 import xml.etree.ElementTree as ET
 import boto3
-import rasterio
 import math
 import hashlib
 import json
 from typing import Union, List, Optional, Any
 from geojson_pydantic.geometries import Polygon, MultiPolygon
-from shapely.geometry import shape
-from rasterio.windows import from_bounds
-from rasterio.warp import transform_geom
-from rasterio.crs import CRS
-from rasterio import features
-from rasterio import Affine as A
 import numpy as np
 import numpy.ma as ma
 import xarray as xr
 from pydantic import create_model
+from rio_tiler.io import COGReader
+from rio_tiler.utils import create_cutline
 
 
 from rezoning_api.core.config import BUCKET
 from rezoning_api.models.zone import LCOE, Weights
 from rezoning_api.db.layers import get_layers
-from rezoning_api.db.country import get_country_min_max
+from rezoning_api.db.country import get_country_min_max, match_gsa_dailies
 
 LAYERS = get_layers()
-PLATE_CARREE = CRS.from_epsg(4326)
 MAX_DIST = 1000000  # meters
 
 s3 = boto3.client("s3")
@@ -47,61 +41,42 @@ def s3_head(bucket: str, key: str):
 def read_dataset(
     dataset: str,
     layers: List,
-    aoi: Union[Polygon, MultiPolygon],
-    tilesize=None,
-    nan=0,
-    extra_mask_geometry: Optional[Union[Polygon, MultiPolygon]] = None,
+    x: Optional[int] = None,
+    y: Optional[int] = None,
+    z: Optional[int] = None,
+    geometry: Optional[Union[Polygon, MultiPolygon]] = None,
+    max_size=None,
 ):
     """read a dataset in a given area"""
-    with rasterio.open(dataset) as src:
-        # find the window of our aoi
-        g2 = transform_geom(PLATE_CARREE, src.crs, aoi)
-        bounds = shape(g2).bounds
-        window = from_bounds(*bounds, transform=src.transform)
+    with COGReader(dataset) as cog:
+        vrt_options = None
+        indexes = list(range(1, len(layers) + 1))
 
-        # be careful with the window
-        window = window.round_shape().round_offsets()
-
-        # read overviews if specified
-        out_shape = (tilesize, tilesize) if tilesize else None
-
-        # read data
-        data = src.read(window=window, out_shape=out_shape, masked=True)
-
-        # for non-tiles, mask with geometry
-        mask = data.mask
-        if not out_shape or extra_mask_geometry:
-            transform = src.window_transform(window)
-            if extra_mask_geometry:
-                g2 = transform_geom(PLATE_CARREE, src.crs, extra_mask_geometry)
-                transform = transform * A.scale(
-                    window.width / tilesize, window.height / tilesize
+        # for tiles
+        if x:
+            if geometry:
+                cutline = create_cutline(
+                    cog.dataset, geometry, geometry_crs="epsg:4326"
                 )
-            mask = np.logical_or(
-                features.geometry_mask(
-                    [g2],
-                    out_shape=data.shape[1:],
-                    transform=transform,
-                    all_touched=True,
-                ),
-                mask,
-            )
+                vrt_options = {"cutline": cutline}
 
-        # reduce mask to a single dimension
-        mask = np.prod(mask, axis=0) > 0
+            data, mask = cog.tile(
+                x, y, z, tilesize=256, indexes=indexes, vrt_options=vrt_options
+            )
+        else:
+            data, mask = cog.feature(geometry, indexes=indexes, max_size=max_size)
 
         # return as xarray + mask
         return (
             xr.DataArray(
                 ma.array(
-                    data.data,
-                    mask=np.broadcast_to(mask, data.shape),
-                    fill_value=data.fill_value,
+                    data,
+                    mask=np.broadcast_to(~mask, data.shape),
                 ),
                 dims=("layer", "x", "y"),
                 coords=dict(layer=layers),
             ),
-            mask,
+            mask / 256,
         )
 
 
@@ -127,20 +102,27 @@ def lcoe_generation(lr: LCOE, cf):
 
 def lcoe_interconnection(lr: LCOE, cf, ds):
     """Calculate LCOE from Interconnection"""
-    numerator = ds * (lr.ct * calc_crf(lr) + lr.omft) + lr.cs * calc_crf(lr)
+    numerator = ds / 1000 * (lr.ct * calc_crf(lr) + lr.omft) + lr.cs * calc_crf(lr)
     denominator = cf * 8760
     return numerator / denominator
 
 
 def lcoe_road(lr: LCOE, cf, dr):
     """Calculate LCOE from Roads"""
-    numerator = dr * (lr.cr * calc_crf(lr) + lr.omfr)
+    numerator = dr / 1000 * (lr.cr * calc_crf(lr) + lr.omfr)
     denominator = cf * 50 * 8760
     return numerator / denominator
 
 
 def get_capacity_factor(
-    aoi: Union[Polygon, MultiPolygon], capacity_factor: str, tilesize=None
+    capacity_factor: str,
+    loss_factor: float,
+    availabity_factor: float,
+    x: Optional[int] = None,
+    y: Optional[int] = None,
+    z: Optional[int] = None,
+    geometry: Union[Polygon, MultiPolygon] = None,
+    max_size=None,
 ):
     """Calculate Capacity Factor"""
     # decide which capacity factor tif to pull from
@@ -153,14 +135,36 @@ def get_capacity_factor(
     cf, _ = read_dataset(
         cf_tif_loc,
         layers=LAYERS[dataset],
-        aoi=aoi,
-        tilesize=tilesize,
+        x=x,
+        y=y,
+        z=z,
+        geometry=geometry,
+        max_size=max_size,
     )
 
-    return cf.sel(layer=LAYERS[dataset][cf_idx])
+    # get our selected layer
+    sel_cf = cf.sel(layer=LAYERS[dataset][cf_idx])
+
+    if capacity_factor == "gsa-pvout":
+        # convert daily to hourly
+        sel_cf = sel_cf / 24
+        # backout the technical loss factor applied
+        sel_cf = sel_cf * (1 / (1 - 0.095))
+
+    # apply loss factor and availability factor
+    sel_cf = sel_cf * (1 - loss_factor) * (1 - availabity_factor)
+
+    return sel_cf
 
 
-def get_distances(aoi: Union[Polygon, MultiPolygon], filters, tilesize=None):
+def get_distances(
+    filters,
+    x: Optional[int] = None,
+    y: Optional[int] = None,
+    z: Optional[int] = None,
+    geometry: Optional[Union[Polygon, MultiPolygon]] = None,
+    max_size=None,
+):
     """Get filtered masks and distance arrays"""
     # find the required datasets to open
     sent_filters = [
@@ -178,8 +182,11 @@ def get_distances(aoi: Union[Polygon, MultiPolygon], filters, tilesize=None):
         data, mask = read_dataset(
             f"s3://{BUCKET}/{dataset}.tif",
             LAYERS[dataset],
-            aoi=aoi,
-            tilesize=tilesize,
+            x=x,
+            y=y,
+            z=z,
+            geometry=geometry,
+            max_size=max_size,
         )
         arrays.append(data)
 
@@ -192,9 +199,7 @@ def get_distances(aoi: Union[Polygon, MultiPolygon], filters, tilesize=None):
         data.sel(layer="roads"),
         data,
         # filter_mask,
-        np.logical_and(
-            ~mask, filter_mask
-        ),  # NOTE: we flip to a "true mask" here (True is valid)
+        np.logical_and(mask, filter_mask),
     )
 
 
@@ -222,6 +227,9 @@ def _filter(array, filters):
                     # convert slope from % values to degrees
                     lower_bound = math.atan(lower_bound / 100) * 180 / math.pi
                     upper_bound = math.atan(upper_bound / 100) * 180 / math.pi
+                if match_gsa_dailies(layer_name):
+                    lower_bound = lower_bound / 365
+                    upper_bound = upper_bound / 365
 
                 tmp = np.logical_and(
                     single_layer >= lower_bound,
@@ -284,7 +292,7 @@ def min_max_scale(arr, scale_min=None, scale_max=None, flip=False):
         scale_min = temp
 
     # to prevent divide by zero errors
-    scale_max = max(scale_max, 1e5)
+    scale_max = max(scale_max, 1e-5)
 
     return (arr - scale_min) / (scale_max - scale_min)
 
@@ -311,15 +319,28 @@ def get_hash(**kwargs: Any) -> str:
     return hashlib.sha224(json.dumps(kwargs, sort_keys=True).encode()).hexdigest()
 
 
-def calc_score(id, aoi, lcoe, weights, filters, tilesize=None, ret_extras=False):
+def calc_score(
+    id,
+    lcoe,
+    weights,
+    filters,
+    x: Optional[int] = None,
+    y: Optional[int] = None,
+    z: Optional[int] = None,
+    geometry: Optional[Union[Polygon, MultiPolygon]] = None,
+    max_size=None,
+    ret_extras=False,
+):
     """
     calculate a "zone score" from the provided LCOE, weight, and filter inputs
     the function returns a pixel array of scored values which can later be
     aggregated into zones so here we refer to the function as a "score" calculation
     """
     # spatial temporal inputs
-    ds, dr, calc, mask = get_distances(aoi, filters, tilesize=tilesize)
-    cf = get_capacity_factor(aoi, lcoe.capacity_factor, tilesize=tilesize)
+    ds, dr, calc, mask = get_distances(filters, x=x, y=y, z=z, geometry=geometry)
+    cf = get_capacity_factor(
+        lcoe.capacity_factor, lcoe.tlf, lcoe.af, x=x, y=y, z=z, geometry=geometry
+    )
 
     # lcoe component calculation
     lg = lcoe_generation(lcoe, cf)
@@ -342,54 +363,54 @@ def calc_score(id, aoi, lcoe, weights, filters, tilesize=None, ret_extras=False)
     weights = Weights(**temp_weights)
 
     # zone score
-    shape = (tilesize, tilesize) if tilesize else cf.shape
+    shape = (256, 256) if x else cf.shape
     score_array = np.zeros(shape)
+
+    weight_count = 0
     for weight_name, weight_value in weights:
         layer = weight_name.replace("_", "-")
         loc, _idx = get_layer_location(layer)
+
         if loc and weight_value > 0:
-            dataset = loc.replace(f"s3://{BUCKET}/", "").replace(".tif", "")
-            data, _ = read_dataset(
-                f"s3://{BUCKET}/{dataset}.tif",
-                LAYERS[dataset],
-                aoi,
-                tilesize=tilesize,
-            )
+            # valid weight
+            weight_count += 1
 
-            scaled_array = min_max_scale(
-                np.nan_to_num(data.sel(layer=layer).values, nan=0),
-                cmm[layer]["min"],
-                cmm[layer]["max"],
-            )
-            score_array += weight_value * scaled_array
+            # flip min/max for certain weights
+            flip = False
+            if weight_name not in ["roads", "grid"]:
+                flip = True
 
-        # non-layer zone score additions
-        score_array += (
-            min_max_scale(
-                lg,
-                cmm["lcoe"][lcoe.capacity_factor]["lg"]["min"],
-                cmm["lcoe"][lcoe.capacity_factor]["lg"]["max"],
-            )
-            * weights.lcoe_gen
-        )
+            # handle LCOE generation differently
+            if weight_name == "lcoe_gen":
+                lcoe_gen_scaled = min_max_scale(
+                    lg,
+                    cmm["lcoe"][lcoe.capacity_factor]["lg"]["min"],
+                    cmm["lcoe"][lcoe.capacity_factor]["lg"]["max"],
+                    flip=True,
+                )
+                score_array += lcoe_gen_scaled * weights.lcoe_gen
+            else:
+                dataset = loc.replace(f"s3://{BUCKET}/", "").replace(".tif", "")
+                data, _ = read_dataset(
+                    f"s3://{BUCKET}/{dataset}.tif",
+                    LAYERS[dataset],
+                    x=x,
+                    y=y,
+                    z=z,
+                    geometry=geometry,
+                    max_size=max_size,
+                )
 
-        score_array += (
-            min_max_scale(
-                li,
-                cmm["lcoe"][lcoe.capacity_factor]["li"]["min"],
-                cmm["lcoe"][lcoe.capacity_factor]["li"]["max"],
-            )
-            * weights.lcoe_transmission
-        )
+                scaled_array = min_max_scale(
+                    np.nan_to_num(data.sel(layer=layer).values, nan=0),
+                    cmm[layer]["min"],
+                    cmm[layer]["max"],
+                    flip=flip,
+                )
+                score_array += weight_value * scaled_array
 
-        score_array += (
-            min_max_scale(
-                lr,
-                cmm["lcoe"][lcoe.capacity_factor]["lr"]["min"],
-                cmm["lcoe"][lcoe.capacity_factor]["lr"]["max"],
-            )
-            * weights.lcoe_road
-        )
+    # final normalization
+    score_array /= weight_count
 
     lcoe = lg + li + lr
     lcoe = ma.masked_invalid(lcoe)

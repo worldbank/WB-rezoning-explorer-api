@@ -205,7 +205,7 @@ class LCOE(BaseModel):
         category=Category.BASIC,
         priority=3,
     )
-    omfg: int = Field(
+    omfg: float = Field(
         40,
         title="Generation – fixed O&M [USD/kW/y]",
         description="Fixed Operation and Maintenance costs for the generation part of the system, per unit of capacity, per year.",
@@ -276,7 +276,7 @@ class LCOE(BaseModel):
         priority=15,
     )
     landuse: float = Field(
-        0,
+        3,
         title="Installed Capacity Area Factor [MW/km2]",
         description="Installed capacity area factor is the average land area occupied by a power plant. More information: https://www.nrel.gov/analysis/tech-size.html ",
         category=Category.BASIC,
@@ -557,5 +557,9 @@ class ZoneResponse(BaseModel):
 
     lcoe: float = Field(..., title="Levelized Cost of Electrification ($USD / GWh)")
     zone_score: float = Field(..., title="Zone Score")
-    zone_output: float = Field(..., title="Zone Output (GWh)")
     zone_output_density: float = Field(..., title="Zone Output Density (kWh / m2)")
+    icp: float = Field(..., title="Installed Capacity Potential")
+    generation_potential: float = Field(
+        ..., title="Annual Energy Generation Potential (GWh)"
+    )
+    cf: float = Field(..., title="Capacity Factor")

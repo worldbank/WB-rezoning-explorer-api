@@ -1,13 +1,11 @@
 """LCOE endpoints."""
 from typing import Optional
-
+import copy
 from rezoning_api.db.country import get_country_min_max
 from fastapi import APIRouter, Depends
-from mercantile import feature, Tile
 from rio_tiler.colormap import cmap
 from rio_tiler.utils import render, linear_rescale
 import numpy as np
-from geojson_pydantic.geometries import Polygon
 
 from rezoning_api.models.tiles import TileResponse
 from rezoning_api.models.zone import LCOE, Filters
@@ -21,6 +19,7 @@ from rezoning_api.utils import (
     get_capacity_factor,
     get_distances,
 )
+from rezoning_api.db.country import get_country_geojson
 
 router = APIRouter()
 
@@ -39,15 +38,23 @@ def lcoe(
     country_id: str,
     filters: Filters = Depends(),
     lcoe: LCOE = Depends(),
+    offshore: bool = False,
 ):
     """Return LCOE tile."""
-    # get AOI from tile
-    aoi = Polygon(**feature(Tile(x, y, z))["geometry"])
+
+    # potentially mask by country
+    geometry = None
+    if country_id:
+        # TODO: early return for tiles outside country bounds
+        feat = get_country_geojson(country_id, offshore)
+        geometry = feat.geometry.dict()
 
     # calculate LCOE (from zone.py, TODO: DRY)
     # spatial temporal inputs
-    ds, dr, _calc, mask = get_distances(aoi.dict(), filters, tilesize=256)
-    cf = get_capacity_factor(aoi.dict(), lcoe.capacity_factor, tilesize=256)
+    ds, dr, _calc, mask = get_distances(filters, x=x, y=y, z=z, geometry=geometry)
+    cf = get_capacity_factor(
+        lcoe.capacity_factor, lcoe.tlf, lcoe.af, x=x, y=y, z=z, geometry=geometry
+    )
 
     # lcoe component calculation
     lg = lcoe_generation(lcoe, cf)
@@ -76,7 +83,7 @@ def lcoe(
 @router.get("/lcoe/{resource}/{country_id}/schema", name="lcoe_country_schema")
 def get_filter_schema(resource: Optional[str], country_id: Optional[str] = None):
     """Return lcoe schema"""
-    schema = LCOE.schema()["properties"]
+    schema = copy.deepcopy(LCOE.schema()["properties"])
     schema["capacity_factor"]["options"] = get_capacity_factor_options()
 
     if resource and country_id:

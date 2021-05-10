@@ -17,10 +17,10 @@ def demo(request: Request):
                 "filter_country", **dict(country_id="BOL", z="{z}", x="{x}", y="{y}")
             ),
             "lcoe_endpoint": request.url_for(
-                "lcoe", **dict(country_id="AFG", z="{z}", x="{x}", y="{y}")
+                "lcoe", **dict(country_id="BOL", z="{z}", x="{x}", y="{y}")
             ),
             "score_endpoint": request.url_for(
-                "score", **dict(country_id="AFG", z="{z}", x="{x}", y="{y}")
+                "score", **dict(country_id="BOL", z="{z}", x="{x}", y="{y}")
             ),
             "layers_endpoint": request.url_for(
                 "layers", **dict(country_id="BOL", id="{id}", z="{z}", x="{x}", y="{y}")

@@ -10,6 +10,7 @@ from shapely.geometry import shape
 from rasterio.windows import from_bounds
 from rasterio.warp import transform_geom
 from rasterio.crs import CRS
+from rio_tiler.utils import linear_rescale
 
 from rezoning_api.utils import read_dataset
 from rezoning_api.core.config import BUCKET, LCOE_MAX
@@ -47,7 +48,13 @@ def refresh_country_extrema(partial=False):
             print(f"reading {dataset}")
             try:
                 ds, _ = read_dataset(
-                    f"s3://{BUCKET}/{dataset}.tif", layers[dataset], aoi, tilesize=64
+                    f"s3://{BUCKET}/{dataset}.tif",
+                    layers[dataset],
+                    x=None,
+                    y=None,
+                    z=None,
+                    geometry=aoi,
+                    max_size=1024,
                 )
                 for layer in layers[dataset]:
                     extrema[layer] = dict(
@@ -70,8 +77,14 @@ def refresh_country_extrema(partial=False):
             filters = Filters()
 
             # spatial temporal inputs
-            ds, dr, _calc, _mask = get_distances(aoi, filters, tilesize=64)
-            cf = get_capacity_factor(aoi, lcoe.capacity_factor, tilesize=64)
+            ds, dr, _calc, _mask = get_distances(filters, geometry=aoi, max_size=1024)
+            cf = get_capacity_factor(
+                lcoe.capacity_factor,
+                lcoe.tlf,
+                lcoe.af,
+                geometry=aoi,
+                max_size=1024,
+            )
 
             # lcoe component calculation
             lg = lcoe_generation(lcoe, cf)
@@ -120,15 +133,18 @@ def single_country_lcoe(dest_file: str, country_id, lcoe=LCOE(), filters=Filters
     t1 = time()
     aoi = get_country_geojson(country_id).geometry.dict()
 
-    # spatial temporal inputs
-    ds, dr, _calc, _mask = get_distances(aoi, filters)
-    cf = get_capacity_factor(aoi, lcoe.capacity_factor)
+    # spatial inputs
+    print("getting spatial inputs")
+    ds, dr, _calc, mask = get_distances(filters, geometry=aoi)
+    cf = get_capacity_factor(lcoe.capacity_factor, lcoe.tlf, lcoe.af, geometry=aoi)
+    print("capacity factor shape", cf.shape)
 
     # lcoe component calculation
     lg = lcoe_generation(lcoe, cf)
     li = lcoe_interconnection(lcoe, cf, ds)
     lr = lcoe_road(lcoe, cf, dr)
     lcoe_total = lg + li + lr
+    print(f"lcoe calculated: {float(lcoe_total.min())} - {float(lcoe_total.max())}")
 
     # cap lcoe components + total
     lg = np.clip(lg, None, LCOE_MAX)
@@ -137,6 +153,7 @@ def single_country_lcoe(dest_file: str, country_id, lcoe=LCOE(), filters=Filters
     lcoe_total = np.clip(lcoe_total, None, LCOE_MAX)
 
     # match with filter for src profile
+    print("begin write out process")
     match_data = f"s3://{BUCKET}/multiband/filter.tif"
     with rasterio.open(match_data) as src:
         g2 = transform_geom(PLATE_CARREE, src.crs, aoi)
@@ -159,6 +176,7 @@ def single_country_lcoe(dest_file: str, country_id, lcoe=LCOE(), filters=Filters
         with rasterio.open(dest_file, "w", **profile) as dst:
             print(f"saving to {dest_file}")
             dst.write(data, 1)
+            dst.write_mask(mask.astype(np.bool))
 
     print(f"elapsed: {time() - t1} seconds")
 
@@ -171,7 +189,12 @@ def single_country_score(
     t1 = time()
     aoi = get_country_geojson(country_id).geometry.dict()
 
-    data, _mask = calc_score(country_id, aoi, lcoe, weights, filters)
+    data, mask = calc_score(country_id, lcoe, weights, filters, geometry=aoi)
+
+    # normalize to 0-1
+    data = linear_rescale(
+        data, in_range=(data.min(), data.max()), out_range=(0, 1)
+    ).astype(np.float32)
 
     # match with filter for src profile
     match_data = f"s3://{BUCKET}/multiband/filter.tif"
@@ -179,7 +202,6 @@ def single_country_score(
         g2 = transform_geom(PLATE_CARREE, src.crs, aoi)
         bounds = shape(g2).bounds
         window = from_bounds(*bounds, transform=src.transform)
-        print(window)
         profile = src.profile
         profile.update(
             dtype=rasterio.float32,
@@ -194,5 +216,6 @@ def single_country_score(
         with rasterio.open(dest_file, "w", **profile) as dst:
             print(f"saving to {dest_file}")
             dst.write(data.astype(np.float32), 1)
+            dst.write_mask(mask.astype(np.bool))
 
     print(f"elapsed: {time() - t1} seconds")

@@ -2,6 +2,7 @@
 
 from fastapi import APIRouter, Depends
 import numpy as np
+from shapely.geometry import shape
 
 from rezoning_api.models.zone import ZoneRequest, ZoneResponse, Filters, Weights
 from rezoning_api.utils import calc_score
@@ -23,24 +24,33 @@ def zone(query: ZoneRequest, country_id: str = "AFG", filters: Filters = Depends
     """calculate LCOE and weight for zone score"""
     data, mask, extras = calc_score(
         country_id,
-        query.aoi.dict(),
         query.lcoe,
         query.weights,
         filters,
-        tilesize=256,
+        geometry=query.aoi.dict(),
         ret_extras=True,
     )
 
     lcoe = extras["lcoe"]
     cf = extras["cf"]
 
+    # installed capacity potential
+    icp = query.lcoe.landuse * shape(query.aoi.dict()).area
+
+    # annual energy generation potential (divide by 1000 for GWh)
+    generation_potential = query.lcoe.landuse * cf.sum() * 8760 / 1000
+
+    # zone score
     zs = data.mean()
     zs = 0.01 if np.isnan(zs) else zs
 
+    # print(lcoe, zs, generation_potential, icp, cf.sum())
     return dict(
         lcoe=lcoe.mean(),
         zone_score=zs,
-        zone_output=cf.sum(),
+        generation_potential=generation_potential,
+        icp=icp,
+        cf=cf.mean(),
         zone_output_density=cf.sum() / (500 ** 2),
     )
 
