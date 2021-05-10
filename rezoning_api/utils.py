@@ -370,8 +370,7 @@ def calc_score(
     for weight_name, weight_value in weights:
         layer = weight_name.replace("_", "-")
         loc, _idx = get_layer_location(layer)
-
-        if loc and weight_value > 0:
+        if (loc and weight_value > 0) or weight_name == "lcoe_gen":
             # valid weight
             weight_count += 1
 
