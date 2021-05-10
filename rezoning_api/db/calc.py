@@ -128,10 +128,13 @@ def refresh_country_extrema(partial=False):
         print(f"elapsed: {time() - t1} seconds")
 
 
-def single_country_lcoe(dest_file: str, country_id, lcoe=LCOE(), filters=Filters()):
+def single_country_lcoe(
+    dest_file: str, country_id, resource, lcoe=LCOE(), filters=Filters()
+):
     """calculate lcoe for single country"""
     t1 = time()
-    aoi = get_country_geojson(country_id).geometry.dict()
+    offshore = True if resource == "offshore" else False
+    aoi = get_country_geojson(country_id, offshore=offshore).geometry.dict()
 
     # spatial inputs
     print("getting spatial inputs")
@@ -182,12 +185,18 @@ def single_country_lcoe(dest_file: str, country_id, lcoe=LCOE(), filters=Filters
 
 
 def single_country_score(
-    dest_file: str, country_id, lcoe=LCOE(), filters=Filters(), weights=Weights()
+    dest_file: str,
+    country_id,
+    resource,
+    lcoe=LCOE(),
+    filters=Filters(),
+    weights=Weights(),
 ):
     # TODO: DRY
     """calculate score for single country"""
     t1 = time()
-    aoi = get_country_geojson(country_id).geometry.dict()
+    offshore = True if resource == "offshore" else False
+    aoi = get_country_geojson(country_id, offshore=offshore).geometry.dict()
 
     data, mask = calc_score(country_id, lcoe, weights, filters, geometry=aoi)
 
