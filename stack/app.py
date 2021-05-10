@@ -105,7 +105,7 @@ class rezoningApiLambdaStack(core.Stack):
             self,
             f"{id}-queue-processor",
             cpu=1800,
-            memory_limit_mib=3600,
+            memory_limit_mib=7600,
             image=image,
             cluster=cluster,
             environment=processor_env,
