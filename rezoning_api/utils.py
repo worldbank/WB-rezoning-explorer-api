@@ -211,7 +211,7 @@ def _filter(array, filters):
     # TODO: make this more readable
     # the condition is "no filter has a value which isn't none"
     if not any([True for filter in filters.dict().values() if filter is not None]):
-        trues = np.prod(array, axis=0) > 0
+        trues = np.prod(array.values, axis=0) > 0
         return (trues.astype(np.uint8), trues.astype(np.bool))
 
     np_filters = []
