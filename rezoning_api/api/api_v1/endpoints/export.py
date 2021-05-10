@@ -50,7 +50,8 @@ def export(
         **lcoe.dict(),
         **filters.dict(),
     )
-    name = f"{country_id}-{operation}-{hash}"
+    id = f"{country_id}-{operation}-{hash}"
+    file_name = f"WBG-REZoning-{id}.tif"
 
     # run export queue processing
     client = boto3.client("sqs")
@@ -58,7 +59,7 @@ def export(
         QueueUrl=QUEUE_URL,
         MessageBody=json.dumps(
             dict(
-                file_name=f"{name}.tif",
+                file_name=file_name,
                 country_id=country_id,
                 operation=operation,
                 weights=weights.json(),
@@ -68,14 +69,14 @@ def export(
         ),
     )
 
-    return {"id": name}
+    return {"id": id}
 
 
 @router.get("/export/status/{id}")
 def get_export_status(id: str, response: Response):
     """Return export status"""
     try:
-        key = f"export/{id}.tif"
+        key = f"export/WBG-REZoning-{id}.tif"
         s3_head(bucket=EXPORT_BUCKET, key=key)
         url = s3.generate_presigned_url(
             "get_object", Params={"Bucket": EXPORT_BUCKET, "Key": key}, ExpiresIn=300
