@@ -79,10 +79,20 @@ def layers(
         # no bathymetry on land: https://github.com/developmentseed/rezoning-api/issues/103
         mask[data.squeeze() > 0] = 0
 
+    if id in ["pp-whs", "unep-coral", "unesco-ramsar"]:
+        # convert these distance layers to boolean for display
+        data = np.where(data <= 1000, 1, 0)
+        layer_min, layer_max = (0, 1)
+
+    if id == "wwf-glw-3":
+        # wetlands layer converted to boolean
+        # https://www.worldwildlife.org/publications/global-lakes-and-wetlands-database-lakes-and-wetlands-grid-level-3
+        data = np.where(np.logical_and(data >= 4, data <= 10), 1, 0)
+        layer_min, layer_max = (0, 1)
+
     if match_gsa_dailies(id):
         # annualize gsa layers to match min/max
         data *= 365
-        print(layer_max, data.max())
 
     if id != "land-cover":
         data = linear_rescale(
