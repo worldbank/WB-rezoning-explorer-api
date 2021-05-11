@@ -68,7 +68,7 @@ def refresh_country_extrema(partial=False):
         # default inputs + every cf combination
         print("calc LCOE extrema")
         cfo = get_capacity_factor_options()
-        options = list(set([cf for cf_list in cfo.values() for cf in cf_list]))
+        options = list(set([cf["id"] for cf_list in cfo.values() for cf in cf_list]))
         extrema["lcoe"] = dict()
         for option in options:
             print(f"LCOE extrema, cf: {option}")
