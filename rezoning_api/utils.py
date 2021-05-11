@@ -375,9 +375,9 @@ def calc_score(
             weight_count += 1
 
             # flip min/max for certain weights
-            flip = False
-            if weight_name not in ["roads", "grid"]:
-                flip = True
+            flip = True
+            if weight_name == "airports":
+                flip = False
 
             # handle LCOE generation differently
             if weight_name == "lcoe_gen":
