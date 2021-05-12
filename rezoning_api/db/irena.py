@@ -1,8 +1,12 @@
 """ utility functions for IRENA data """
 import os
+from os import path as op
+import json
 import requests
 
-# on startup, fetch the IRENA data
+# on startup, load pre-fetched IRENA data
+with open(op.join(op.dirname(__file__), "irena.json"), "r") as f:
+    irena_data = json.load(f)
 
 
 def request_irena_data(resource, records=[], offset=""):
@@ -21,7 +25,7 @@ def request_irena_data(resource, records=[], offset=""):
         return records + data["records"]
 
 
-def fetch_irena_data(resource):
+def fetch_irena_data_table(resource):
     """create a lookup table for IRENA data from Airtable"""
     records = request_irena_data(resource)
     table = dict()
@@ -34,10 +38,12 @@ def fetch_irena_data(resource):
     return table
 
 
-irena_data = dict(
-    solar=fetch_irena_data("solar"),
-    wind=fetch_irena_data("wind"),
-)
+def fetch_irena_data():
+    """fetch all IRENA data"""
+    return dict(
+        solar=fetch_irena_data_table("solar"),
+        wind=fetch_irena_data_table("wind"),
+    )
 
 
 def get_irena_defaults(resource: str, country: str):

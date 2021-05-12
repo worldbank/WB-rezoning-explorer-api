@@ -52,6 +52,7 @@ setup(
             "db/eez.geojson",
             "db/layers.json",
             "db/cf.json",
+            "db/irena.json",
         ]
     },
     zip_safe=False,
