@@ -82,6 +82,9 @@ def get_country_min_max(id):
         math.tan(mm_obj["slope"]["max"] / 180 * math.pi) * 100
     )
 
+    # some nodata is in the population data set
+    mm_obj["worldpop"]["min"] = 0
+
     # GSA layers converted from daily (data layer) to annual for the front end
     for key, mm in mm_obj.items():
         if match_gsa_dailies(key):
