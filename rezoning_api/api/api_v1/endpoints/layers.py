@@ -31,7 +31,7 @@ TILE_URL = "https://reztileserver.com/services/{layer}/tiles/{{z}}/{{x}}/{{y}}.p
     name="layers",
 )
 @router.get(
-    "/layers/{country_id}/{id}/{z}/{x}/{y}.png",
+    "/layers/{country_id}/{resource}/{id}/{z}/{x}/{y}.png",
     responses={
         200: dict(description="return a tile for a given layer, filtered by country")
     },
@@ -45,6 +45,7 @@ def layers(
     y: int,
     colormap: str,
     country_id: str = None,
+    resource: str = None,
     offshore: bool = False,
 ):
     """Return a tile from a layer."""
@@ -64,7 +65,7 @@ def layers(
 
     try:
         if country_id:
-            minmax = get_country_min_max(country_id)
+            minmax = get_country_min_max(country_id, resource)
             layer_min = minmax[id]["min"]
             layer_max = minmax[id]["max"]
         else:
@@ -74,6 +75,15 @@ def layers(
     except Exception:
         layer_min = data.min()
         layer_max = data.max()
+
+    if not country_id and id == "worldpop":
+        layer_max = 1000
+
+    if not country_id and "gwa-speed" in id:
+        layer_max /= 3
+
+    if not country_id and "gwa-power" in id:
+        layer_max /= 100
 
     if id == "gebco":
         # no bathymetry on land: https://github.com/developmentseed/rezoning-api/issues/103
@@ -92,7 +102,8 @@ def layers(
 
     if match_gsa_dailies(id):
         # annualize gsa layers to match min/max
-        data *= 365
+        if country_id:
+            data *= 365
 
     if id != "land-cover":
         data = linear_rescale(

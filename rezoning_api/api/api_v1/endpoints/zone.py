@@ -17,14 +17,17 @@ router = APIRouter()
     response_model=ZoneResponse,
 )
 @router.post(
-    "/zone/{country_id}",
+    "/zone/{country_id}/{resource}",
     responses={200: dict(description="return an LCOE calculation for a given area")},
     response_model=ZoneResponse,
 )
-def zone(query: ZoneRequest, country_id: str = "AFG", filters: Filters = Depends()):
+def zone(
+    query: ZoneRequest, country_id: str, resource: str, filters: Filters = Depends()
+):
     """calculate LCOE and weight for zone score"""
     data, mask, extras = calc_score(
         country_id,
+        resource,
         query.lcoe,
         query.weights,
         filters,

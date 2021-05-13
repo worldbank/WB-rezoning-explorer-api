@@ -198,7 +198,7 @@ def single_country_score(
     offshore = True if resource == "offshore" else False
     aoi = get_country_geojson(country_id, offshore=offshore).geometry.dict()
 
-    data, mask = calc_score(country_id, lcoe, weights, filters, geometry=aoi)
+    data, mask = calc_score(country_id, resource, lcoe, weights, filters, geometry=aoi)
 
     # normalize to 0-1
     data = linear_rescale(
