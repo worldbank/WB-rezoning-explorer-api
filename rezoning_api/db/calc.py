@@ -10,21 +10,17 @@ from shapely.geometry import shape
 from rasterio.windows import from_bounds
 from rasterio.warp import transform_geom
 from rasterio.crs import CRS
-from rio_tiler.utils import linear_rescale
 
 from rezoning_api.utils import read_dataset
 from rezoning_api.core.config import BUCKET, LCOE_MAX
 from rezoning_api.db.country import get_country_geojson, world
-from rezoning_api.db.cf import get_capacity_factor_options
 from rezoning_api.models.zone import LCOE, Filters, Weights
 from rezoning_api.utils import (
     get_capacity_factor,
     get_distances,
-    lcoe_generation,
-    lcoe_interconnection,
-    lcoe_road,
     calc_score,
 )
+from rezoning_api.base_utils import lcoe_generation, lcoe_interconnection, lcoe_road
 from rezoning_api.db.layers import get_layers
 
 PLATE_CARREE = CRS.from_epsg(4326)
@@ -44,28 +40,25 @@ def refresh_country_extrema(partial=False):
         # try:
         aoi = feature["geometry"]
         extrema = dict()
-        cfo = get_capacity_factor_options()
-        cf_options = list(set([cf["id"] for cf_list in cfo.values() for cf in cf_list]))
         for dataset in datasets:
-            if dataset not in cf_options:
-                print(f"reading {dataset}")
-                try:
-                    ds, _ = read_dataset(
-                        f"s3://{BUCKET}/{dataset}.tif",
-                        layers[dataset],
-                        x=None,
-                        y=None,
-                        z=None,
-                        geometry=aoi,
-                        max_size=1024,
+            print(f"reading {dataset}")
+            try:
+                ds, _ = read_dataset(
+                    f"s3://{BUCKET}/{dataset}.tif",
+                    layers[dataset],
+                    x=None,
+                    y=None,
+                    z=None,
+                    geometry=aoi,
+                    max_size=1024,
+                )
+                for layer in layers[dataset]:
+                    extrema[layer] = dict(
+                        min=float(ds.sel(layer=layer).min()),
+                        max=float(ds.sel(layer=layer).max()),
                     )
-                    for layer in layers[dataset]:
-                        extrema[layer] = dict(
-                            min=float(ds.sel(layer=layer).min()),
-                            max=float(ds.sel(layer=layer).max()),
-                        )
-                except Exception:
-                    print(f"could not read {dataset}")
+            except Exception:
+                print(f"could not read {dataset}")
 
         with open(fname, "w") as out:
             json.dump(extrema, out)
@@ -146,10 +139,8 @@ def single_country_score(
 
     data, mask = calc_score(country_id, resource, lcoe, weights, filters, geometry=aoi)
 
-    # normalize to 0-1
-    data = linear_rescale(
-        data, in_range=(data.min(), data.max()), out_range=(0, 1)
-    ).astype(np.float32)
+    # normalize to data maximum (max value 1)
+    data /= data.max()
 
     # match with filter for src profile
     match_data = f"s3://{BUCKET}/multiband/filter.tif"

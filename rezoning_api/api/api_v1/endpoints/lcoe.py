@@ -13,12 +13,10 @@ from rezoning_api.db.cf import get_capacity_factor_options
 from rezoning_api.db.irena import get_irena_defaults
 from rezoning_api.core.config import LCOE_MAX
 from rezoning_api.utils import (
-    lcoe_generation,
-    lcoe_interconnection,
-    lcoe_road,
     get_capacity_factor,
     get_distances,
 )
+from rezoning_api.base_utils import lcoe_total
 from rezoning_api.db.country import get_country_geojson
 
 router = APIRouter()
@@ -58,19 +56,35 @@ def lcoe(
     )
 
     # lcoe component calculation
-    lg = lcoe_generation(lcoe, cf)
-    li = lcoe_interconnection(lcoe, cf, ds)
-    lr = lcoe_road(lcoe, cf, dr)
-    lcoe_total = lg + li + lr
+    lcoe_calc = lcoe_total(lcoe, cf, ds, dr)
     # cap lcoe total
-    lcoe_total = np.clip(lcoe_total, None, LCOE_MAX)
+    lcoe_calc = np.clip(lcoe_calc, None, LCOE_MAX)
 
     # get country min max for scaling
-    country_min_max = get_country_min_max(country_id, resource)
-    lcoe_min_max = country_min_max["lcoe"]
+    cmm = get_country_min_max(country_id, resource)
+    if filters.f_roads:
+        road_min = max(cmm["roads"]["min"], float(filters.f_roads.split(",")[0]))
+        road_max = min(cmm["roads"]["max"], float(filters.f_roads.split(",")[1]))
+    else:
+        road_min = cmm["roads"]["min"]
+        road_max = cmm["roads"]["max"]
+
+    if filters.f_grid:
+        grid_min = max(cmm["grid"]["min"], float(filters.f_grid.split(",")[0]))
+        grid_max = min(cmm["grid"]["max"], float(filters.f_grid.split(",")[1]))
+    else:
+        grid_min = cmm["grid"]["min"]
+        grid_max = cmm["grid"]["max"]
+
+    lcoe_min_max = dict(
+        min=lcoe_total(lcoe, cmm[lcoe.capacity_factor]["max"], grid_min, road_min),
+        max=lcoe_total(
+            lcoe, 0.25 * cmm[lcoe.capacity_factor]["max"], grid_max, road_max
+        ),
+    )
 
     tile = linear_rescale(
-        lcoe_total.values,
+        lcoe_calc.values,
         in_range=[lcoe_min_max["min"], lcoe_min_max["max"]],
         out_range=[0, 255],
     ).astype(np.uint8)

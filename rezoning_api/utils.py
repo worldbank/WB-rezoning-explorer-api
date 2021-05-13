@@ -15,9 +15,10 @@ from rio_tiler.utils import create_cutline
 
 
 from rezoning_api.core.config import BUCKET
-from rezoning_api.models.zone import LCOE, Weights
+from rezoning_api.models.zone import Weights
 from rezoning_api.db.layers import get_layers
 from rezoning_api.db.country import get_country_min_max, match_gsa_dailies
+from rezoning_api.base_utils import lcoe_generation, lcoe_interconnection, lcoe_road
 
 LAYERS = get_layers()
 MAX_DIST = 1000000  # meters
@@ -83,35 +84,6 @@ def read_dataset(
 def filter_to_layer_name(flt):
     """filter name helper"""
     return flt[2:].replace("_", "-")
-
-
-def calc_crf(lr: LCOE):
-    """
-    Calculate Capital Recovery Factor (CRF)
-    https://www.nrel.gov/analysis/tech-lcoe-documentation.html
-    """
-    return (lr.i * (1 + lr.i) ** lr.n) / (((1 + lr.i) ** lr.n) - 1)
-
-
-def lcoe_generation(lr: LCOE, cf):
-    """Calculate LCOE from Generation"""
-    numerator = lr.cg * calc_crf(lr) + lr.omfg
-    denominator = cf * 8760
-    return (numerator / denominator) * 1000 + lr.omvg
-
-
-def lcoe_interconnection(lr: LCOE, cf, ds):
-    """Calculate LCOE from Interconnection"""
-    numerator = ds / 1000 * (lr.ct * calc_crf(lr) + lr.omft) + lr.cs * calc_crf(lr)
-    denominator = cf * 8760
-    return numerator / denominator
-
-
-def lcoe_road(lr: LCOE, cf, dr):
-    """Calculate LCOE from Roads"""
-    numerator = dr / 1000 * (lr.cr * calc_crf(lr) + lr.omfr)
-    denominator = cf * 50 * 8760
-    return numerator / denominator
 
 
 def get_capacity_factor(
@@ -384,10 +356,11 @@ def calc_score(
             if weight_name == "lcoe_gen":
                 lcoe_gen_scaled = min_max_scale(
                     lg,
-                    cmm["lcoe"][lcoe.capacity_factor]["lg"]["min"],
-                    cmm["lcoe"][lcoe.capacity_factor]["lg"]["max"],
+                    cmm["lcoe"]["min"],
+                    cmm["lcoe"]["max"],
                     flip=True,
                 )
+                lcoe_gen_scaled = np.clip(lcoe_gen_scaled, 0, 1)
                 score_array += lcoe_gen_scaled * weights.lcoe_gen
             else:
                 dataset = loc.replace(f"s3://{BUCKET}/", "").replace(".tif", "")
