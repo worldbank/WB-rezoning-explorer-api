@@ -18,7 +18,12 @@ from rezoning_api.core.config import BUCKET
 from rezoning_api.models.zone import Weights
 from rezoning_api.db.layers import get_layers
 from rezoning_api.db.country import get_country_min_max, match_gsa_dailies
-from rezoning_api.base_utils import lcoe_generation, lcoe_interconnection, lcoe_road
+from rezoning_api.base_utils import (
+    get_lcoe_min_max,
+    lcoe_generation,
+    lcoe_interconnection,
+    lcoe_road,
+)
 
 LAYERS = get_layers()
 MAX_DIST = 1000000  # meters
@@ -327,6 +332,10 @@ def calc_score(
 
     # get regional min/max
     cmm = get_country_min_max(id, resource)
+    # 0 out road/grid to get LCOE gen only
+    filters.f_grid = "0,0"
+    filters.f_roads = "0,0"
+    lcoe_min_max = get_lcoe_min_max(cmm, filters, lcoe)
 
     # normalize weights
     scale_max = sum([wv for wn, wv in weights])
@@ -356,8 +365,8 @@ def calc_score(
             if weight_name == "lcoe_gen":
                 lcoe_gen_scaled = min_max_scale(
                     lg,
-                    cmm["lcoe"]["min"],
-                    cmm["lcoe"]["max"],
+                    lcoe_min_max["min"],
+                    lcoe_min_max["max"],
                     flip=True,
                 )
                 lcoe_gen_scaled = np.clip(lcoe_gen_scaled, 0, 1)

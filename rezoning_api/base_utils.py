@@ -38,3 +38,27 @@ def lcoe_total(lr: LCOE, cf, ds, dr):
         + lcoe_interconnection(lr, cf, ds)
         + lcoe_road(lr, cf, dr)
     )
+
+
+def get_lcoe_min_max(cmm, filters, lcoe):
+    """Calculate LCOE min max based on other input data"""
+    if filters.f_roads:
+        road_min = max(cmm["roads"]["min"], float(filters.f_roads.split(",")[0]))
+        road_max = min(cmm["roads"]["max"], float(filters.f_roads.split(",")[1]))
+    else:
+        road_min = cmm["roads"]["min"]
+        road_max = cmm["roads"]["max"]
+
+    if filters.f_grid:
+        grid_min = max(cmm["grid"]["min"], float(filters.f_grid.split(",")[0]))
+        grid_max = min(cmm["grid"]["max"], float(filters.f_grid.split(",")[1]))
+    else:
+        grid_min = cmm["grid"]["min"]
+        grid_max = cmm["grid"]["max"]
+
+    return dict(
+        min=lcoe_total(lcoe, cmm[lcoe.capacity_factor]["max"], grid_min, road_min),
+        max=lcoe_total(
+            lcoe, 0.25 * cmm[lcoe.capacity_factor]["max"], grid_max, road_max
+        ),
+    )

@@ -95,7 +95,7 @@ def get_country_min_max(id, resource):
             mm["min"] = mm["min"] * 365
             mm["max"] = mm["max"] * 365
 
-    # replace lcoe object with hardcoded minmax
-    mm_obj["lcoe"] = dict(min=80, max=300)
+    # remove lcoe object
+    mm_obj["lcoe"] = dict()
 
     return mm_obj
