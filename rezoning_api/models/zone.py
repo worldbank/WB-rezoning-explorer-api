@@ -189,7 +189,7 @@ class LCOE(BaseModel):
     capacity_factor: str = Field(
         None,
         title="Turbine Type or Solar Unit Type",
-        description="Annual capacity factor is a unitless ratio of the actual electrical energy output over a given period of time to the maximum possible electrical energy output over that period.",
+        description="Choose the appropriate solar unit or wind turbine type.",
         category=Category.BASIC,
         priority=1,
     )
@@ -200,98 +200,98 @@ class LCOE(BaseModel):
     # )
     cg: int = Field(
         2000,
-        title="Generation – capital [USD/kW]",
+        title="Generation – capital (USD/kW)",
         description="Capital expenditure for generation, per unit of capacity.",
         category=Category.BASIC,
         priority=3,
     )
     omfg: float = Field(
         40,
-        title="Generation – fixed O&M [USD/kW/y]",
+        title="Generation – fixed O&M (USD/kW/y)",
         description="Fixed Operation and Maintenance costs for the generation part of the system, per unit of capacity, per year.",
         category=Category.BASIC,
         priority=4,
     )
     omvg: float = Field(
         4,
-        title="Generation – variable O&M [USD/MWh]",
+        title="Generation – variable O&M (USD/MWh)",
         description="Variable Operation and Maintenance costs for generation, per unit of energy produced.",
         category=Category.ADVANCED,
         priority=8,
     )
     ct: int = Field(
         1000,
-        title="Transmission (land cabling) – capital [USD/MW/km]",
+        title="Transmission (land cabling) – capital (USD/MW/km)",
         description="Capital expenditure for transmission (land cabling), per unit of capacity and distance.",
         category=Category.ADVANCED,
         priority=9,
     )
     omft: int = Field(
         1,
-        title="Transmission – fixed O&M [USD/MW/km]",
+        title="Transmission – fixed O&M (USD/MW/km)",
         description="Fixed Operation and Maintenance costs for the transmission, per unit of distance, per year.",
         category=Category.ADVANCED,
         priority=10,
     )
     cs: float = Field(
         70000,
-        title="Substation – capital [USD / MW / two substations (per new transmission connection) ]",
+        title="Substation – capital (USD / MW / two substations (per new transmission connection) )",
         description="Capital expenditure for new substations or upgrades per transmission connection.",
         category=Category.ADVANCED,
         priority=11,
     )
     cr: float = Field(
         40000,
-        title="Road – capital [USD/km]",
+        title="Road – capital (USD/km)",
         description="Capital expenditure for road infrastructure, per unit of distance. One road assumed for every 50 MW of installed capacity",
         category=Category.ADVANCED,
         priority=12,
     )
     omfr: float = Field(
         1,
-        title="Road – fixed O&M [USD/km]",
+        title="Road – fixed O&M (USD/km)",
         description="Fixed Operation and Maintenance costs for road infrastructure, per unit of distance, per year.",
         category=Category.ADVANCED,
         priority=13,
     )
     decom: float = Field(
         0.01,
-        title="Decommission rate [%]",
+        title="Decommission rate (%)",
         description="Decommissioning costs incurred at end of lifetime as a share of capital costs of generation.",
         category=Category.ADVANCED,
         priority=14,
     )
     i: float = Field(
         0.1,
-        title="Economic discount rate [%]",
+        title="Economic discount rate (%)",
         description="Rate of return used to discount future cash flows back to their present value. This rate is often a company’s Weighted Average Cost of Capital (WACC), required rate of return, or the hurdle rate that investors expect to earn relative to the risk of the investment.",
         category=Category.BASIC,
         priority=5,
     )
     n: float = Field(
         25,
-        title="Lifetime [years]",
+        title="Lifetime (years)",
         description="Lifetime of the power plant",
         category=Category.ADVANCED,
         priority=15,
     )
     landuse: float = Field(
         3,
-        title="Installed Capacity Area Factor [MW/km2]",
+        title="Installed Capacity Area Factor (MW/km2)",
         description="Installed capacity area factor is the average land area occupied by a power plant. More information: https://www.nrel.gov/analysis/tech-size.html ",
         category=Category.BASIC,
         priority=2,
     )
     tlf: float = Field(
         0.1,
-        title="Technical Loss Factor [%]",
+        title="Technical Loss Factor (%)",
         description="Percentage of gross energy generation lost due to technical losses (e.g. wake effects for wind turbines; wiring and inverter losses for solar PV systems)",
         category=Category.ADVANCED,
         priority=6,
     )
     af: float = Field(
         0.05,
-        title="Unavailability Factor [%]",
+        title="Unavailability Factor (%)",
         description="Percentage of energy generation lost due to forced or scheduled outages (Applied after technical losses).",
         category=Category.ADVANCED,
         priority=7,
@@ -406,7 +406,7 @@ class Filters(BaseModel):
         priority=18,
     )
     f_unesco: Optional[RangeFilter] = FilterField(
-        title="UNESCO World Heritage Sites",
+        title="UNESCO World Heritage Sites (Distance to)",
         unit="meters",
         category=Category.ADVANCED,
         secondary_category=SecondaryCategory.CULTURAL,
@@ -562,4 +562,5 @@ class ZoneResponse(BaseModel):
     generation_potential: float = Field(
         ..., title="Annual Energy Generation Potential (GWh)"
     )
+    suitable_area: float = Field(..., title="Suitable area (m2)")
     cf: float = Field(..., title="Capacity Factor")

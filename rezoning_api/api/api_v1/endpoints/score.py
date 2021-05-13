@@ -14,7 +14,7 @@ router = APIRouter()
 
 
 @router.get(
-    "/score/{country_id}/{z}/{x}/{y}.png",
+    "/score/{country_id}/{resource}/{z}/{x}/{y}.png",
     responses={200: dict(description="return a score tile given certain parameters")},
     response_class=TileResponse,
     name="score",
@@ -25,6 +25,7 @@ def score(
     x: int,
     y: int,
     colormap: str,
+    resource: str,
     filters: Filters = Depends(),
     lcoe: LCOE = Depends(),
     weights: Weights = Depends(),
@@ -39,7 +40,7 @@ def score(
         geometry = feat.geometry.dict()
 
     data, mask = calc_score(
-        country_id, lcoe, weights, filters, x=x, y=y, z=z, geometry=geometry
+        country_id, resource, lcoe, weights, filters, x=x, y=y, z=z, geometry=geometry
     )
 
     tile = linear_rescale(data, in_range=[0, 1], out_range=[0, 255]).astype(np.uint8)

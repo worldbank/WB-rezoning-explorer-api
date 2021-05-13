@@ -25,7 +25,7 @@ router = APIRouter()
 
 
 @router.get(
-    "/lcoe/{country_id}/{z}/{x}/{y}.png",
+    "/lcoe/{country_id}/{resource}/{z}/{x}/{y}.png",
     responses={200: dict(description="return an LCOE tile given certain parameters")},
     response_class=TileResponse,
     name="lcoe",
@@ -36,6 +36,7 @@ def lcoe(
     y: int,
     colormap: str,
     country_id: str,
+    resource: str,
     filters: Filters = Depends(),
     lcoe: LCOE = Depends(),
     offshore: bool = False,
@@ -65,7 +66,7 @@ def lcoe(
     lcoe_total = np.clip(lcoe_total, None, LCOE_MAX)
 
     # get country min max for scaling
-    country_min_max = get_country_min_max(country_id)
+    country_min_max = get_country_min_max(country_id, resource)
     lcoe_min_max = country_min_max["lcoe"]
 
     tile = linear_rescale(

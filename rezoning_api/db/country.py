@@ -59,8 +59,12 @@ def get_country_geojson(id, offshore=False):
         return None
 
 
-def get_country_min_max(id):
-    """get minmax for country"""
+def get_country_min_max(id, resource):
+    """get minmax for country and resource"""
+    if resource == "offshore":
+        # fetch another JSON
+        pass
+
     # TODO: calculate and use offshore minmax when requested
     try:
         minmax = s3_get(BUCKET, f"api/minmax/{id}.json")
