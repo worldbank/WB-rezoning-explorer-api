@@ -189,7 +189,7 @@ class LCOE(BaseModel):
     capacity_factor: str = Field(
         None,
         title="Turbine Type or Solar Unit Type",
-        description="Choose a technology: Onshore wind, Offshore wind, or Solar PV.",
+        description="Choose the appropriate solar unit or wind turbine type.",
         category=Category.BASIC,
         priority=1,
     )
