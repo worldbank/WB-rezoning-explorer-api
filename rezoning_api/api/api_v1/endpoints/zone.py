@@ -50,6 +50,9 @@ def zone(query: ZoneRequest, country_id: str = "AFG", filters: Filters = Depends
     zs = data_m.mean()
     zs = 0.00001 if np.isnan(zs) else zs
 
+    # suitable area
+    suitable_area = mask.sum() * (500 ** 2)
+
     if not lcoe_m.mean():
         raise HTTPException(status_code=404, detail="No suitable area after filtering")
 
@@ -59,7 +62,8 @@ def zone(query: ZoneRequest, country_id: str = "AFG", filters: Filters = Depends
         generation_potential=generation_potential,
         icp=icp,
         cf=cf_m.mean(),
-        zone_output_density=cf_m.sum() / (500 ** 2),
+        zone_output_density=generation_potential / suitable_area,
+        suitable_area=suitable_area,
     )
 
 
