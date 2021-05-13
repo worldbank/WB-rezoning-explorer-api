@@ -93,7 +93,8 @@ def layers(
 
     if match_gsa_dailies(id):
         # annualize gsa layers to match min/max
-        data *= 365
+        if country_id:
+            data *= 365
 
     if id != "land-cover":
         data = linear_rescale(
