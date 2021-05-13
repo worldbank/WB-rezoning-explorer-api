@@ -321,6 +321,7 @@ def get_hash(**kwargs: Any) -> str:
 
 def calc_score(
     id,
+    resource,
     lcoe,
     weights,
     filters,
@@ -353,7 +354,7 @@ def calc_score(
     lr = ma.masked_invalid(lr)
 
     # get regional min/max
-    cmm = get_country_min_max(id)
+    cmm = get_country_min_max(id, resource)
 
     # normalize weights
     scale_max = sum([wv for wn, wv in weights])

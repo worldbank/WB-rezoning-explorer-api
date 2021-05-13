@@ -104,10 +104,10 @@ def filter(
     return TileResponse(content=content)
 
 
-@router.get("/filter/{country_id}/layers")
-def get_country_layers(country_id: str):
+@router.get("/filter/{country_id}/{resource}/layers")
+def get_country_layers(country_id: str, resource: str):
     """Return min/max for country layers"""
-    minmax = get_country_min_max(country_id)
+    minmax = get_country_min_max(country_id, resource)
     # keys = list(minmax.keys())
     # [minmax.pop(key) for key in keys if key.startswith(("gwa", "gsa"))]
     return minmax
