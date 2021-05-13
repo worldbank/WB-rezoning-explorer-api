@@ -17,13 +17,11 @@ def demo(request: Request):
                 "filter_country", **dict(country_id="BOL", z="{z}", x="{x}", y="{y}")
             ),
             "lcoe_endpoint": request.url_for(
-                "lcoe", **dict(country_id="BOL", z="{z}", x="{x}", y="{y}")
-            ),
-            "score_endpoint": request.url_for(
-                "score", **dict(country_id="BOL", z="{z}", x="{x}", y="{y}")
+                "lcoe",
+                **dict(country_id="BOL", resource="solar", z="{z}", x="{x}", y="{y}")
             ),
             "layers_endpoint": request.url_for(
-                "layers", **dict(country_id="BOL", id="{id}", z="{z}", x="{x}", y="{y}")
+                "layers", **dict(id="{id}", z="{z}", x="{x}", y="{y}")
             ),
             "layer_list": request.url_for("layer_list"),
             "filter_schema": request.url_for("filter_schema"),

@@ -76,6 +76,15 @@ def layers(
         layer_min = data.min()
         layer_max = data.max()
 
+    if not country_id and id == "worldpop":
+        layer_max = 1000
+
+    if not country_id and "gwa-speed" in id:
+        layer_max /= 3
+
+    if not country_id and "gwa-power" in id:
+        layer_max /= 100
+
     if id == "gebco":
         # no bathymetry on land: https://github.com/developmentseed/rezoning-api/issues/103
         mask[data.squeeze() > 0] = 0
