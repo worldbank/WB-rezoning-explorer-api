@@ -31,7 +31,7 @@ TILE_URL = "https://reztileserver.com/services/{layer}/tiles/{{z}}/{{x}}/{{y}}.p
     name="layers",
 )
 @router.get(
-    "/layers/{country_id}/{id}/{z}/{x}/{y}.png",
+    "/layers/{country_id}/{resource}/{id}/{z}/{x}/{y}.png",
     responses={
         200: dict(description="return a tile for a given layer, filtered by country")
     },
@@ -45,6 +45,7 @@ def layers(
     y: int,
     colormap: str,
     country_id: str = None,
+    resource: str = None,
     offshore: bool = False,
 ):
     """Return a tile from a layer."""
@@ -64,7 +65,7 @@ def layers(
 
     try:
         if country_id:
-            minmax = get_country_min_max(country_id)
+            minmax = get_country_min_max(country_id, resource)
             layer_min = minmax[id]["min"]
             layer_max = minmax[id]["max"]
         else:
