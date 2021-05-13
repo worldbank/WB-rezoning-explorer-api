@@ -562,4 +562,5 @@ class ZoneResponse(BaseModel):
     generation_potential: float = Field(
         ..., title="Annual Energy Generation Potential (GWh)"
     )
+    suitable_area: float = Field(..., title="Suitable area (m2)")
     cf: float = Field(..., title="Capacity Factor")
