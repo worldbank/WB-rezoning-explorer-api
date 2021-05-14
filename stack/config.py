@@ -37,8 +37,8 @@ TASK_MEMORY: int = 512
 #                                 LAMBDA                                       #
 #                                                                              #
 ################################################################################
-TIMEOUT: int = 10
-MEMORY: int = 1536
+TIMEOUT: int = 30
+MEMORY: int = 3008
 MAX_CONCURRENT: int = 200
 
 # Cache
