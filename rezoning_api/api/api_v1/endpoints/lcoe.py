@@ -67,7 +67,7 @@ def lcoe(
 
     # get country min max for scaling
     country_min_max = get_country_min_max(country_id, resource)
-    lcoe_min_max = country_min_max["lcoe"][lcoe.capacity_factor]["total"]
+    lcoe_min_max = country_min_max["lcoe"]
 
     tile = linear_rescale(
         lcoe_total.values,

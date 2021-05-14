@@ -44,82 +44,28 @@ def refresh_country_extrema(partial=False):
         # try:
         aoi = feature["geometry"]
         extrema = dict()
-        for dataset in datasets:
-            print(f"reading {dataset}")
-            try:
-                ds, _ = read_dataset(
-                    f"s3://{BUCKET}/{dataset}.tif",
-                    layers[dataset],
-                    x=None,
-                    y=None,
-                    z=None,
-                    geometry=aoi,
-                    max_size=1024,
-                )
-                for layer in layers[dataset]:
-                    extrema[layer] = dict(
-                        min=float(ds.sel(layer=layer).min()),
-                        max=float(ds.sel(layer=layer).max()),
-                    )
-            except Exception:
-                print(f"could not read {dataset}")
-
-        # calculate LCOE (from zone.py, TODO: DRY)
-        # default inputs + every cf combination
-        print("calc LCOE extrema")
         cfo = get_capacity_factor_options()
-        options = list(set([cf["id"] for cf_list in cfo.values() for cf in cf_list]))
-        extrema["lcoe"] = dict()
-        for option in options:
-            print(f"LCOE extrema, cf: {option}")
-            # try:
-            lcoe = LCOE(capacity_factor=option)
-            filters = Filters()
-
-            # spatial temporal inputs
-            ds, dr, _calc, _mask = get_distances(filters, geometry=aoi, max_size=1024)
-            cf = get_capacity_factor(
-                lcoe.capacity_factor,
-                lcoe.tlf,
-                lcoe.af,
-                geometry=aoi,
-                max_size=1024,
-            )
-
-            # lcoe component calculation
-            lg = lcoe_generation(lcoe, cf)
-            li = lcoe_interconnection(lcoe, cf, ds)
-            lr = lcoe_road(lcoe, cf, dr)
-            lcoe_total = lg + li + lr
-
-            # cap lcoe components + total
-            lg = np.clip(lg, None, LCOE_MAX)
-            li = np.clip(li, None, LCOE_MAX)
-            lr = np.clip(lr, None, LCOE_MAX)
-            lcoe_total = np.clip(lcoe_total, None, LCOE_MAX)
-
-            # add to extrema
-            extrema["lcoe"][option] = dict(
-                lg=dict(
-                    min=float(lg.min()),
-                    max=float(lg.max()),
-                ),
-                li=dict(
-                    min=float(li.min()),
-                    max=float(li.max()),
-                ),
-                lr=dict(
-                    min=float(lr.min()),
-                    max=float(lr.max()),
-                ),
-                total=dict(
-                    min=float(lcoe_total.min()),
-                    max=float(lcoe_total.max()),
-                ),
-            )
-            # except Exception as e:
-            #     print(e)
-            #     print("lcoe error")
+        cf_options = list(set([cf["id"] for cf_list in cfo.values() for cf in cf_list]))
+        for dataset in datasets:
+            if dataset not in cf_options:
+                print(f"reading {dataset}")
+                try:
+                    ds, _ = read_dataset(
+                        f"s3://{BUCKET}/{dataset}.tif",
+                        layers[dataset],
+                        x=None,
+                        y=None,
+                        z=None,
+                        geometry=aoi,
+                        max_size=1024,
+                    )
+                    for layer in layers[dataset]:
+                        extrema[layer] = dict(
+                            min=float(ds.sel(layer=layer).min()),
+                            max=float(ds.sel(layer=layer).max()),
+                        )
+                except Exception:
+                    print(f"could not read {dataset}")
 
         with open(fname, "w") as out:
             json.dump(extrema, out)

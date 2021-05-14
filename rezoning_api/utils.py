@@ -384,10 +384,11 @@ def calc_score(
             if weight_name == "lcoe_gen":
                 lcoe_gen_scaled = min_max_scale(
                     lg,
-                    cmm["lcoe"][lcoe.capacity_factor]["lg"]["min"],
-                    cmm["lcoe"][lcoe.capacity_factor]["lg"]["max"],
+                    cmm["lcoe"]["min"],
+                    cmm["lcoe"]["max"],
                     flip=True,
                 )
+                lcoe_gen_scaled = np.clip(lcoe_gen_scaled, 0, 1)
                 score_array += lcoe_gen_scaled * weights.lcoe_gen
             else:
                 dataset = loc.replace(f"s3://{BUCKET}/", "").replace(".tif", "")
