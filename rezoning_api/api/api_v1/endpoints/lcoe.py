@@ -25,6 +25,12 @@ router = APIRouter()
 
 
 @router.get(
+    "/lcoe/{z}/{x}/{y}.png",
+    responses={200: dict(description="return an LCOE tile given certain parameters")},
+    response_class=TileResponse,
+    name="lcoe",
+)
+@router.get(
     "/lcoe/{country_id}/{resource}/{z}/{x}/{y}.png",
     responses={200: dict(description="return an LCOE tile given certain parameters")},
     response_class=TileResponse,
@@ -35,8 +41,8 @@ def lcoe(
     x: int,
     y: int,
     colormap: str,
-    country_id: str,
-    resource: str,
+    country_id: Optional[str] = None,
+    resource: Optional[str] = None,
     filters: Filters = Depends(),
     lcoe: LCOE = Depends(),
     offshore: bool = False,
