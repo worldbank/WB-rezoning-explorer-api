@@ -1,5 +1,5 @@
 """LCOE endpoints."""
-
+from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException
 import numpy as np
 import numpy.ma as ma
@@ -22,7 +22,10 @@ router = APIRouter()
     response_model=ZoneResponse,
 )
 def zone(
-    query: ZoneRequest, country_id: str, resource: str, filters: Filters = Depends()
+    query: ZoneRequest,
+    country_id: Optional[str] = None,
+    resource: Optional[str] = None,
+    filters: Filters = Depends(),
 ):
     """calculate LCOE and weight for zone score"""
     data, mask, extras = calc_score(

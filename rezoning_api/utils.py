@@ -354,7 +354,10 @@ def calc_score(
     lr = ma.masked_invalid(lr)
 
     # get regional min/max
-    cmm = get_country_min_max(id, resource)
+    try:
+        cmm = get_country_min_max(id, resource)
+    except Exception:
+        cmm = None
 
     # normalize weights
     scale_max = sum([wv for wn, wv in weights])
@@ -370,7 +373,7 @@ def calc_score(
     weight_count = 0
     for weight_name, weight_value in weights:
         layer = weight_name.replace("_", "-")
-        loc, _idx = get_layer_location(layer)
+        loc, idx = get_layer_location(layer)
         if (loc and weight_value > 0) or weight_name == "lcoe_gen":
             # valid weight
             weight_count += 1
@@ -402,10 +405,20 @@ def calc_score(
                     max_size=max_size,
                 )
 
+                # if we don't have country min/max, use layer
+                if cmm:
+                    layer_min = cmm[layer]["min"]
+                    layer_max = cmm[layer]["max"]
+                else:
+                    key = loc.replace(f"s3://{BUCKET}/", "").replace("tif", "vrt")
+                    layer_min_arr, layer_max_arr = get_min_max(s3_get(BUCKET, key))
+                    layer_min = layer_min_arr[idx]
+                    layer_max = layer_max_arr[idx]
+
                 scaled_array = min_max_scale(
                     np.nan_to_num(data.sel(layer=layer).values, nan=0),
-                    cmm[layer]["min"],
-                    cmm[layer]["max"],
+                    layer_min,
+                    layer_max,
                     flip=flip,
                 )
                 score_array += weight_value * scaled_array
