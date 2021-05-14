@@ -41,10 +41,8 @@ def lcoe(
     x: int,
     y: int,
     colormap: str,
-    country_id: Optional[
-        str
-    ] = "AFG",  # we can use silly defaults here because LCOE is hardcoded but depends on country and resource
-    resource: Optional[str] = "solar",
+    country_id: Optional[str] = None,
+    resource: Optional[str] = None,
     filters: Filters = Depends(),
     lcoe: LCOE = Depends(),
     offshore: bool = False,
