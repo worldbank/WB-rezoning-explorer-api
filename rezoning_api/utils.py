@@ -339,6 +339,17 @@ def calc_score(
     """
     # spatial temporal inputs
     ds, dr, calc, mask = get_distances(filters, x=x, y=y, z=z, geometry=geometry)
+
+    # if the entire area is filtered out, return early and fail early
+    if mask.sum() == 0:
+        score_array = np.zeros(mask.shape)
+        cf = np.zeros(mask.shape)
+        lcoe_t = np.zeros(mask.shape)
+        if ret_extras:
+            return score_array, mask, dict(lcoe=lcoe_t, cf=cf)
+        else:
+            return score_array, mask
+
     cf = get_capacity_factor(
         lcoe.capacity_factor, lcoe.tlf, lcoe.af, x=x, y=y, z=z, geometry=geometry
     )
@@ -426,10 +437,10 @@ def calc_score(
     # final normalization
     score_array /= weight_count
 
-    lcoe = lg + li + lr
-    lcoe = ma.masked_invalid(lcoe)
+    lcoe_t = lg + li + lr
+    lcoe_t = ma.masked_invalid(lcoe_t)
     score_array = ma.masked_invalid(score_array)
     if ret_extras:
-        return score_array, mask, dict(lcoe=lcoe, cf=cf)
+        return score_array, mask, dict(lcoe=lcoe_t, cf=cf)
     else:
         return score_array, mask
