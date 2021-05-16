@@ -3,7 +3,7 @@ from os import path as op
 import json
 import math
 from geojson_pydantic.features import Feature
-from shapely.geometry import shape, mapping, box
+from shapely.geometry import shape, mapping
 import boto3
 
 from rezoning_api.core.config import BUCKET
@@ -51,7 +51,7 @@ def get_country_geojson(id, offshore=False):
                 if feature["properties"]["ISO_TER1"]
                 == feature["properties"]["ISO_SOV1"]
             ]
-            geom = box(*shape(double_filt[0]["geometry"]).bounds)
+            geom = shape(double_filt[0]["geometry"])
             feat = dict(properties={}, geometry=mapping(geom), type="Feature")
             return Feature(**feat)
         return Feature(**filtered[0])
