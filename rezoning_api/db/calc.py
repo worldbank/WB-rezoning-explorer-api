@@ -36,6 +36,8 @@ def refresh_country_extrema(partial=False, offshore=False):
     for feature in world["features"]:
         f_key = feature["properties"]["GID_0"]
         fname = f"temp/{f_key}.json"
+        if offshore:
+            fname = f"temp/{f_key}_offshore.json"
         t1 = time()
         if partial and os.path.exists(fname):
             print(f"skipping {fname} already exists")

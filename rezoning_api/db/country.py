@@ -50,17 +50,26 @@ def get_country_geojson(id, offshore=False):
             feat = dict(properties={}, geometry=mapping(geom), type="Feature")
             return Feature(**feat)
         return Feature(**filtered[0])
-    except IndexError:
+    except Exception:
         return None
 
 
 def get_country_min_max(id, resource):
     """get minmax for country and resource"""
     if resource == "offshore":
-        # fetch another JSON
-        pass
+        # fetch another JSON (there is probably a better way to handle this)
+        try:
+            minmax = s3_get(BUCKET, f"api/minmax/{id}_offshore.json")
+            mm = minmax.decode("utf-8").replace("Infinity", "1000000")
+            mm_obj = json.loads(mm)
+        except Exception:
+            try:
+                minmax = s3_get(BUCKET, f"api/minmax/{id}.json")
+                mm = minmax.decode("utf-8").replace("Infinity", "1000000")
+                mm_obj = json.loads(mm)
+            except Exception:
+                mm_obj = json.loads(s3_get(BUCKET, "api/minmax/AFG.json"))
 
-    # TODO: calculate and use offshore minmax when requested
     try:
         minmax = s3_get(BUCKET, f"api/minmax/{id}.json")
         mm = minmax.decode("utf-8").replace("Infinity", "1000000")
