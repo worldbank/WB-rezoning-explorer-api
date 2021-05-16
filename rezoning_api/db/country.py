@@ -3,8 +3,9 @@ from os import path as op
 import json
 import math
 from geojson_pydantic.features import Feature
-from shapely.geometry import shape, mapping, box
 import boto3
+from shapely.ops import unary_union
+from shapely.geometry import shape, mapping
 
 from rezoning_api.core.config import BUCKET
 
@@ -36,7 +37,7 @@ def match_gsa_dailies(id):
 def get_country_geojson(id, offshore=False):
     """get geojson for a single country or eez"""
     vector_data = eez if offshore else world
-    key = "ISO_SOV1" if offshore else "GID_0"
+    key = "ISO_TER1" if offshore else "GID_0"
 
     filtered = [
         feature
@@ -45,27 +46,30 @@ def get_country_geojson(id, offshore=False):
     ]
     try:
         if offshore:
-            double_filt = [
-                feature
-                for feature in filtered
-                if feature["properties"]["ISO_TER1"]
-                == feature["properties"]["ISO_SOV1"]
-            ]
-            geom = box(*shape(double_filt[0]["geometry"]).bounds)
+            geom = unary_union([shape(f["geometry"]) for f in filtered]).convex_hull
             feat = dict(properties={}, geometry=mapping(geom), type="Feature")
             return Feature(**feat)
         return Feature(**filtered[0])
-    except IndexError:
+    except Exception:
         return None
 
 
 def get_country_min_max(id, resource):
     """get minmax for country and resource"""
     if resource == "offshore":
-        # fetch another JSON
-        pass
+        # fetch another JSON (there is probably a better way to handle this)
+        try:
+            minmax = s3_get(BUCKET, f"api/minmax/{id}_offshore.json")
+            mm = minmax.decode("utf-8").replace("Infinity", "1000000")
+            mm_obj = json.loads(mm)
+        except Exception:
+            try:
+                minmax = s3_get(BUCKET, f"api/minmax/{id}.json")
+                mm = minmax.decode("utf-8").replace("Infinity", "1000000")
+                mm_obj = json.loads(mm)
+            except Exception:
+                mm_obj = json.loads(s3_get(BUCKET, "api/minmax/AFG.json"))
 
-    # TODO: calculate and use offshore minmax when requested
     try:
         minmax = s3_get(BUCKET, f"api/minmax/{id}.json")
         mm = minmax.decode("utf-8").replace("Infinity", "1000000")

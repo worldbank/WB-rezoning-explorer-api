@@ -24,7 +24,7 @@ router = APIRouter()
 TILE_URL = "https://reztileserver.com/services/{layer}/tiles/{{z}}/{{x}}/{{y}}.pbf"
 
 
-@router.get(
+@router.get(  # noqa: C901
     "/layers/{id}/{z}/{x}/{y}.png",
     responses={200: dict(description="return a tile for a given layer")},
     response_class=TileResponse,
@@ -62,6 +62,13 @@ def layers(
         data, mask = cog.tile(
             x, y, z, tilesize=256, indexes=[idx + 1], vrt_options=vrt_options
         )
+
+    # mask everything offshore with gebco
+    if offshore:
+        gloc, gidx = get_layer_location("gebco")
+        with COGReader(gloc) as cog:
+            gdata, _gmask = cog.tile(x, y, z, tilesize=256, indexes=[gidx + 1])
+        mask = mask * (gdata <= 0).squeeze()
 
     try:
         if country_id:

@@ -3,6 +3,7 @@ from typing import Optional
 import copy
 from rezoning_api.db.country import get_country_min_max
 from fastapi import APIRouter, Depends
+from rio_tiler.io import COGReader
 from rio_tiler.colormap import cmap
 from rio_tiler.utils import render, linear_rescale
 import numpy as np
@@ -18,6 +19,7 @@ from rezoning_api.utils import (
     lcoe_road,
     get_capacity_factor,
     get_distances,
+    get_layer_location,
 )
 from rezoning_api.db.country import get_country_geojson
 
@@ -74,6 +76,13 @@ def lcoe(
     # get country min max for scaling
     country_min_max = get_country_min_max(country_id, resource)
     lcoe_min_max = country_min_max["lcoe"]
+
+    # mask everything offshore with gebco
+    if offshore:
+        gloc, gidx = get_layer_location("gebco")
+        with COGReader(gloc) as cog:
+            gdata, _gmask = cog.tile(x, y, z, tilesize=256, indexes=[gidx + 1])
+        mask = mask * (gdata <= 0).squeeze()
 
     tile = linear_rescale(
         lcoe_total.values,

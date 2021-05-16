@@ -14,14 +14,22 @@ def demo(request: Request):
         {
             "request": request,
             "filter_endpoint": request.url_for(
-                "filter_country", **dict(country_id="BOL", z="{z}", x="{x}", y="{y}")
+                "filter_country", **dict(country_id="FRA", z="{z}", x="{x}", y="{y}")
             ),
             "lcoe_endpoint": request.url_for(
                 "lcoe",
-                **dict(country_id="BOL", resource="solar", z="{z}", x="{x}", y="{y}")
+                **dict(country_id="FRA", resource="offshore", z="{z}", x="{x}", y="{y}")
             ),
             "layers_endpoint": request.url_for(
-                "layers", **dict(id="{id}", z="{z}", x="{x}", y="{y}")
+                "layers",
+                **dict(
+                    country_id="FRA",
+                    resource="offshore",
+                    id="{id}",
+                    z="{z}",
+                    x="{x}",
+                    y="{y}",
+                )
             ),
             "layer_list": request.url_for("layer_list"),
             "filter_schema": request.url_for("filter_schema"),

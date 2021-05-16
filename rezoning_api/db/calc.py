@@ -15,7 +15,6 @@ from rio_tiler.utils import linear_rescale
 from rezoning_api.utils import read_dataset
 from rezoning_api.core.config import BUCKET, LCOE_MAX
 from rezoning_api.db.country import get_country_geojson, world
-from rezoning_api.db.cf import get_capacity_factor_options
 from rezoning_api.models.zone import LCOE, Filters, Weights
 from rezoning_api.utils import (
     get_capacity_factor,
@@ -30,42 +29,47 @@ from rezoning_api.db.layers import get_layers
 PLATE_CARREE = CRS.from_epsg(4326)
 
 
-def refresh_country_extrema(partial=False):
+def refresh_country_extrema(partial=False, offshore=False):
     """refresh the country minima and maxima per layer"""
     layers = get_layers()
     datasets = layers.keys()
     for feature in world["features"]:
-        fname = f"temp/{feature['properties']['GID_0']}.json"
+        f_key = feature["properties"]["GID_0"]
+        fname = f"temp/{f_key}.json"
+        if offshore:
+            fname = f"temp/{f_key}_offshore.json"
         t1 = time()
         if partial and os.path.exists(fname):
             print(f"skipping {fname} already exists")
             continue
         print(f"reading values for {feature['properties']['NAME_0']}")
-        # try:
-        aoi = feature["geometry"]
+        try:
+            aoi = get_country_geojson(f_key, offshore=offshore).geometry.dict()
+        except Exception:
+            print(f"no valid geometry for {f_key}, offshore = {offshore}")
+            continue
+
         extrema = dict()
-        cfo = get_capacity_factor_options()
-        cf_options = list(set([cf["id"] for cf_list in cfo.values() for cf in cf_list]))
         for dataset in datasets:
-            if dataset not in cf_options:
-                print(f"reading {dataset}")
-                try:
-                    ds, _ = read_dataset(
-                        f"s3://{BUCKET}/{dataset}.tif",
-                        layers[dataset],
-                        x=None,
-                        y=None,
-                        z=None,
-                        geometry=aoi,
-                        max_size=1024,
+            print(f"reading {dataset}")
+            try:
+                ds, _ = read_dataset(
+                    f"s3://{BUCKET}/{dataset}.tif",
+                    layers[dataset],
+                    x=None,
+                    y=None,
+                    z=None,
+                    geometry=aoi,
+                    max_size=1024,
+                )
+                for layer in layers[dataset]:
+                    extrema[layer] = dict(
+                        min=float(ds.sel(layer=layer).min()),
+                        max=float(ds.sel(layer=layer).max()),
                     )
-                    for layer in layers[dataset]:
-                        extrema[layer] = dict(
-                            min=float(ds.sel(layer=layer).min()),
-                            max=float(ds.sel(layer=layer).max()),
-                        )
-                except Exception:
-                    print(f"could not read {dataset}")
+            except Exception as e:
+                print(e)
+                print(f"could not read {dataset}")
 
         with open(fname, "w") as out:
             json.dump(extrema, out)
