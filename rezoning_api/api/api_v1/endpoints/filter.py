@@ -2,6 +2,7 @@
 
 from rezoning_api.utils import read_dataset
 from fastapi import APIRouter, Depends
+from rio_tiler.io import COGReader
 from rio_tiler.utils import render
 import numpy as np
 import xarray as xr
@@ -10,7 +11,7 @@ from typing import Optional
 from rezoning_api.core.config import BUCKET
 from rezoning_api.models.tiles import TileResponse
 from rezoning_api.models.zone import Filters, RangeFilter
-from rezoning_api.utils import _filter, LAYERS, filter_to_layer_name
+from rezoning_api.utils import _filter, LAYERS, filter_to_layer_name, get_layer_location
 from rezoning_api.db.country import get_country_min_max, get_country_geojson
 
 router = APIRouter()
@@ -88,6 +89,13 @@ def filter(
         arr = xr.concat(arrays, dim="layer")
         filters.f_gebco = RangeFilter("0,10000000")
         tile, new_mask = _filter(arr, filters)
+
+    # mask everything offshore with gebco
+    if offshore:
+        gloc, gidx = get_layer_location("gebco")
+        with COGReader(gloc) as cog:
+            gdata, _gmask = cog.tile(x, y, z, tilesize=256, indexes=[gidx + 1])
+        mask = mask * (gdata <= 0).squeeze()
 
     # color like 45,39,88,178 (RGBA)
     color_list = list(map(lambda x: int(x), color.split(",")))

@@ -4,6 +4,8 @@ import json
 import math
 from geojson_pydantic.features import Feature
 import boto3
+from shapely.ops import unary_union
+from shapely.geometry import shape, mapping
 
 from rezoning_api.core.config import BUCKET
 
@@ -43,6 +45,10 @@ def get_country_geojson(id, offshore=False):
         if feature["properties"][key].lower() == id.lower()
     ]
     try:
+        if offshore:
+            geom = unary_union([shape(f["geometry"]) for f in filtered]).convex_hull
+            feat = dict(properties={}, geometry=mapping(geom), type="Feature")
+            return Feature(**feat)
         return Feature(**filtered[0])
     except IndexError:
         return None

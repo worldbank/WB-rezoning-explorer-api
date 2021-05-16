@@ -80,8 +80,8 @@
             container: 'map',
             style: { version: 8, sources: {}, layers: [] },
             center: [
-            -65.21484375,
-              -16.13026201203474
+            -2.548828125,
+          48.019324184801185
             ],
             zoom: 5
         })
@@ -91,11 +91,11 @@
             if (map.getSource('raster')) map.removeSource('raster')
             
             // let filters = ''
-            let filters = 'f_gwa_speed_100=0,5'
+            let filters = 'f_gwa_speed_100=0,100'
             // console.log(filters)
-            // let url = `${filterEndpoint}?${filters}&color=45,39,88,178`
-            // let url = `${layersEndpoint.replace('{id}', id)}?colormap=viridis`
-            let url = `${lcoeEndpoint}?${filters}&capacity_factor=gwa-iec2&colormap=viridis`
+            // let url = `${filterEndpoint}?${filters}&color=45,39,88,178&offshore=true`
+            // let url = `${layersEndpoint.replace('{id}', id)}?colormap=viridis&offshore=true`
+            let url = `${lcoeEndpoint}?${filters}&capacity_factor=gwa-iec2&colormap=viridis&offshore=true`
             // let url = `${scoreEndpoint}?${filters}&capacity_factor=gwa-iec1&colormap=viridis`
             map.addSource(
               'raster', { type: 'raster', tiles: [url], tileSize: 256 }
