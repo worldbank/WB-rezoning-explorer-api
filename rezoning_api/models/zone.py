@@ -14,7 +14,7 @@ LAND_COVER_OPTIONS = [
     "Cropland, irrigated",
     "Mosaic cropland (>50%) / natural vegetation (<50%)",
     "Mosaic natural vegetation (>50%) / cropland (<50%)",
-    "Tree cover, broadleaved, evergreen, closed to open (>15%)"
+    "Tree cover, broadleaved, evergreen, closed to open (>15%)",
     "Tree cover, broadleaved, deciduous, closed to open (>15%)",
     "Tree cover, needleleaved, evergreen, closed to open (>15%)",
     "Tree cover, needleleaved, deciduous, closed to open (>15%)",
