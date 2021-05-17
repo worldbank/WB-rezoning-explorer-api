@@ -61,5 +61,6 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: 'us-east-2'
           AIRTABLE_KEY: ${{ secrets.AIRTABLE_KEY }}
-        run: cdk deploy rezoning-api-lambda-dev --require-approval never
+          STAGE: prod
+        run: cdk deploy rezoning-api-lambda-prod --require-approval never
 
