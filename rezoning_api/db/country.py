@@ -69,13 +69,13 @@ def get_country_min_max(id, resource):
                 mm_obj = json.loads(mm)
             except Exception:
                 mm_obj = json.loads(s3_get(BUCKET, "api/minmax/AFG.json"))
-
-    try:
-        minmax = s3_get(BUCKET, f"api/minmax/{id}.json")
-        mm = minmax.decode("utf-8").replace("Infinity", "1000000")
-        mm_obj = json.loads(mm)
-    except Exception:
-        mm_obj = json.loads(s3_get(BUCKET, "api/minmax/AFG.json"))
+    else:
+        try:
+            minmax = s3_get(BUCKET, f"api/minmax/{id}.json")
+            mm = minmax.decode("utf-8").replace("Infinity", "1000000")
+            mm_obj = json.loads(mm)
+        except Exception:
+            mm_obj = json.loads(s3_get(BUCKET, "api/minmax/AFG.json"))
 
     # bathymetry data should never filter below -1000: https://github.com/developmentseed/rezoning-api/issues/91
     # don't display on land: https://github.com/developmentseed/rezoning-api/issues/103
