@@ -188,7 +188,7 @@ def get_layers():
         elif lkey == "gsa-gti":
             layer["description"] = None
             layer["category"] = "additional-solar"
-            layer["title"] = "Global Titled Irradiation"
+            layer["title"] = "Global Tilted Irradiation"
             layer["energy_type"] = ["solar"]
             layer["units"] = "kWh/m²"
         elif lkey == "gsa-ghi":
