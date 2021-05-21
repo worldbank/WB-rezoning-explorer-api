@@ -3,7 +3,6 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException
 import numpy as np
 import numpy.ma as ma
-from shapely.geometry import shape
 
 from rezoning_api.models.zone import ZoneRequest, ZoneResponse, Filters, Weights
 from rezoning_api.utils import calc_score
@@ -46,9 +45,6 @@ def zone(
     cf_m = ma.masked_array(cf, ~mask)
     data_m = ma.masked_array(data, ~mask)
 
-    # installed capacity potential
-    icp = query.lcoe.landuse * shape(query.aoi.dict()).area
-
     # annual energy generation potential (divide by 1000 for GWh)
     generation_potential = query.lcoe.landuse * cf_m.sum() * 8760 / 1000
 
@@ -58,6 +54,10 @@ def zone(
 
     # suitable area
     suitable_area = mask.sum() * (500 ** 2)
+
+    # installed capacity potential
+    # filtered by suitable area, landuse is /KM2
+    icp = query.lcoe.landuse * suitable_area / 1000000
 
     if not lcoe_m.mean():
         raise HTTPException(status_code=404, detail="No suitable area after filtering")
