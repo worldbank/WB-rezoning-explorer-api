@@ -45,9 +45,6 @@ def zone(
     cf_m = ma.masked_array(cf, ~mask)
     data_m = ma.masked_array(data, ~mask)
 
-    # annual energy generation potential (divide by 1000 for GWh)
-    generation_potential = query.lcoe.landuse * cf_m.sum() * 8760 / 1000
-
     # zone score
     zs = data_m.mean()
     zs = 0.00001 if np.isnan(zs) else zs
@@ -58,6 +55,9 @@ def zone(
     # installed capacity potential
     # filtered by suitable area, landuse is /KM2
     icp = query.lcoe.landuse * suitable_area / 1000000
+
+    # annual energy generation potential (divide by 1000 for GWh)
+    generation_potential = icp * cf_m.mean() * 8760 / 1000
 
     if not lcoe_m.mean():
         raise HTTPException(status_code=404, detail="No suitable area after filtering")
