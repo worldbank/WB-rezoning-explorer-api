@@ -53,7 +53,7 @@ def zone(
     suitable_area = mask.sum() * (500 ** 2)
 
     # installed capacity potential
-    # filtered by suitable area, landuse is /KM2
+    # filtered by suitable area, landuse is /km2
     icp = query.lcoe.landuse * suitable_area / 1000000
 
     # annual energy generation potential (divide by 1000 for GWh)
@@ -68,7 +68,9 @@ def zone(
         generation_potential=generation_potential,
         icp=icp,
         cf=cf_m.mean(),
-        zone_output_density=generation_potential / suitable_area * 1000,
+        zone_output_density=generation_potential
+        / suitable_area
+        * 1000000,  # area is m2, ratio is /km2
         suitable_area=suitable_area,
     )
 
