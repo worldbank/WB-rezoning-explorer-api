@@ -2,17 +2,21 @@
 
 Reneweable Energy Zone Calculations. Backend to https://github.com/developmentseed/rezoning-web
 
-Deployed at https://cb1d9tl7ve.execute-api.us-east-2.amazonaws.com/
+Deployed at https://d2b8erzy6y494p.cloudfront.net/
 
-Documentation at https://cb1d9tl7ve.execute-api.us-east-2.amazonaws.com/docs
+Documentation at https://d2b8erzy6y494p.cloudfront.net/docs
 
 ## Primary functions
 
-This API exposes two primary functions:
+This API exposes four primary functions:
 1. A tile server to display areas which satisfy a set of geospatial filters (e.g. areas within 5000 meters of a road and 10000 meters away from transmission lines)
 2. The ability to calculate "zone statistics" for a given area of interest, including Levelized Cost of Energy (LCOE) and "zone score" based on user provided weights
+3. A tile server to display LCOE calculations at a pixel level
+4. A tile server to display contextual data (stored as Cloud-Optimized GeoTIFFs)
 
-### Tile Server
+It also provides a variety of other metadata endpoints to define the schema and layers needed for these functions.
+
+### Filter Tile Server
 
 ![demonstration of the tile server of Africa](images/rezoning-api-filter.gif)
 
@@ -52,7 +56,7 @@ and returns:
 }
 ```
 
-Each parameter is described in more detail at https://cb1d9tl7ve.execute-api.us-east-2.amazonaws.com/docs
+Each parameter is described in more detail at https://d2b8erzy6y494p.cloudfront.net/docs
 
 ## Development
 
@@ -72,7 +76,7 @@ Serve
 uvicorn rezoning_api.main:app --reload
 ```
 
-The latter command requires two environment variables `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` to be set in order to access the spatial data stored on AWS S3.
+The latter command requires three environment variables `AWS_ACCESS_KEY_ID`,  `AWS_SECRET_ACCESS_KEY`, and `AIRTABLE_KEY` to be set in order to access the spatial data stored on AWS S3 and additional defaults stored on Airtable.
 
 ### Deploy
 
@@ -83,3 +87,14 @@ cdk deploy
 ```
 
 but is generally done via a [CI/CD pipeline](.github/workflows/ci.yml) running with Github Actions.
+
+### Additional Notes
+
+- The ECR Repository and docker image for exporting files are not deployed automatically. The Dockerfile is available at `export/Dockerfile` and can be deployed like:
+```
+docker build . -t export-queue-processing -f export/Dockerfile
+docker tag export-queue-processing 497760869739.dkr.ecr.us-east-2.amazonaws.com/export-queue-processing:latest
+docker push 497760869739.dkr.ecr.us-east-2.amazonaws.com/export-queue-processing
+```
+- There is an additional vector tile server for certain infrastructure layers hosted by Development Seed. It is available at reztileserver.com
+- The production API endpoint is behind a manually configured CloudFront Origin for performance enhancement.
