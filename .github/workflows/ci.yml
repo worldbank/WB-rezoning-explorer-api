@@ -76,13 +76,14 @@ jobs:
           python-version: "3.7" 
       - uses: actions/setup-node@v2-beta
         with:
-          # version 2+ of cdk requires node 14+
-          node-version: '12'
+          # 12 seems to hang. CDK 1.x seems to run with 16
+          node-version: '16'
      
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -e '.[deploy]'
+          # pin the CDK to the last v1 version
           npm install -g aws-cdk@1.158.0
       
       - name: cdk deploy
