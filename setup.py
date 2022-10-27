@@ -4,15 +4,15 @@ from setuptools import find_packages, setup
 
 # Runtime requirements.
 inst_reqs = [
-    "fastapi",
-    "pydantic",
-    "jinja2",
-    "geojson_pydantic",
-    "shapely",
-    "xarray",
-    "aiofiles",
-    "rio-tiler @ git+https://github.com/cogeotiff/rio-tiler.git",
-    "mercantile",
+    "fastapi==0.65.3",
+    "pydantic==1.8.2",
+    "jinja2==3.0.3",
+    "geojson_pydantic==0.3.4",
+    "shapely==1.7.1",
+    "xarray==0.18.2",
+    "aiofiles==0.7.0",
+    "rio-tiler==2.1.4",
+    "mercantile==1.2.1",
     "rasterio==1.1.8",
 ]
 
