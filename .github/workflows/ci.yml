@@ -85,12 +85,15 @@ jobs:
           pip install -e '.[deploy]'
           # pin the CDK to the last v1 version
           npm install -g aws-cdk@1.158.0
-      
+          cdk acknowledge 19836
+
       - name: cdk deploy
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: 'us-east-2'
+          CDK_DEFAULT_REGION: 'us-east-2'
+          CDK_DEFAULT_ACCOUNT: '4977-6086-9739'  
           AIRTABLE_KEY: ${{ secrets.AIRTABLE_KEY }}
           STAGE: dev
         run: cdk deploy rezoning-api-lambda-dev --require-approval never
