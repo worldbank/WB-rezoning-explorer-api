@@ -1,11 +1,11 @@
 repos:
-    -
-        repo: https://github.com/psf/black
-        rev: v22.10.0
-        hooks:
-            - id: black
-              args: ['--safe']
-              language_version: python3.7
+    # -
+    #     repo: https://github.com/psf/black
+    #     rev: v22.10.0
+    #     hooks:
+    #         - id: black
+    #           args: ['--safe']
+    #           language_version: python3.7
     -
         repo: https://github.com/pre-commit/pre-commit-hooks
         rev: v2.4.0
