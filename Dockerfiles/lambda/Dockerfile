@@ -18,6 +18,9 @@ RUN find /var/task -type d -a -name 'tests' -print0 | xargs -0 rm -rf
 RUN rm -rdf /var/task/numpy/doc/
 RUN rm -rdf /var/task/stack
 
+# boto3 and botocore are installed on python lambda images, and botocore is gigantic (78M unzipped, 1/5 of size budget)
+RUN rm -rf /var/task/boto3* /var/task/botocore*
+
 RUN cd /var/task && zip -r9q /tmp/package.zip *
 
 COPY lambda/handler.py handler.py
