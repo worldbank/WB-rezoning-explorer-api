@@ -248,13 +248,17 @@ def _filter(array, filters):
                     tmp = ~np.logical_and(single_layer >= 4, single_layer <= 10)
                 elif layer_name == "waterbodies":
                     # booleans are only sent when false, match non values
+                    # http://maps.elie.ucl.ac.be/CCI/viewer/download.php
+                    # 0=ocean, 1=land, 2=inland water
                     tmp = single_layer != 2
                 elif layer_name in ["pp-whs", "unep-coral", "unesco-ramsar"]:
                     # these are really distance layers that we treat as boolean
-                    tmp = single_layer < 1
+                    # This is allowing things as long as they're a meter away.
+                    tmp = single_layer > 1
                 else:
                     # booleans are only sent when false, match non values
-                    tmp = single_layer > 0
+                    # Protected areas are true, we want non-protected areas.
+                    tmp = single_layer == 0
             np_filters.append(tmp)
 
     all_true = np.prod(np.stack(np_filters), axis=0).astype(np.uint8)
