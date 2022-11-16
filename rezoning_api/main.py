@@ -21,8 +21,9 @@ if config.BACKEND_CORS_ORIGINS:
         CORSMiddleware,
         allow_origins=origins,
         allow_credentials=True,
-        allow_methods=["GET, POST"],
+        allow_methods=["GET", "POST"],
         allow_headers=["*"],
+        max_age=86400,
     )
 
 app.add_middleware(GZipMiddleware, minimum_size=0)
