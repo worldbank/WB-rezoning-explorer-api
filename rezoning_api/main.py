@@ -1,5 +1,5 @@
 """rezoning_api app."""
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 
@@ -23,8 +23,21 @@ if config.BACKEND_CORS_ORIGINS:
         allow_credentials=True,
         allow_methods=["GET", "POST"],
         allow_headers=["*"],
-        max_age=86400,
+        max_age=86400
     )
+
+
+# force cache the cors options request using middleware
+@app.middleware("http")
+async def cache_options(request: Request, call_next):
+    response = await call_next(request)
+    if request.method == 'OPTIONS':
+        # expires is ignored with a cache control header.
+        response.headers['Cache-Control'] = "public, max-age=86400"
+        response.headers['vary'] = 'origin'
+
+    return response
+
 
 app.add_middleware(GZipMiddleware, minimum_size=0)
 app.include_router(api_router, prefix=config.API_VERSION_STR)
