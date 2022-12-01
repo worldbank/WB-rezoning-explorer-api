@@ -53,7 +53,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e '.[deploy]'
-          npm install -g aws-cdk@1.158.0
+          npm install -g aws-cdk@1.181.1
           cdk acknowledge 19836
       
       - name: cdk deploy
@@ -87,7 +87,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e '.[deploy]'
           # pin the CDK to the last v1 version
-          npm install -g aws-cdk@1.158.0
+          npm install -g aws-cdk@1.181.1
           cdk acknowledge 19836
 
       - name: cdk deploy
