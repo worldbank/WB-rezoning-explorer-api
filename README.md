@@ -94,6 +94,7 @@ but is generally done via a [CI/CD pipeline](.github/workflows/ci.yml) running w
 ```
 docker build . -t export-queue-processing -f export/Dockerfile
 docker tag export-queue-processing 497760869739.dkr.ecr.us-east-2.amazonaws.com/export-queue-processing:latest
+`aws ecr get-login --region=us-east-2 --no-include-email`
 docker push 497760869739.dkr.ecr.us-east-2.amazonaws.com/export-queue-processing
 ```
 - There is an additional vector tile server for certain infrastructure layers hosted by Development Seed. It is available at reztileserver.com
