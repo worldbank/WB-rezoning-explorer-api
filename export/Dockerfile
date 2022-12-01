@@ -7,7 +7,7 @@ COPY rezoning_api/ /app/rezoning_api/
 COPY setup.py /app/setup.py
 
 RUN mkdir /app/export/
-RUN apt update && apt install git-all -y
+RUN apt-get -y update && apt-get -y install git && apt-get clean && rm -r /var/lib/apt/lists
 RUN pip install -e /app/. --no-cache-dir
 
 COPY export/export.py /app/export.py
