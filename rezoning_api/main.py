@@ -30,6 +30,7 @@ if config.BACKEND_CORS_ORIGINS:
 # force cache the cors options request using middleware
 @app.middleware("http")
 async def cache_options(request: Request, call_next):
+    """ cache options """
     response = await call_next(request)
     if request.method == 'OPTIONS':
         # expires is ignored with a cache control header.
