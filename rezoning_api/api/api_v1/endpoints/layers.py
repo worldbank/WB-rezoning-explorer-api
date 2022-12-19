@@ -21,7 +21,7 @@ from rezoning_api.db.country import match_gsa_dailies
 
 router = APIRouter()
 
-TILE_URL = "https://reztileserver.com/services/{layer}/tiles/{{z}}/{{x}}/{{y}}.pbf"
+TILE_URL = "https://d3hkm6tx5mgudr.cloudfront.net/services/{layer}/tiles/{{z}}/{{x}}/{{y}}.pbf"
 
 
 @router.get(  # noqa: C901
