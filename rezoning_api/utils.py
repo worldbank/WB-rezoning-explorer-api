@@ -27,7 +27,7 @@ s3 = boto3.client("s3")
 
 def s3_get(bucket: str, key: str, full_response=False):
     """Get AWS S3 Object."""
-        response = s3.get_object(Bucket=bucket, Key=key)
+    response = s3.get_object(Bucket=bucket, Key=key)
     if full_response:
         return response
     return response["Body"].read()
