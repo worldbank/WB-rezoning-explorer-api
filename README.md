@@ -99,3 +99,7 @@ docker push 497760869739.dkr.ecr.us-east-2.amazonaws.com/export-queue-processing
 ```
 - There is an additional vector tile server for certain infrastructure layers hosted by Development Seed. It is available at reztileserver.com
 - The production API endpoint is behind a manually configured CloudFront Origin for performance enhancement.
+
+### ReztileServer
+
+The reztileserver hosts certain vector tiles using https://github.com/consbio/mbtileserver. This is currently hosted in the AWS infra on Fargate, using EFS for the data files. There is a cloudfront distribution pointing to it: https://d3hkm6tx5mgudr.cloudfront.net for ssl termination and caching. 
