@@ -27,7 +27,7 @@ s3 = boto3.client("s3")
 
 def s3_get(bucket: str, key: str, full_response=False):
     """Get AWS S3 Object."""
-    response = s3.get_object(Bucket=bucket, Key=key)
+        response = s3.get_object(Bucket=bucket, Key=key)
     if full_response:
         return response
     return response["Body"].read()
@@ -424,7 +424,7 @@ def calc_score(
                 if cmm:
                     layer_min = cmm[layer]["min"]
                     layer_max = cmm[layer]["max"]
-                else:
+                if not cmm or layer_min == layer_max:
                     key = loc.replace(f"s3://{BUCKET}/", "").replace("tif", "vrt")
                     layer_min_arr, layer_max_arr = get_min_max(s3_get(BUCKET, key))
                     layer_min = layer_min_arr[idx]
