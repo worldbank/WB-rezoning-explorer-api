@@ -21,9 +21,11 @@ with open(op.join(op.dirname(__file__), "eez.geojson"), "r") as f:
 s3 = boto3.client("s3")
 
 
-def s3_get(bucket: str, key: str, full_response=False):
+def s3_get(bucket: str, key: str, full_response=False, customClient=None):
     """Get AWS S3 Object."""
-    response = s3.get_object(Bucket=bucket, Key=key)
+    if not customClient:
+        customClient = s3
+    response = customClient.get_object(Bucket=bucket, Key=key)
     if full_response:
         return response
     return response["Body"].read()
@@ -54,28 +56,30 @@ def get_country_geojson(id, offshore=False):
         return None
 
 
-def get_country_min_max(id, resource):
+def get_country_min_max(id, resource, customClient=None):
     """get minmax for country and resource"""
+    if not customClient:
+        customClient = s3
     if resource == "offshore":
         # fetch another JSON (there is probably a better way to handle this)
         try:
-            minmax = s3_get(BUCKET, f"api/minmax/{id}_offshore.json")
+            minmax = s3_get(BUCKET, f"api/minmax/{id}_offshore.json", customClient=customClient )
             mm = minmax.decode("utf-8").replace("Infinity", "1000000")
             mm_obj = json.loads(mm)
         except Exception:
             try:
-                minmax = s3_get(BUCKET, f"api/minmax/{id}.json")
+                minmax = s3_get(BUCKET, f"api/minmax/{id}.json", customClient=customClient )
                 mm = minmax.decode("utf-8").replace("Infinity", "1000000")
                 mm_obj = json.loads(mm)
             except Exception:
-                mm_obj = json.loads(s3_get(BUCKET, "api/minmax/AFG.json"))
+                mm_obj = json.loads(s3_get(BUCKET, "api/minmax/AFG.json", customClient=customClient ) )
     else:
         try:
-            minmax = s3_get(BUCKET, f"api/minmax/{id}.json")
+            minmax = s3_get(BUCKET, f"api/minmax/{id}.json", customClient=customClient )
             mm = minmax.decode("utf-8").replace("Infinity", "1000000")
             mm_obj = json.loads(mm)
         except Exception:
-            mm_obj = json.loads(s3_get(BUCKET, "api/minmax/AFG.json"))
+            mm_obj = json.loads(s3_get(BUCKET, "api/minmax/AFG.json", customClient=customClient ))
 
     # bathymetry data should never filter below -1000: https://github.com/developmentseed/rezoning-api/issues/91
     # don't display on land: https://github.com/developmentseed/rezoning-api/issues/103

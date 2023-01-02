@@ -11,7 +11,7 @@ from botocore.exceptions import ClientError
 from rezoning_api.db.calc import single_country_lcoe, single_country_score
 from rezoning_api.models.zone import Filters, Weights, LCOE
 from rezoning_api.utils import s3_head
-from rezoning_api.core.config import EXPORT_BUCKET
+from rezoning_api.core.config import EXPORT_BUCKET, IS_LOCAL_DEV, LOCALSTACK_ENDPOINT_URL
 
 logger = logging.getLogger("exporter")
 logging.getLogger("botocore.credentials").disabled = True
@@ -74,17 +74,24 @@ def process(message):
             weights,
         )
 
-    s3 = boto3.client("s3")
+    if IS_LOCAL_DEV:
+        s3 = boto3.client("s3", endpoint_url=LOCALSTACK_ENDPOINT_URL)
+    else:
+        s3 = boto3.client("s3")
 
     s3.upload_file(file_path, EXPORT_BUCKET, file_path)
 
 
 def main():
     """Pull Message and Process."""
-    region_name = os.environ["REGION"]
-    queue_name = os.environ["QUEUE_NAME"]
+    region_name = os.environ ["REGION"] if "REGION" in os.environ else None
+    queue_name = os.environ["QUEUE_NAME"] if "QUEUE_NAME" in os.environ else None
 
-    sqs = boto3.resource("sqs", region_name=region_name)
+    sqs = None
+    if IS_LOCAL_DEV:
+        sqs = boto3.resource("sqs", endpoint_url=LOCALSTACK_ENDPOINT_URL)
+    else:
+        sqs = boto3.resource("sqs", region_name=region_name)
 
     # Get the queue
     try:

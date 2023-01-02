@@ -14,10 +14,12 @@ from rio_tiler.io import COGReader
 from rio_tiler.utils import create_cutline
 
 
-from rezoning_api.core.config import BUCKET
+from rezoning_api.core.config import BUCKET, IS_LOCAL_DEV, REZONING_LOCAL_DATA_PATH
 from rezoning_api.models.zone import LCOE, Weights
 from rezoning_api.db.layers import get_layers
 from rezoning_api.db.country import get_country_min_max, match_gsa_dailies
+
+from os.path import exists
 
 LAYERS = get_layers()
 MAX_DIST = 1000000  # meters
@@ -25,16 +27,22 @@ MAX_DIST = 1000000  # meters
 s3 = boto3.client("s3")
 
 
-def s3_get(bucket: str, key: str, full_response=False):
+def s3_get(bucket: str, key: str, full_response=False, customClient=None):
     """Get AWS S3 Object."""
-    response = s3.get_object(Bucket=bucket, Key=key)
+    response = None
+    if IS_LOCAL_DEV and customClient:
+        response = customClient.get_object(Bucket=bucket, Key=key)
+    else:
+        response = s3.get_object(Bucket=bucket, Key=key)
     if full_response:
         return response
     return response["Body"].read()
 
 
-def s3_head(bucket: str, key: str):
+def s3_head(bucket: str, key: str, customClient = None):
     """Head request on S3 Object."""
+    if IS_LOCAL_DEV and customClient:
+        return customClient.head_object(Bucket=bucket, Key=key)
     return s3.head_object(Bucket=bucket, Key=key)
 
 
@@ -48,6 +56,10 @@ def read_dataset(
     max_size=None,
 ):
     """read a dataset in a given area"""
+    if IS_LOCAL_DEV:
+        new_loc = dataset.replace( f"s3://{BUCKET}/", REZONING_LOCAL_DATA_PATH )
+        if IS_LOCAL_DEV and exists( new_loc ):
+            dataset = new_loc
     with COGReader(dataset) as cog:
         vrt_options = None
         indexes = list(range(1, len(layers) + 1))

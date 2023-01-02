@@ -13,7 +13,7 @@ from rasterio.crs import CRS
 from rio_tiler.utils import linear_rescale
 
 from rezoning_api.utils import read_dataset
-from rezoning_api.core.config import BUCKET, LCOE_MAX
+from rezoning_api.core.config import BUCKET, LCOE_MAX, IS_LOCAL_DEV, REZONING_LOCAL_DATA_PATH
 from rezoning_api.db.country import get_country_geojson, world
 from rezoning_api.models.zone import LCOE, Filters, Weights
 from rezoning_api.utils import (
@@ -25,6 +25,8 @@ from rezoning_api.utils import (
     calc_score,
 )
 from rezoning_api.db.layers import get_layers
+
+from os.path import exists
 
 PLATE_CARREE = CRS.from_epsg(4326)
 
@@ -79,7 +81,7 @@ def refresh_country_extrema(partial=False, offshore=False):
 
 
 def single_country_lcoe(
-    dest_file: str, country_id, resource, lcoe=LCOE(), filters=Filters()
+    dest_file: str, country_id, resource, lcoe=LCOE(), filters=Filters(), customClient=None
 ):
     """calculate lcoe for single country"""
     t1 = time()
@@ -108,6 +110,11 @@ def single_country_lcoe(
     # match with filter for src profile
     print("begin write out process")
     match_data = f"s3://{BUCKET}/multiband/filter.tif"
+    if IS_LOCAL_DEV:
+        local_match_data = match_data.replace( f"s3://{BUCKET}/", REZONING_LOCAL_DATA_PATH )
+        if exists( local_match_data ):
+            match_data = local_match_data
+    
     with rasterio.open(match_data) as src:
         g2 = transform_geom(PLATE_CARREE, src.crs, aoi)
         bounds = shape(g2).bounds
@@ -141,6 +148,7 @@ def single_country_score(
     lcoe=LCOE(),
     filters=Filters(),
     weights=Weights(),
+    customClien=None
 ):
     # TODO: DRY
     """calculate score for single country"""
@@ -157,6 +165,10 @@ def single_country_score(
 
     # match with filter for src profile
     match_data = f"s3://{BUCKET}/multiband/filter.tif"
+    if IS_LOCAL_DEV:
+        local_match_data = match_data.replace( f"s3://{BUCKET}/", REZONING_LOCAL_DATA_PATH )
+        if exists( local_match_data ):
+            match_data = local_match_data
     with rasterio.open(match_data) as src:
         g2 = transform_geom(PLATE_CARREE, src.crs, aoi)
         bounds = shape(g2).bounds

@@ -8,7 +8,7 @@ from fastapi import APIRouter, status, HTTPException
 from fastapi.responses import Response
 
 from rezoning_api.utils import s3_head, get_hash
-from rezoning_api.core.config import EXPORT_BUCKET, QUEUE_URL
+from rezoning_api.core.config import EXPORT_BUCKET, QUEUE_URL, IS_LOCAL_DEV, LOCALSTACK_ENDPOINT_URL
 from rezoning_api.models.zone import ExportRequest
 
 router = APIRouter()
@@ -54,11 +54,14 @@ def export(
     )
     id = f"{country_id}-{operation}-{resource}-{hash}"
     file_name = f"WBG-REZoning-{id}.tif"
-
+    
     # run export queue processing
     client = boto3.client("sqs")
+    if IS_LOCAL_DEV:
+        client = boto3.client("sqs", endpoint_url=LOCALSTACK_ENDPOINT_URL)
+        queue_url = client.get_queue_url( QueueName="export-queue" )
     client.send_message(
-        QueueUrl=QUEUE_URL,
+        QueueUrl=queue_url["QueueUrl"] if IS_LOCAL_DEV else QUEUE_URL,
         MessageBody=json.dumps(
             dict(
                 file_name=file_name,
@@ -78,9 +81,11 @@ def export(
 @router.get("/export/status/{id}")
 def get_export_status(id: str, response: Response):
     """Return export status"""
+    if IS_LOCAL_DEV:
+        s3 = boto3.client("s3", endpoint_url=LOCALSTACK_ENDPOINT_URL) 
     try:
         key = f"export/WBG-REZoning-{id}.tif"
-        s3_head(bucket=EXPORT_BUCKET, key=key)
+        head_obj = s3.head_object(Bucket=EXPORT_BUCKET, Key=key)
         url = s3.generate_presigned_url(
             "get_object", Params={"Bucket": EXPORT_BUCKET, "Key": key}, ExpiresIn=300
         )
