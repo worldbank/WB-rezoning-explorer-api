@@ -1,5 +1,5 @@
 """Filter endpoints."""
-from rezoning_api.db.country import get_country_geojson, get_country_min_max
+from rezoning_api.db.country import get_country_geojson, get_country_min_max, get_region_geojson
 from fastapi import APIRouter
 from rio_tiler.io import COGReader
 from rio_tiler.utils import render, linear_rescale, create_cutline
@@ -62,7 +62,10 @@ def layers(
     with COGReader(loc) as cog:
         vrt_options = None
         if country_id:
-            aoi = get_country_geojson(country_id, offshore)
+            if len( country_id ) == 3:
+                aoi = get_country_geojson(country_id, offshore)
+            else:
+                aoi = get_region_geojson(country_id, offshore)
             cutline = create_cutline(cog.dataset, aoi.dict(), geometry_crs="epsg:4326")
             vrt_options = {"cutline": cutline}
 

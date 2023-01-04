@@ -55,6 +55,11 @@ def get_country_geojson(id, offshore=False):
     except Exception:
         return None
 
+def get_region_geojson( id, offshore=False ):
+    """get geojson for a single region or eez"""
+    source_dir = "regions_eez" if offshore else "regions"
+    region = json.load( open(op.join(op.dirname(__file__), f"{source_dir}/{id}.geojson"), "r") )
+    return Feature(**region)
 
 def get_country_min_max(id, resource, customClient=None):
     """get minmax for country and resource"""
