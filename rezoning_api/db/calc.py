@@ -14,7 +14,7 @@ from rio_tiler.utils import linear_rescale
 
 from rezoning_api.utils import read_dataset
 from rezoning_api.core.config import BUCKET, LCOE_MAX, IS_LOCAL_DEV, REZONING_LOCAL_DATA_PATH
-from rezoning_api.db.country import get_country_geojson, world
+from rezoning_api.db.country import get_country_geojson. get_region_geojson, world
 from rezoning_api.models.zone import LCOE, Filters, Weights
 from rezoning_api.utils import (
     get_capacity_factor,
@@ -46,7 +46,11 @@ def refresh_country_extrema(partial=False, offshore=False):
             continue
         print(f"reading values for {feature['properties']['NAME_0']}")
         try:
-            aoi = get_country_geojson(f_key, offshore=offshore).geometry.dict()
+            if len( f_key ) == 3:
+                aoi = get_country_geojson(f_key, offshore=offshore).geometry.dict()
+            else:
+                aoi = get_region_geojson(f_key, offshore=offshore).geometry.dict()
+
         except Exception:
             print(f"no valid geometry for {f_key}, offshore = {offshore}")
             continue
@@ -86,7 +90,11 @@ def single_country_lcoe(
     """calculate lcoe for single country"""
     t1 = time()
     offshore = True if resource == "offshore" else False
-    aoi = get_country_geojson(country_id, offshore=offshore).geometry.dict()
+    if len( country_id ) == 3:
+        aoi = get_country_geojson(country_id, offshore=offshore).geometry.dict()
+    else:
+        aoi = get_region_geojson(country_id, offshore=offshore).geometry.dict()
+
 
     # spatial inputs
     print("getting spatial inputs")
@@ -154,7 +162,10 @@ def single_country_score(
     """calculate score for single country"""
     t1 = time()
     offshore = True if resource == "offshore" else False
-    aoi = get_country_geojson(country_id, offshore=offshore).geometry.dict()
+    if len( country_id ) == 3:
+        aoi = get_country_geojson(country_id, offshore=offshore).geometry.dict()
+    else:
+        aoi = get_region_geojson(country_id, offshore=offshore).geometry.dict()
 
     data, mask = calc_score(country_id, resource, lcoe, weights, filters, geometry=aoi)
 

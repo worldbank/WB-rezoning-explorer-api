@@ -12,7 +12,7 @@ from rezoning_api.core.config import BUCKET
 from rezoning_api.models.tiles import TileResponse
 from rezoning_api.models.zone import Filters, RangeFilter
 from rezoning_api.utils import _filter, LAYERS, filter_to_layer_name, get_layer_location
-from rezoning_api.db.country import get_country_min_max, get_country_geojson
+from rezoning_api.db.country import get_country_min_max, get_country_geojson, get_region_geojson
 
 router = APIRouter()
 
@@ -57,8 +57,12 @@ def filter(
     geometry = None
     if country_id:
         # TODO: early return for tiles outside country bounds
-        feat = get_country_geojson(country_id, offshore)
-        geometry = feat.geometry.dict()
+        if len( country_id ) == 3:
+            feat = get_country_geojson(country_id, offshore)
+            geometry = feat.geometry.dict()
+        else:
+            feat = get_region_geojson(country_id, offshore)
+            geometry = feat.geometry.dict()
 
     arrays = []
     for dataset in datasets:

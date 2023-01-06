@@ -21,7 +21,7 @@ from rezoning_api.utils import (
     get_distances,
     get_layer_location,
 )
-from rezoning_api.db.country import get_country_geojson
+from rezoning_api.db.country import get_country_geojson, get_region_geojson
 
 router = APIRouter()
 
@@ -55,7 +55,10 @@ def lcoe(
     geometry = None
     if country_id:
         # TODO: early return for tiles outside country bounds
-        feat = get_country_geojson(country_id, offshore)
+        if len( country_id ) == 3:
+            feat = get_country_geojson(country_id, offshore)
+        else:
+            feat = get_region_geojson(country_id, offshore)
         geometry = feat.geometry.dict()
 
     # calculate LCOE (from zone.py, TODO: DRY)
