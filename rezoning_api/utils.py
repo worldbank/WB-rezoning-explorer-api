@@ -436,7 +436,7 @@ def calc_score(
                 if cmm:
                     layer_min = cmm[layer]["min"]
                     layer_max = cmm[layer]["max"]
-                else:
+                if not cmm or layer_min == layer_max:
                     key = loc.replace(f"s3://{BUCKET}/", "").replace("tif", "vrt")
                     layer_min_arr, layer_max_arr = get_min_max(s3_get(BUCKET, key))
                     layer_min = layer_min_arr[idx]
