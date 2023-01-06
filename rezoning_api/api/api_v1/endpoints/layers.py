@@ -185,6 +185,7 @@ def get_layers():
             layer["title"] = mf.get("title", None)
             layer["energy_type"] = mf.get("energy_type", None)
             layer["units"] = mf.get("units", None)
+            layer["source_url"] = mf.get("source_url", None)
         elif lkey in cfo_ids:
             # remove excess capacity factor layers
             layers[lkey] = {}
