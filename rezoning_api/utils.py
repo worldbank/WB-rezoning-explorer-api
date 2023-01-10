@@ -397,13 +397,16 @@ def calc_score(
     shape = (256, 256) if x else cf.shape
     score_array = np.zeros(shape)
 
+    criterion_average = dict()
+    criterion_contribution = dict()
+
     weight_count = 0
     for weight_name, weight_value in weights:
         layer = weight_name.replace("_", "-")
         loc, idx = get_layer_location(layer)
         if (loc and weight_value > 0) or weight_name == "lcoe_gen":
             # valid weight
-            weight_count += 1
+            weight_count += weight_value
 
             # flip min/max for certain weights
             flip = True
@@ -419,6 +422,10 @@ def calc_score(
                     flip=True,
                 )
                 lcoe_gen_scaled = np.clip(lcoe_gen_scaled, 0, 1)
+                
+                criterion_average[weight_name] = float( ma.masked_array( lg, ~mask ).mean() )
+                criterion_contribution[weight_name] = weights.lcoe_gen * float( ma.masked_array(lcoe_gen_scaled, ~mask).mean() )
+
                 score_array += lcoe_gen_scaled * weights.lcoe_gen
             else:
                 dataset = loc.replace(f"s3://{BUCKET}/", "").replace(".tif", "")
@@ -448,6 +455,10 @@ def calc_score(
                     layer_max,
                     flip=flip,
                 )
+
+                criterion_average[weight_name] = float( ma.masked_array( data.sel(layer=layer).values, ~mask ).mean() )
+                criterion_contribution[weight_name] = weight_value * float( ma.masked_array(scaled_array, ~mask).mean() )
+
                 score_array += weight_value * scaled_array
 
     # final normalization
@@ -457,6 +468,6 @@ def calc_score(
     lcoe_t = ma.masked_invalid(lcoe_t)
     score_array = ma.masked_invalid(score_array)
     if ret_extras:
-        return score_array, mask, dict(lcoe=lcoe_t, cf=cf)
+        return score_array, mask, dict(lcoe=lcoe_t, cf=cf, criterion_average=criterion_average, criterion_contribution=criterion_contribution)
     else:
         return score_array, mask

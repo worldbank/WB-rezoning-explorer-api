@@ -39,6 +39,8 @@ def zone(
 
     lcoe = extras["lcoe"]
     cf = extras["cf"]
+    criterion_average = extras["criterion_average"]
+    criterion_contribution = extras["criterion_contribution"]
 
     # mask everything with filters
     lcoe_m = ma.masked_array(lcoe, ~mask)
@@ -59,6 +61,8 @@ def zone(
     # annual energy generation potential (divide by 1000 for GWh)
     generation_potential = icp * cf_m.mean() * 8760 / 1000
 
+    print( criterion_average )
+    print( criterion_contribution )
     if not lcoe_m.mean():
         raise HTTPException(status_code=404, detail="No suitable area after filtering")
 
@@ -72,6 +76,8 @@ def zone(
         / suitable_area
         * 1000000,  # area is m2, ratio is /km2
         suitable_area=suitable_area,
+        criterion_average=criterion_average,
+        criterion_contribution=criterion_contribution,
     )
 
 
