@@ -14,7 +14,7 @@ from rio_tiler.utils import linear_rescale
 
 from rezoning_api.utils import read_dataset
 from rezoning_api.core.config import BUCKET, LCOE_MAX, IS_LOCAL_DEV, REZONING_LOCAL_DATA_PATH
-from rezoning_api.db.country import get_country_geojson. get_region_geojson, world
+from rezoning_api.db.country import get_country_geojson, get_region_geojson, world
 from rezoning_api.models.zone import LCOE, Filters, Weights
 from rezoning_api.utils import (
     get_capacity_factor,

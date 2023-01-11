@@ -55,7 +55,7 @@ def lcoe(
     geometry = None
     if country_id:
         # TODO: early return for tiles outside country bounds
-        if len( country_id ) == 3:
+        if len(country_id) == 3:
             feat = get_country_geojson(country_id, offshore)
         else:
             feat = get_region_geojson(country_id, offshore)
