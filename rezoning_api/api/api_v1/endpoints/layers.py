@@ -1,10 +1,12 @@
 """Filter endpoints."""
-from rezoning_api.db.country import get_country_geojson, get_country_min_max
+from rezoning_api.db.country import get_country_geojson, get_country_min_max, get_region_geojson
 from fastapi import APIRouter
 from rio_tiler.io import COGReader
 from rio_tiler.utils import render, linear_rescale, create_cutline
 from rio_tiler.colormap import cmap
 import numpy as np
+
+from os.path import exists
 
 from rezoning_api.models.tiles import TileResponse
 from rezoning_api.models.zone import Filters
@@ -15,7 +17,7 @@ from rezoning_api.utils import (
     s3_get,
     filter_to_layer_name,
 )
-from rezoning_api.core.config import BUCKET
+from rezoning_api.core.config import BUCKET, IS_LOCAL_DEV, REZONING_LOCAL_DATA_PATH
 from rezoning_api.db.cf import get_capacity_factor_options
 from rezoning_api.db.country import match_gsa_dailies
 
@@ -52,10 +54,18 @@ def layers(
     loc, idx = get_layer_location(id)
     key = loc.replace(f"s3://{BUCKET}/", "").replace("tif", "vrt")
 
+    if IS_LOCAL_DEV:
+        local_loc = loc.replace(f"s3://{BUCKET}/", REZONING_LOCAL_DATA_PATH)
+        if exists(local_loc):
+            loc = local_loc
+
     with COGReader(loc) as cog:
         vrt_options = None
         if country_id:
-            aoi = get_country_geojson(country_id, offshore)
+            if len(country_id) == 3:
+                aoi = get_country_geojson(country_id, offshore)
+            else:
+                aoi = get_region_geojson(country_id, offshore)
             cutline = create_cutline(cog.dataset, aoi.dict(), geometry_crs="epsg:4326")
             vrt_options = {"cutline": cutline}
 
