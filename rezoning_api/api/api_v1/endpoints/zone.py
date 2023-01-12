@@ -61,8 +61,6 @@ def zone(
     # annual energy generation potential (divide by 1000 for GWh)
     generation_potential = icp * cf_m.mean() * 8760 / 1000
 
-    print( criterion_average )
-    print( criterion_contribution )
     if not lcoe_m.mean():
         raise HTTPException(status_code=404, detail="No suitable area after filtering")
 
@@ -72,9 +70,7 @@ def zone(
         generation_potential=generation_potential,
         icp=icp,
         cf=cf_m.mean(),
-        zone_output_density=generation_potential
-        / suitable_area
-        * 1000000,  # area is m2, ratio is /km2
+        zone_output_density=generation_potential / suitable_area * 1000000,  # area is m2, ratio is /km2
         suitable_area=suitable_area,
         criterion_average=criterion_average,
         criterion_contribution=criterion_contribution,

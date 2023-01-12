@@ -39,7 +39,7 @@ def s3_get(bucket: str, key: str, full_response=False, customClient=None):
     return response["Body"].read()
 
 
-def s3_head(bucket: str, key: str, customClient = None):
+def s3_head(bucket: str, key: str, customClient=None):
     """Head request on S3 Object."""
     if IS_LOCAL_DEV and customClient:
         return customClient.head_object(Bucket=bucket, Key=key)
@@ -57,8 +57,8 @@ def read_dataset(
 ):
     """read a dataset in a given area"""
     if IS_LOCAL_DEV:
-        new_loc = dataset.replace( f"s3://{BUCKET}/", REZONING_LOCAL_DATA_PATH )
-        if IS_LOCAL_DEV and exists( new_loc ):
+        new_loc = dataset.replace(f"s3://{BUCKET}/", REZONING_LOCAL_DATA_PATH)
+        if IS_LOCAL_DEV and exists(new_loc):
             dataset = new_loc
     with COGReader(dataset) as cog:
         vrt_options = None
@@ -422,9 +422,9 @@ def calc_score(
                     flip=True,
                 )
                 lcoe_gen_scaled = np.clip(lcoe_gen_scaled, 0, 1)
-                
-                criterion_average[weight_name] = float( ma.masked_array( lg, ~mask ).mean() )
-                criterion_contribution[weight_name] = weights.lcoe_gen * float( ma.masked_array(lcoe_gen_scaled, ~mask).mean() )
+
+                criterion_average[weight_name] = float(ma.masked_array(lg, ~mask).mean())
+                criterion_contribution[weight_name] = weights.lcoe_gen * float(ma.masked_array(lcoe_gen_scaled, ~mask).mean())
 
                 score_array += lcoe_gen_scaled * weights.lcoe_gen
             else:
@@ -456,8 +456,8 @@ def calc_score(
                     flip=flip,
                 )
 
-                criterion_average[weight_name] = float( ma.masked_array( data.sel(layer=layer).values, ~mask ).mean() )
-                criterion_contribution[weight_name] = weight_value * float( ma.masked_array(scaled_array, ~mask).mean() )
+                criterion_average[weight_name] = float(ma.masked_array(data.sel(layer=layer).values, ~mask).mean())
+                criterion_contribution[weight_name] = weight_value * float(ma.masked_array(scaled_array, ~mask).mean())
 
                 score_array += weight_value * scaled_array
 

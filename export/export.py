@@ -84,7 +84,7 @@ def process(message):
 
 def main():
     """Pull Message and Process."""
-    region_name = os.environ ["REGION"] if "REGION" in os.environ else None
+    region_name = os.environ["REGION"] if "REGION" in os.environ else None
     queue_name = os.environ["QUEUE_NAME"] if "QUEUE_NAME" in os.environ else None
 
     sqs = None
