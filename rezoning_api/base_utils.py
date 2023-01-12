@@ -34,9 +34,7 @@ def lcoe_road(lr: LCOE, cf, dr):
 def lcoe_total(lr: LCOE, cf, ds, dr):
     """Calculate total LCOE"""
     return (
-        lcoe_generation(lr, cf)
-        + lcoe_interconnection(lr, cf, ds)
-        + lcoe_road(lr, cf, dr)
+        lcoe_generation(lr, cf) + lcoe_interconnection(lr, cf, ds) + lcoe_road(lr, cf, dr)
     )
 
 

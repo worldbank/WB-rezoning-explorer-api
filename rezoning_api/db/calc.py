@@ -14,7 +14,7 @@ from rio_tiler.utils import linear_rescale
 
 from rezoning_api.utils import read_dataset
 from rezoning_api.core.config import BUCKET, LCOE_MAX, IS_LOCAL_DEV, REZONING_LOCAL_DATA_PATH
-from rezoning_api.db.country import get_country_geojson. get_region_geojson, world
+from rezoning_api.db.country import get_country_geojson, get_region_geojson, world
 from rezoning_api.models.zone import LCOE, Filters, Weights
 from rezoning_api.utils import (
     get_capacity_factor,
@@ -46,7 +46,7 @@ def refresh_country_extrema(partial=False, offshore=False):
             continue
         print(f"reading values for {feature['properties']['NAME_0']}")
         try:
-            if len( f_key ) == 3:
+            if len(f_key) == 3:
                 aoi = get_country_geojson(f_key, offshore=offshore).geometry.dict()
             else:
                 aoi = get_region_geojson(f_key, offshore=offshore).geometry.dict()
@@ -90,11 +90,10 @@ def single_country_lcoe(
     """calculate lcoe for single country"""
     t1 = time()
     offshore = True if resource == "offshore" else False
-    if len( country_id ) == 3:
+    if len(country_id) == 3:
         aoi = get_country_geojson(country_id, offshore=offshore).geometry.dict()
     else:
         aoi = get_region_geojson(country_id, offshore=offshore).geometry.dict()
-
 
     # spatial inputs
     print("getting spatial inputs")
@@ -119,10 +118,10 @@ def single_country_lcoe(
     print("begin write out process")
     match_data = f"s3://{BUCKET}/multiband/filter.tif"
     if IS_LOCAL_DEV:
-        local_match_data = match_data.replace( f"s3://{BUCKET}/", REZONING_LOCAL_DATA_PATH )
-        if exists( local_match_data ):
+        local_match_data = match_data.replace(f"s3://{BUCKET}/", REZONING_LOCAL_DATA_PATH)
+        if exists(local_match_data):
             match_data = local_match_data
-    
+
     with rasterio.open(match_data) as src:
         g2 = transform_geom(PLATE_CARREE, src.crs, aoi)
         bounds = shape(g2).bounds
@@ -162,7 +161,7 @@ def single_country_score(
     """calculate score for single country"""
     t1 = time()
     offshore = True if resource == "offshore" else False
-    if len( country_id ) == 3:
+    if len(country_id) == 3:
         aoi = get_country_geojson(country_id, offshore=offshore).geometry.dict()
     else:
         aoi = get_region_geojson(country_id, offshore=offshore).geometry.dict()
@@ -177,8 +176,8 @@ def single_country_score(
     # match with filter for src profile
     match_data = f"s3://{BUCKET}/multiband/filter.tif"
     if IS_LOCAL_DEV:
-        local_match_data = match_data.replace( f"s3://{BUCKET}/", REZONING_LOCAL_DATA_PATH )
-        if exists( local_match_data ):
+        local_match_data = match_data.replace(f"s3://{BUCKET}/", REZONING_LOCAL_DATA_PATH)
+        if exists(local_match_data):
             match_data = local_match_data
     with rasterio.open(match_data) as src:
         g2 = transform_geom(PLATE_CARREE, src.crs, aoi)

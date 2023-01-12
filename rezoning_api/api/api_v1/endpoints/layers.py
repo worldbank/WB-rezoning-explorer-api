@@ -55,14 +55,14 @@ def layers(
     key = loc.replace(f"s3://{BUCKET}/", "").replace("tif", "vrt")
 
     if IS_LOCAL_DEV:
-        local_loc = loc.replace( f"s3://{BUCKET}/", REZONING_LOCAL_DATA_PATH )
-        if exists( local_loc ):
+        local_loc = loc.replace(f"s3://{BUCKET}/", REZONING_LOCAL_DATA_PATH)
+        if exists(local_loc):
             loc = local_loc
 
     with COGReader(loc) as cog:
         vrt_options = None
         if country_id:
-            if len( country_id ) == 3:
+            if len(country_id) == 3:
                 aoi = get_country_geojson(country_id, offshore)
             else:
                 aoi = get_region_geojson(country_id, offshore)
