@@ -68,9 +68,7 @@ def zone(
         generation_potential=generation_potential,
         icp=icp,
         cf=cf_m.mean(),
-        zone_output_density=generation_potential
-        / suitable_area
-        * 1000000,  # area is m2, ratio is /km2
+        zone_output_density=generation_potential / suitable_area * 1000000,  # area is m2, ratio is /km2
         suitable_area=suitable_area,
     )
 
