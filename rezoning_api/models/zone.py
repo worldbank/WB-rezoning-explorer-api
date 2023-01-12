@@ -588,3 +588,5 @@ class ZoneResponse(BaseModel):
     )
     suitable_area: float = Field(..., title="Suitable area (m2)")
     cf: float = Field(..., title="Capacity Factor")
+    criterion_average: dict = Field(..., title="Weight average")
+    criterion_contribution: dict = Field(..., title="Weight contribution to score")
