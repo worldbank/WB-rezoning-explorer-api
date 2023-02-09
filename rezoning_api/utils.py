@@ -356,13 +356,16 @@ def calc_score(
     # spatial temporal inputs
     ds, dr, calc, mask = get_distances(filters, x=x, y=y, z=z, geometry=geometry)
 
+    criterion_average = dict()
+    criterion_contribution = dict()
+
     # if the entire area is filtered out, return early and fail early
     if mask.sum() == 0:
         score_array = np.zeros(mask.shape)
         cf = np.zeros(mask.shape)
         lcoe_t = np.zeros(mask.shape)
         if ret_extras:
-            return score_array, mask, dict(lcoe=lcoe_t, cf=cf)
+            return score_array, mask, dict(lcoe=lcoe_t, cf=cf, criterion_average=criterion_average, criterion_contribution=criterion_contribution)
         else:
             return score_array, mask
 
@@ -396,9 +399,6 @@ def calc_score(
     # zone score
     shape = (256, 256) if x else cf.shape
     score_array = np.zeros(shape)
-
-    criterion_average = dict()
-    criterion_contribution = dict()
 
     weight_count = 0
     for weight_name, weight_value in weights:
