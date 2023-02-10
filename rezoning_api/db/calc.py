@@ -143,7 +143,7 @@ def single_country_lcoe(
         with rasterio.open(dest_file, "w", **profile) as dst:
             print(f"saving to {dest_file}")
             dst.write(data, 1)
-            dst.write_mask(mask.astype(np.bool))
+            dst.write_mask(mask.astype(np.bool_))
 
     print(f"elapsed: {time() - t1} seconds")
 
@@ -197,6 +197,6 @@ def single_country_score(
         with rasterio.open(dest_file, "w", **profile) as dst:
             print(f"saving to {dest_file}")
             dst.write(data.astype(np.float32), 1)
-            dst.write_mask(mask.astype(np.bool))
+            dst.write_mask(mask.astype(np.bool_))
 
     print(f"elapsed: {time() - t1} seconds")

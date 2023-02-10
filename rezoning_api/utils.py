@@ -224,7 +224,7 @@ def _filter(array, filters):
     # the condition is "no filter has a value which isn't none"
     if not any([True for filter in filters.dict().values() if filter is not None]):
         trues = np.prod(array.values, axis=0) > 0
-        return (trues.astype(np.uint8), trues.astype(np.bool))
+        return (trues.astype(np.uint8), trues.astype(np.bool_))
 
     np_filters = []
     for f_layer, filt in filters.dict().items():
