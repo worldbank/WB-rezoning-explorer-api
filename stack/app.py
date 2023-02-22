@@ -194,11 +194,15 @@ class rezoningApiLambdaStack(core.Stack):
         print(f"code dir: {code_dir}")
         client = docker.from_env()
         print("docker client up")
-        client.images.build(
-            path=code_dir,
-            dockerfile="Dockerfiles/lambda/Dockerfile",
-            tag="lambda:latest",
-        )
+        response = client.api.build( path=code_dir, dockerfile="Dockerfiles/lambda/Dockerfile", tag="lambda:latest" )
+        print( "====================================" )
+        print( *response, sep='\n' )
+        print( "====================================" )
+        # client.images.build(
+        #     path=code_dir,
+        #     dockerfile="Dockerfiles/lambda/Dockerfile",
+        #     tag="lambda:latest",
+        # )
         print("docker image built")
         client.containers.run(
             image="lambda:latest",
