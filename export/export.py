@@ -111,9 +111,9 @@ def main():
 
             # Let the queue know that the message is processed
             message.delete()
-        print( "Processing queue", queue_name )
+        logger.warning( "Processing queue", queue_name )
         if not message:
-            # logger.warning("No message in Queue, will sleep for 3 seconds...")
+            logger.warning("No message in Queue, will sleep for 3 seconds...")
             time.sleep(3)  # if no message, let's wait 60secs
 
 
