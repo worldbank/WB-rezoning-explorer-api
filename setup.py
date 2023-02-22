@@ -14,6 +14,7 @@ inst_reqs = [
     "rio-tiler==3.0.0",
     "mercantile==1.2.1",
     "rasterio==1.3.4",
+    "requests",
 ]
 
 extra_reqs = {
