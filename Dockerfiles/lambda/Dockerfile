@@ -20,7 +20,7 @@ RUN rm -rdf /var/task/stack
 # boto3 and botocore are installed on python lambda images, and botocore is gigantic (78M unzipped, 1/5 of size budget)
 RUN rm -rf /var/task/boto3* /var/task/botocore*
 RUN ls -alh /var/task/
-RUN du -sh /var/task/
+RUN du --summarize --human-readable /var/task/*
 
 RUN cd /var/task && zip -r9q /tmp/package.zip *
 
