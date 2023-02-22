@@ -7,7 +7,7 @@ WORKDIR /tmp
 COPY README.md /app/README.md
 COPY rezoning_api/ /app/rezoning_api/
 COPY setup.py /app/setup.py 
-RUN pip install /app/. "mangum>=0.9.0" -t /var/task --prefer-binary --compile
+RUN pip install /app/. "mangum>=0.9.0" -t /var/task
 
 # Reduce package size and remove useless files
 RUN cd /var/task && find . -type f -name '*.pyc' | while read f; do n=$(echo $f | sed 's/__pycache__\///' | sed 's/.cpython-[2-3][0-9]//'); cp $f $n; done;

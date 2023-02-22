@@ -5,7 +5,7 @@ from setuptools import find_packages, setup
 # Runtime requirements.
 inst_reqs = [
     "fastapi==0.65.3",
-    "pydantic==1.8.2",
+    "pydantic==1.10.5",
     "jinja2==3.0.3",
     "geojson_pydantic==0.3.4",
     "shapely==1.7.1",
