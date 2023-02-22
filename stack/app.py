@@ -167,7 +167,7 @@ class rezoningApiLambdaStack(core.Stack):
         lambda_function = aws_lambda.Function(
             self,
             f"{id}-lambda",
-            runtime=aws_lambda.Runtime.PYTHON_3_7,
+            runtime=aws_lambda.Runtime.PYTHON_3_8,
             code=self.create_package(code_dir),
             handler="handler.handler",
             memory_size=memory,
