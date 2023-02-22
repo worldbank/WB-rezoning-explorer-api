@@ -54,6 +54,7 @@ def export(
     )
     id = f"{country_id}-{operation}-{resource}-{hash}"
     file_name = f"WBG-REZoning-{id}.tif"
+    print( f"Running export for file {file_name}" );
 
     # run export queue processing
     client = boto3.client("sqs")
@@ -81,6 +82,7 @@ def export(
 @router.get("/export/status/{id}")
 def get_export_status(id: str, response: Response):
     """Return export status"""
+    ret = None
     if IS_LOCAL_DEV:
         s3 = boto3.client("s3", endpoint_url=LOCALSTACK_ENDPOINT_URL)
     try:
@@ -89,8 +91,10 @@ def get_export_status(id: str, response: Response):
         url = s3.generate_presigned_url(
             "get_object", Params={"Bucket": EXPORT_BUCKET, "Key": key}, ExpiresIn=300
         )
-        return dict(status="complete", url=url)
+        ret = dict(status="complete", url=url)
     except Exception as e:
         print(e)
         response.status_code = status.HTTP_202_ACCEPTED
-        return dict(status="processing")
+        ret = dict(status="processing")
+    print( "Investigating export status of", id, "yielded", ret )
+    return ret
