@@ -21,6 +21,7 @@ RUN rm -rdf /var/task/stack
 RUN rm -rf /var/task/boto3* /var/task/botocore*
 RUN ls -alh /var/task/
 RUN du --summarize --human-readable /var/task/*
+RUN du --summarize --human-readable /var/task/
 
 RUN cd /var/task && zip -r9q /tmp/package.zip *
 
