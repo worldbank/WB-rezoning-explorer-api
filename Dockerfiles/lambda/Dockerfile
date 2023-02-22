@@ -1,4 +1,4 @@
-FROM lambci/lambda:build-python3.7
+FROM lambci/lambda:build-python3.8
 
 WORKDIR /tmp
 
@@ -6,8 +6,7 @@ WORKDIR /tmp
 
 COPY README.md /app/README.md
 COPY rezoning_api/ /app/rezoning_api/
-COPY setup.py /app/setup.py
-
+COPY setup.py /app/setup.py 
 RUN pip install /app/. "mangum>=0.9.0" -t /var/task --no-binary numpy
 
 # Reduce package size and remove useless files
