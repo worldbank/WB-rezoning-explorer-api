@@ -51,6 +51,7 @@ def layers(
     offshore: bool = False,
 ):
     """Return a tile from a layer."""
+    print( "layers", id, z, x, y, colormap, country_id, resource, offshore )
     loc, idx = get_layer_location(id)
     key = loc.replace(f"s3://{BUCKET}/", "").replace("tif", "vrt")
 
@@ -58,6 +59,8 @@ def layers(
         local_loc = loc.replace(f"s3://{BUCKET}/", REZONING_LOCAL_DATA_PATH)
         if exists(local_loc):
             loc = local_loc
+        else:
+            print( "File", local_loc, "doesn't exist" )
 
     with COGReader(loc) as cog:
         vrt_options = None
