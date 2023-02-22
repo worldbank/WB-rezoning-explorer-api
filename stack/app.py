@@ -184,6 +184,7 @@ class rezoningApiLambdaStack(core.Stack):
             self,
             f"{id}-endpoint",
             default_integration=apigw_int.HttpLambdaIntegration(
+                id=f"{id}-endpoint-http-lambda-integration",
                 handler=lambda_function
             ),
         )
