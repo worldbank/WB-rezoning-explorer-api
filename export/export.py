@@ -98,6 +98,7 @@ def main():
         queue = sqs.get_queue_by_name(QueueName=queue_name)
     except ClientError:
         logger.warning(f"SQS Queue '{queue_name}' ({region_name}) not found")
+        print(f"SQS Queue '{queue_name}' ({region_name}) not found")
         sys.exit(1)
 
     while True:
@@ -108,12 +109,15 @@ def main():
             t1 = time.time()
             process(m)
             logger.warning(f"processing time: {time.time() - t1} sec.")
+            print(f"processing time: {time.time() - t1} sec.")
 
             # Let the queue know that the message is processed
             message.delete()
         logger.warning( f"Processing queue {queue_name}" )
+        print( f"Processing queue {queue_name}" )
         if not message:
             logger.warning("No message in Queue, will sleep for 3 seconds...")
+            print( "No message in Queue, will sleep for 3 seconds..." )
             time.sleep(3)  # if no message, let's wait 60secs
 
 
