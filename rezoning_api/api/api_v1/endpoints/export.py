@@ -58,10 +58,11 @@ def export(
 
     # run export queue processing
     client = boto3.client("sqs")
+    queue_url = QUEUE_URL
     if IS_LOCAL_DEV:
         client = boto3.client("sqs", endpoint_url=LOCALSTACK_ENDPOINT_URL)
-    queue_url = client.get_queue_url(QueueName="export-queue")
-    print( f"Pushing into bucket url {QUEUE_URL}" )
+        queue_url = client.get_queue_url(QueueName="export-queue")
+    print( f"Pushing into bucket url {queue_url}" )
     client.send_message(
         QueueUrl=queue_url["QueueUrl"] if IS_LOCAL_DEV else QUEUE_URL,
         MessageBody=json.dumps(
