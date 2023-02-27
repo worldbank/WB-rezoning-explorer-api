@@ -54,7 +54,8 @@ def export(
     )
     id = f"{country_id}-{operation}-{resource}-{hash}"
     file_name = f"WBG-REZoning-{id}.tif"
-    print( f"Running export for file {file_name}" );
+    print( f"Running export for file {file_name}" )
+    print( "Is local dev?", IS_LOCAL_DEV )
 
     # run export queue processing
     client = boto3.client("sqs")
@@ -62,9 +63,10 @@ def export(
     if IS_LOCAL_DEV:
         client = boto3.client("sqs", endpoint_url=LOCALSTACK_ENDPOINT_URL)
         queue_url = client.get_queue_url(QueueName="export-queue")
+        queue_url = queue_url["QueueUrl"]
     print( f"Pushing into bucket url {queue_url}" )
     client.send_message(
-        QueueUrl=queue_url["QueueUrl"] if IS_LOCAL_DEV else QUEUE_URL,
+        QueueUrl=queue_url,
         MessageBody=json.dumps(
             dict(
                 file_name=file_name,
