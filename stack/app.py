@@ -56,12 +56,14 @@ class rezoningApiLambdaStack(core.Stack):
         """Define stack."""
         super().__init__(scope, id, **kwargs)
 
+        print( "Creating stack for", id )
+
         # hardcoded VPC
         vpc = ec2.Vpc.from_lookup(self, f"{id}-vpc", vpc_id="vpc-dfff4bb4")
 
         # hardcode bucket (shared across env)
         bucket = s3.Bucket.from_bucket_name(
-            self, f"{id}-export-bucket", "rezoning-exports"
+            self, f"{id}-export-bucket", config.EXPORT_BUCKET
         )
 
         s3_access_policy = iam.PolicyStatement(
