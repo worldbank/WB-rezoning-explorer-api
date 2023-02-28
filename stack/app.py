@@ -197,7 +197,7 @@ class rezoningApiLambdaStack(core.Stack):
         print(f"code dir: {code_dir}")
         client = docker.from_env()
         print("docker client up")
-        response = client.api.build( path=code_dir, dockerfile="Dockerfiles/lambda/Dockerfile", tag="lambda:latest" )
+        response = client.api.build( path=code_dir, dockerfile="Dockerfiles/lambda/Dockerfile", tag="lambda:latest", nocache=True )
         print( "====================================" )
         print( *response, sep='\n' )
         print( "====================================" )
