@@ -65,7 +65,7 @@ def export(
         queue_url = client.get_queue_url(QueueName="export-queue")
         queue_url = queue_url["QueueUrl"]
     print( f"Pushing into bucket url {queue_url}" )
-    client.send_message(`
+    client.send_message(
         QueueUrl=queue_url,
         MessageBody=json.dumps(
             dict(

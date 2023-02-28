@@ -158,7 +158,7 @@ class rezoningApiLambdaStack(core.Stack):
                 MODULE_NAME="rezoning_api.main",
                 VARIABLE_NAME="app",
                 WORKERS_PER_CORE="1",
-                LOG_LEVEL="error",
+                LOG_LEVEL="Trace",
                 QUEUE_URL=queue_processor.sqs_queue.queue_url,
                 AIRTABLE_KEY=os.environ["AIRTABLE_KEY"],
                 # MEMCACHE_HOST=cache.attr_configuration_endpoint_address,
