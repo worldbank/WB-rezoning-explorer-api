@@ -16,10 +16,6 @@ aws sqs create-queue --queue-name export-queue --endpoint-url=http://localhost:4
 ```sh
 aws s3 mb s3://rezoning-exports --endpoint-url=http://localhost:4566/
 ```
-- Create the export bucket used to communicate the exporting requests between the API and the export function:
-```sh
-aws s3 mb s3://rezoning-exports --endpoint-url=http://localhost:4566/
-```
 
 ## Running Rezoning API:
 In order to work with Rezoning locally, you need AWS access to the processed data (Currently around 330Gb of data) and a certain Airtable. 
