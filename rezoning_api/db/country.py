@@ -58,7 +58,7 @@ def get_country_geojson(id, offshore=False):
         if len(filtered) == 1:
             return Feature(**filtered[0])
         geom = unary_union([shape(f["geometry"]) for f in filtered])
-        feat = dict(properties={}, geometry=mapping(geom), type="Feature")
+        feat = dict(properties={}, geometry=mapping(geom.convex_hull), type="Feature")
         feature = Feature(**feat)
     except:
         print( "Failed to get country geometry:", id )
@@ -68,8 +68,10 @@ def get_country_geojson(id, offshore=False):
 def get_region_geojson(id, offshore=False):
     """get geojson for a single region or eez"""
     source_dir = "regions_eez" if offshore else "regions"
-    region = json.load(open(op.join(op.dirname(__file__), f"{source_dir}/{id}.geojson"), "r"))
-    return Feature(**region)
+    region_json = json.load(open(op.join(op.dirname(__file__), f"{source_dir}/{id}.geojson"), "r"))
+    geom = shape( region_json["geometry"] ).convex_hull
+    feat = dict(properties=region_json["properties"], geometry=mapping(geom), type="Feature")
+    return Feature(**feat)
 
 
 def get_country_min_max(id, resource, customClient=None):
