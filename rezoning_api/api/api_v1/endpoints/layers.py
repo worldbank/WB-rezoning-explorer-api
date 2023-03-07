@@ -83,26 +83,26 @@ def layers(
             gdata, _gmask = cog.tile(x, y, z, tilesize=256, indexes=[gidx + 1])
         mask = mask * (gdata <= 0).squeeze()
 
+    is_country = country_id and len( country_id ) == 3
     try:
-        if country_id:
+        layer_min_arr, layer_max_arr = get_min_max(s3_get(BUCKET, key))
+        layer_min = layer_min_arr[idx]
+        layer_max = layer_max_arr[idx]
+        if is_country:
             minmax = get_country_min_max(country_id, resource)
-            layer_min = minmax[id]["min"]
-            layer_max = minmax[id]["max"]
-        else:
-            layer_min_arr, layer_max_arr = get_min_max(s3_get(BUCKET, key))
-            layer_min = layer_min_arr[idx]
-            layer_max = layer_max_arr[idx]
+            layer_min = max( minmax[id]["min"], layer_min )
+            layer_max = min( minmax[id]["max"], layer_max )
     except Exception:
         layer_min = data.min()
         layer_max = data.max()
 
-    if not country_id and id == "worldpop":
+    if not is_country and id == "worldpop":
         layer_max = 1000
 
-    if not country_id and "gwa-speed" in id:
+    if not is_country and "gwa-speed" in id:
         layer_max /= 3
 
-    if not country_id and "gwa-power" in id:
+    if not is_country and "gwa-power" in id:
         layer_max /= 100
 
     if id == "gebco":
@@ -124,6 +124,10 @@ def layers(
         # annualize gsa layers to match min/max
         if country_id:
             data *= 365
+
+    # Mask data that is out of [layer_min, layer_max] range
+    mask = mask * (data >= layer_min).squeeze()
+    mask = mask * (data <= layer_max).squeeze()
 
     if id != "land-cover":
         data = linear_rescale(

@@ -11,8 +11,8 @@ from typing import Optional
 from rezoning_api.core.config import BUCKET
 from rezoning_api.models.tiles import TileResponse
 from rezoning_api.models.zone import Filters, RangeFilter
-from rezoning_api.utils import _filter, LAYERS, filter_to_layer_name, get_layer_location
-from rezoning_api.db.country import get_country_min_max, get_country_geojson, get_region_geojson
+from rezoning_api.utils import _filter, LAYERS, filter_to_layer_name, get_layer_location, get_min_max
+from rezoning_api.db.country import get_country_min_max, s3_get, get_country_geojson, get_region_geojson
 
 router = APIRouter()
 
@@ -120,6 +120,16 @@ def filter(
 def get_country_layers(country_id: str, resource: str):
     """Return min/max for country layers"""
     minmax = get_country_min_max(country_id, resource)
+    # TODO: make sure to update the countries min max so the following loop is not required
+    for layer_id, minmax_dict in  minmax.items():
+        try:
+            loc, idx = get_layer_location(layer_id)
+            key = loc.replace(f"s3://{BUCKET}/", "").replace("tif", "vrt")
+            layer_min_arr, layer_max_arr = get_min_max(s3_get(BUCKET, key))
+            minmax[layer_id]["min"] = max( minmax_dict["min"], layer_min_arr[idx] )
+            minmax[layer_id]["max"] = min( minmax_dict["max"], layer_max_arr[idx] )
+        except:
+            pass
     # keys = list(minmax.keys())
     # [minmax.pop(key) for key in keys if key.startswith(("gwa", "gsa"))]
     return minmax
