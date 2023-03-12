@@ -231,7 +231,14 @@ def _filter(array, filters):
         if filt is not None:
             filter_type = filters.schema()["properties"][f_layer].get("pattern")
             layer_name = filter_to_layer_name(f_layer)
-            single_layer = array.sel(layer=layer_name).values.squeeze()
+            single_layer = None
+            # TODO: use a better way to skip filters
+            try:
+                single_layer = array.sel(layer=layer_name).values.squeeze()
+            except KeyError as e:
+                pass
+            if single_layer is None:
+                continue
             if filter_type == "range_filter":
                 lower_bound = float(filt.split(",")[0])
                 upper_bound = float(filt.split(",")[1])

@@ -56,6 +56,7 @@ setup(
             "db/irena.json",
             "db/regions/*.geojson",
             "db/regions_eez/*.geojson",
+            "db/api/minmax/*.json"
         ]
     },
     zip_safe=False,

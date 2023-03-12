@@ -81,23 +81,22 @@ def get_country_min_max(id, resource, customClient=None):
     if resource == "offshore":
         # fetch another JSON (there is probably a better way to handle this)
         try:
-            minmax = s3_get(BUCKET, f"api/minmax/{id}_offshore.json", customClient=customClient)
-            mm = minmax.decode("utf-8").replace("Infinity", "1000000")
-            mm_obj = json.loads(mm)
+            mm = open( f"rezoning_api/db/api/minmax/{id}_offshore.json" )
+            mm_obj = json.load(mm)
         except Exception:
             try:
-                minmax = s3_get(BUCKET, f"api/minmax/{id}.json", customClient=customClient)
-                mm = minmax.decode("utf-8").replace("Infinity", "1000000")
-                mm_obj = json.loads(mm)
+                mm = open( f"rezoning_api/db/api/minmax/{id}_offshore.json" )
+                mm_obj = json.load(mm)
             except Exception:
-                mm_obj = json.loads(s3_get(BUCKET, "api/minmax/AFG.json", customClient=customClient))
+                mm = open( f"rezoning_api/db/api/minmax/AFG_offshore.json" )
+                mm_obj = json.load(mm)
     else:
         try:
-            minmax = s3_get(BUCKET, f"api/minmax/{id}.json", customClient=customClient)
-            mm = minmax.decode("utf-8").replace("Infinity", "1000000")
-            mm_obj = json.loads(mm)
+            mm = open( f"rezoning_api/db/api/minmax/{id}.json" )
+            mm_obj = json.load(mm)
         except Exception:
-            mm_obj = json.loads(s3_get(BUCKET, "api/minmax/AFG.json", customClient=customClient))
+            mm = open( f"rezoning_api/db/api/minmax/AFG.json" )
+            mm_obj = json.load(mm)
 
     # bathymetry data should never filter below -1000: https://github.com/developmentseed/rezoning-api/issues/91
     # don't display on land: https://github.com/developmentseed/rezoning-api/issues/103
