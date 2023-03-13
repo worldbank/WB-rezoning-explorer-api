@@ -1,6 +1,6 @@
 """Filter endpoints."""
 from rezoning_api.db.country import get_country_geojson, get_country_min_max, get_region_geojson
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from typing import Optional
 
 from rio_tiler.io import COGReader
@@ -8,6 +8,8 @@ from rio_tiler.utils import render, linear_rescale, create_cutline
 from rio_tiler.colormap import cmap
 import numpy as np
 import xarray as xr
+
+from rio_tiler.errors import TileOutsideBounds
 
 from os.path import exists
 
@@ -38,7 +40,7 @@ def getFilterMask(
     y: int,
     layer_id: Optional[str] = None,
     country_id: Optional[str] = None,
-    filters: Filters = Depends(),
+    filters: Optional[Filters] = Depends(),
     offshore: bool = False,
  ):
     """Return filtered tile."""
@@ -130,6 +132,7 @@ def layers(
     offshore: bool = False,
 ):
     """Return a tile from a layer."""
+    print( "layers", id, z, x, y, colormap, country_id, resource, offshore, filters )
     loc, idx = get_layer_location(id)
     key = loc.replace(f"s3://{BUCKET}/", "").replace("tif", "vrt")
 
@@ -150,9 +153,12 @@ def layers(
             cutline = create_cutline(cog.dataset, aoi.dict(), geometry_crs="epsg:4326")
             vrt_options = {"cutline": cutline}
 
-        data, mask = cog.tile(
-            x, y, z, tilesize=256, indexes=[idx + 1], vrt_options=vrt_options
-        )
+        try:
+            data, mask = cog.tile(
+                x, y, z, tilesize=256, indexes=[idx + 1], vrt_options=vrt_options
+            )
+        except TileOutsideBounds as err:
+            return TileResponse( content=bytes() )
 
     # mask everything offshore with gebco
     if offshore:
