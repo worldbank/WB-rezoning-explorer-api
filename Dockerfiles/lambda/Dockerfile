@@ -1,4 +1,4 @@
-FROM lambci/lambda:build-python3.8
+FROM 497760869739.dkr.ecr.us-east-2.amazonaws.com/lambci:lambda_build-python3.8
 
 WORKDIR /tmp
 
