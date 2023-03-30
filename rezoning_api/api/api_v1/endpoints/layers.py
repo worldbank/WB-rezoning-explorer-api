@@ -8,6 +8,7 @@ from rio_tiler.utils import render, linear_rescale, create_cutline
 from rio_tiler.colormap import cmap
 import numpy as np
 import xarray as xr
+import time
 
 from rio_tiler.errors import TileOutsideBounds
 
@@ -214,7 +215,7 @@ def layers(
     mask = mask * (data >= layer_min).squeeze()
     mask = mask * (data <= layer_max).squeeze()
 
-    if filters:
+    if len( [kv for kv in filters.dict().items() if kv[1]] ) > 0:
         filter_mask = getFilterMask(z, x, y, id, country_id, filters, offshore)
         mask = mask * filter_mask
 
