@@ -39,6 +39,8 @@ def zone(
 
     lcoe = extras["lcoe"]
     cf = extras["cf"]
+    criterion_average = extras["criterion_average"]
+    criterion_contribution = extras["criterion_contribution"]
 
     # mask everything with filters
     lcoe_m = ma.masked_array(lcoe, ~mask)
@@ -68,10 +70,10 @@ def zone(
         generation_potential=generation_potential,
         icp=icp,
         cf=cf_m.mean(),
-        zone_output_density=generation_potential
-        / suitable_area
-        * 1000000,  # area is m2, ratio is /km2
+        zone_output_density=generation_potential / suitable_area * 1000000,  # area is m2, ratio is /km2
         suitable_area=suitable_area,
+        criterion_average=criterion_average,
+        criterion_contribution=criterion_contribution,
     )
 
 

@@ -56,12 +56,14 @@ class rezoningApiLambdaStack(core.Stack):
         """Define stack."""
         super().__init__(scope, id, **kwargs)
 
+        print( "Creating stack for", id )
+
         # hardcoded VPC
         vpc = ec2.Vpc.from_lookup(self, f"{id}-vpc", vpc_id="vpc-dfff4bb4")
 
         # hardcode bucket (shared across env)
         bucket = s3.Bucket.from_bucket_name(
-            self, f"{id}-export-bucket", "rezoning-exports"
+            self, f"{id}-export-bucket", config.EXPORT_BUCKET
         )
 
         s3_access_policy = iam.PolicyStatement(
@@ -156,7 +158,7 @@ class rezoningApiLambdaStack(core.Stack):
                 MODULE_NAME="rezoning_api.main",
                 VARIABLE_NAME="app",
                 WORKERS_PER_CORE="1",
-                LOG_LEVEL="error",
+                LOG_LEVEL="Trace",
                 QUEUE_URL=queue_processor.sqs_queue.queue_url,
                 AIRTABLE_KEY=os.environ["AIRTABLE_KEY"],
                 # MEMCACHE_HOST=cache.attr_configuration_endpoint_address,
@@ -184,7 +186,7 @@ class rezoningApiLambdaStack(core.Stack):
             self,
             f"{id}-endpoint",
             default_integration=apigw_int.HttpLambdaIntegration(
-                "rezoningLambdaIntegration",
+                id=f"{id}-endpoint-http-lambda-integration",
                 handler=lambda_function
             ),
             cors_preflight={
@@ -206,11 +208,15 @@ class rezoningApiLambdaStack(core.Stack):
         print(f"code dir: {code_dir}")
         client = docker.from_env()
         print("docker client up")
-        client.images.build(
-            path=code_dir,
-            dockerfile="Dockerfiles/lambda/Dockerfile",
-            tag="lambda:latest",
-        )
+        response = client.api.build( path=code_dir, dockerfile="Dockerfiles/lambda/Dockerfile", tag="lambda:latest", nocache=True )
+        print( "====================================" )
+        print( *response, sep='\n' )
+        print( "====================================" )
+        # client.images.build(
+        #     path=code_dir,
+        #     dockerfile="Dockerfiles/lambda/Dockerfile",
+        #     tag="lambda:latest",
+        # )
         print("docker image built")
         client.containers.run(
             image="lambda:latest",

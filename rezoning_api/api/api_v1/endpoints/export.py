@@ -7,8 +7,8 @@ from botocore.client import Config
 from fastapi import APIRouter, status, HTTPException
 from fastapi.responses import Response
 
-from rezoning_api.utils import s3_head, get_hash
-from rezoning_api.core.config import EXPORT_BUCKET, QUEUE_URL
+from rezoning_api.utils import get_hash
+from rezoning_api.core.config import EXPORT_BUCKET, QUEUE_URL, IS_LOCAL_DEV, LOCALSTACK_ENDPOINT_URL
 from rezoning_api.models.zone import ExportRequest
 
 router = APIRouter()
@@ -54,11 +54,19 @@ def export(
     )
     id = f"{country_id}-{operation}-{resource}-{hash}"
     file_name = f"WBG-REZoning-{id}.tif"
+    print( f"Running export for file {file_name}" )
+    print( "Is local dev?", IS_LOCAL_DEV )
 
     # run export queue processing
     client = boto3.client("sqs")
+    queue_url = QUEUE_URL
+    if IS_LOCAL_DEV:
+        client = boto3.client("sqs", endpoint_url=LOCALSTACK_ENDPOINT_URL)
+        queue_url = client.get_queue_url(QueueName="export-queue")
+        queue_url = queue_url["QueueUrl"]
+    print( f"Pushing into bucket url {queue_url}" )
     client.send_message(
-        QueueUrl=QUEUE_URL,
+        QueueUrl=queue_url,
         MessageBody=json.dumps(
             dict(
                 file_name=file_name,
@@ -78,14 +86,18 @@ def export(
 @router.get("/export/status/{id}")
 def get_export_status(id: str, response: Response):
     """Return export status"""
+    ret = None
+    s3 = boto3.client("s3", endpoint_url=(LOCALSTACK_ENDPOINT_URL if IS_LOCAL_DEV else None) )
     try:
         key = f"export/WBG-REZoning-{id}.tif"
-        s3_head(bucket=EXPORT_BUCKET, key=key)
+        s3.head_object(Bucket=EXPORT_BUCKET, Key=key)
         url = s3.generate_presigned_url(
             "get_object", Params={"Bucket": EXPORT_BUCKET, "Key": key}, ExpiresIn=300
         )
-        return dict(status="complete", url=url)
+        ret = dict(status="complete", url=url)
     except Exception as e:
         print(e)
         response.status_code = status.HTTP_202_ACCEPTED
-        return dict(status="processing")
+        ret = dict(status="processing")
+    print( "Investigating export status of", id, "yielded", ret )
+    return ret

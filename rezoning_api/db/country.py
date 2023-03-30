@@ -21,9 +21,11 @@ with open(op.join(op.dirname(__file__), "eez.geojson"), "r") as f:
 s3 = boto3.client("s3")
 
 
-def s3_get(bucket: str, key: str, full_response=False):
+def s3_get(bucket: str, key: str, full_response=False, customClient=None):
     """Get AWS S3 Object."""
-    response = s3.get_object(Bucket=bucket, Key=key)
+    if not customClient:
+        customClient = s3
+    response = customClient.get_object(Bucket=bucket, Key=key)
     if full_response:
         return response
     return response["Body"].read()
@@ -53,29 +55,36 @@ def get_country_geojson(id, offshore=False):
     except Exception:
         return None
 
+def get_region_geojson(id, offshore=False):
+    """get geojson for a single region or eez"""
+    source_dir = "regions_eez" if offshore else "regions"
+    region_json = json.load(open(op.join(op.dirname(__file__), f"{source_dir}/{id}.geojson"), "r"))
+    geom = shape( region_json["geometry"] ).convex_hull
+    feat = dict(properties=region_json["properties"], geometry=mapping(geom), type="Feature")
+    return Feature(**feat)
+
 
 def get_country_min_max(id, resource):
     """get minmax for country and resource"""
     if resource == "offshore":
         # fetch another JSON (there is probably a better way to handle this)
         try:
-            minmax = s3_get(BUCKET, f"api/minmax/{id}_offshore.json")
-            mm = minmax.decode("utf-8").replace("Infinity", "1000000")
-            mm_obj = json.loads(mm)
+            mm = open( f"rezoning_api/db/api/minmax/{id}_offshore.json" )
+            mm_obj = json.load(mm)
         except Exception:
             try:
-                minmax = s3_get(BUCKET, f"api/minmax/{id}.json")
-                mm = minmax.decode("utf-8").replace("Infinity", "1000000")
-                mm_obj = json.loads(mm)
+                mm = open( f"rezoning_api/db/api/minmax/{id}_offshore.json" )
+                mm_obj = json.load(mm)
             except Exception:
-                mm_obj = json.loads(s3_get(BUCKET, "api/minmax/AFG.json"))
+                mm = open( f"rezoning_api/db/api/minmax/AFG.json" )
+                mm_obj = json.load(mm)
     else:
         try:
-            minmax = s3_get(BUCKET, f"api/minmax/{id}.json")
-            mm = minmax.decode("utf-8").replace("Infinity", "1000000")
-            mm_obj = json.loads(mm)
+            mm = open( f"rezoning_api/db/api/minmax/{id}.json" )
+            mm_obj = json.load(mm)
         except Exception:
-            mm_obj = json.loads(s3_get(BUCKET, "api/minmax/AFG.json"))
+            mm = open( f"rezoning_api/db/api/minmax/AFG.json" )
+            mm_obj = json.load(mm)
 
     # bathymetry data should never filter below -1000: https://github.com/developmentseed/rezoning-api/issues/91
     # don't display on land: https://github.com/developmentseed/rezoning-api/issues/103
@@ -102,4 +111,23 @@ def get_country_min_max(id, resource):
     # replace lcoe object with hardcoded minmax
     mm_obj["lcoe"] = dict(min=80, max=300)
 
+    return mm_obj
+
+def get_region_min_max(id, resource):
+    regions = json.load( open( f"rezoning_api/db/regions.json" ) )
+    mm_obj = dict()
+    for reg in regions["regions"]:
+        if reg["id"] == id:
+            countries_minmax = [ get_country_min_max(country, resource) for country in reg["territories"] ]
+            grouped = dict()
+            for c in countries_minmax:
+                for k, v in c.items():
+                    if k not in grouped:
+                        grouped[k] = []
+                    grouped[k].append( v )            
+            for k, v in grouped.items():
+                mins = [obj["min"] for obj in v]
+                maxs = [obj["max"] for obj in v]
+                mm_obj[k] = {"min": min(mins), "max": max(maxs)}
+            break
     return mm_obj

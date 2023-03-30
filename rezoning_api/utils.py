@@ -14,10 +14,12 @@ from rio_tiler.io import COGReader
 from rio_tiler.utils import create_cutline
 
 
-from rezoning_api.core.config import BUCKET
+from rezoning_api.core.config import BUCKET, IS_LOCAL_DEV, REZONING_LOCAL_DATA_PATH
 from rezoning_api.models.zone import LCOE, Weights
 from rezoning_api.db.layers import get_layers
 from rezoning_api.db.country import get_country_min_max, match_gsa_dailies
+
+from os.path import exists
 
 LAYERS = get_layers()
 MAX_DIST = 1000000  # meters
@@ -25,16 +27,22 @@ MAX_DIST = 1000000  # meters
 s3 = boto3.client("s3")
 
 
-def s3_get(bucket: str, key: str, full_response=False):
+def s3_get(bucket: str, key: str, full_response=False, customClient=None):
     """Get AWS S3 Object."""
-    response = s3.get_object(Bucket=bucket, Key=key)
+    response = None
+    if IS_LOCAL_DEV and customClient:
+        response = customClient.get_object(Bucket=bucket, Key=key)
+    else:
+        response = s3.get_object(Bucket=bucket, Key=key)
     if full_response:
         return response
     return response["Body"].read()
 
 
-def s3_head(bucket: str, key: str):
+def s3_head(bucket: str, key: str, customClient=None):
     """Head request on S3 Object."""
+    if IS_LOCAL_DEV and customClient:
+        return customClient.head_object(Bucket=bucket, Key=key)
     return s3.head_object(Bucket=bucket, Key=key)
 
 
@@ -48,6 +56,10 @@ def read_dataset(
     max_size=None,
 ):
     """read a dataset in a given area"""
+    if IS_LOCAL_DEV:
+        new_loc = dataset.replace(f"s3://{BUCKET}/", REZONING_LOCAL_DATA_PATH)
+        if IS_LOCAL_DEV and exists(new_loc):
+            dataset = new_loc
     with COGReader(dataset) as cog:
         vrt_options = None
         indexes = list(range(1, len(layers) + 1))
@@ -212,14 +224,21 @@ def _filter(array, filters):
     # the condition is "no filter has a value which isn't none"
     if not any([True for filter in filters.dict().values() if filter is not None]):
         trues = np.prod(array.values, axis=0) > 0
-        return (trues.astype(np.uint8), trues.astype(np.bool))
+        return (trues.astype(np.uint8), trues.astype(np.bool_))
 
     np_filters = []
     for f_layer, filt in filters.dict().items():
         if filt is not None:
             filter_type = filters.schema()["properties"][f_layer].get("pattern")
             layer_name = filter_to_layer_name(f_layer)
-            single_layer = array.sel(layer=layer_name).values.squeeze()
+            single_layer = None
+            # TODO: use a better way to skip filters
+            try:
+                single_layer = array.sel(layer=layer_name).values.squeeze()
+            except KeyError as e:
+                pass
+            if single_layer is None:
+                continue
             if filter_type == "range_filter":
                 lower_bound = float(filt.split(",")[0])
                 upper_bound = float(filt.split(",")[1])
@@ -344,13 +363,16 @@ def calc_score(
     # spatial temporal inputs
     ds, dr, calc, mask = get_distances(filters, x=x, y=y, z=z, geometry=geometry)
 
+    criterion_average = dict()
+    criterion_contribution = dict()
+
     # if the entire area is filtered out, return early and fail early
     if mask.sum() == 0:
         score_array = np.zeros(mask.shape)
         cf = np.zeros(mask.shape)
         lcoe_t = np.zeros(mask.shape)
         if ret_extras:
-            return score_array, mask, dict(lcoe=lcoe_t, cf=cf)
+            return score_array, mask, dict(lcoe=lcoe_t, cf=cf, criterion_average=criterion_average, criterion_contribution=criterion_contribution)
         else:
             return score_array, mask
 
@@ -391,7 +413,7 @@ def calc_score(
         loc, idx = get_layer_location(layer)
         if (loc and weight_value > 0) or weight_name == "lcoe_gen":
             # valid weight
-            weight_count += 1
+            weight_count += weight_value
 
             # flip min/max for certain weights
             flip = True
@@ -407,6 +429,10 @@ def calc_score(
                     flip=True,
                 )
                 lcoe_gen_scaled = np.clip(lcoe_gen_scaled, 0, 1)
+
+                criterion_average[weight_name] = float(ma.masked_array(lg, ~mask).mean())
+                criterion_contribution[weight_name] = weights.lcoe_gen * float(ma.masked_array(lcoe_gen_scaled, ~mask).mean())
+
                 score_array += lcoe_gen_scaled * weights.lcoe_gen
             else:
                 dataset = loc.replace(f"s3://{BUCKET}/", "").replace(".tif", "")
@@ -424,7 +450,7 @@ def calc_score(
                 if cmm:
                     layer_min = cmm[layer]["min"]
                     layer_max = cmm[layer]["max"]
-                else:
+                if not cmm or layer_min == layer_max:
                     key = loc.replace(f"s3://{BUCKET}/", "").replace("tif", "vrt")
                     layer_min_arr, layer_max_arr = get_min_max(s3_get(BUCKET, key))
                     layer_min = layer_min_arr[idx]
@@ -436,6 +462,10 @@ def calc_score(
                     layer_max,
                     flip=flip,
                 )
+
+                criterion_average[weight_name] = float(ma.masked_array(data.sel(layer=layer).values, ~mask).mean())
+                criterion_contribution[weight_name] = weight_value * float(ma.masked_array(scaled_array, ~mask).mean())
+
                 score_array += weight_value * scaled_array
 
     # final normalization
@@ -445,6 +475,6 @@ def calc_score(
     lcoe_t = ma.masked_invalid(lcoe_t)
     score_array = ma.masked_invalid(score_array)
     if ret_extras:
-        return score_array, mask, dict(lcoe=lcoe_t, cf=cf)
+        return score_array, mask, dict(lcoe=lcoe_t, cf=cf, criterion_average=criterion_average, criterion_contribution=criterion_contribution)
     else:
         return score_array, mask

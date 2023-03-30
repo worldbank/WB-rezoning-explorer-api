@@ -136,6 +136,7 @@ def FilterField(
     secondary_category=None,
     options=None,
     priority=99,
+    source_url=None,
     resource_defaults=None,
 ):
     """filter field defaults"""
@@ -151,6 +152,7 @@ def FilterField(
         secondary_category=secondary_category,
         options=options,
         priority=priority,
+        source_url=source_url,
         resource_defaults=resource_defaults,
     )
 
@@ -310,6 +312,7 @@ class Filters(BaseModel):
         secondary_description="A measurement of population per unit area",
         energy_type=["solar", "wind"],
         priority=4,
+        source_url="http://worldpop.org.uk/",
         resource_defaults=[None, 500],
     )
     f_slope: Optional[RangeFilter] = FilterField(
@@ -321,6 +324,7 @@ class Filters(BaseModel):
         secondary_description="The steepness or angle considered with reference to the horizon.",
         energy_type=["solar", "wind"],
         priority=3,
+        source_url="https://www.gebco.net/data_and_products/gridded_bathymetry_data/",
         resource_defaults=dict(solar=[None, 5], wind=[None, 20]),
     )
     f_land_cover: Optional[CategorialFilter] = FilterField(
@@ -332,6 +336,7 @@ class Filters(BaseModel):
         secondary_description="Land cover refers to the surface cover on the ground, whether vegetation, urban infrastructure, water, bare soil, etc.",
         energy_type=["solar", "wind"],
         priority=12,
+        source_url="http://www.fao.org/land-water/land/land-governance/land-resources-planning-toolbox/category/details/en/c/1036355/",
         resource_defaults=[
             idx
             for idx, lc in enumerate(LAND_COVER_OPTIONS)
@@ -346,6 +351,7 @@ class Filters(BaseModel):
         description="Set a minimum and maximum distance to transmission lines from suitable areas.",
         energy_type=["solar", "wind"],
         priority=5,
+        source_url="https://energydata.info/dataset/derived-map-global-electricity-transmission-and-distribution-lines/resource/ffff88b8-4d43-4a90-965a-c47e475371a1",
         resource_defaults=[None, 100000],
     )
     f_airports: Optional[RangeFilter] = FilterField(
@@ -355,6 +361,7 @@ class Filters(BaseModel):
         secondary_category=SecondaryCategory.INFRASTRUCTURE,
         description="Set the minimum and maximum distance to airports from suitable areas",
         priority=14,
+        source_url="https://datacatalog.worldbank.org/dataset/global-airports",
         resource_defaults=dict(wind=[5000, None], offshore=[10000, None]),
     )
     f_ports: Optional[RangeFilter] = FilterField(
@@ -365,6 +372,7 @@ class Filters(BaseModel):
         energy_type=["offshore"],
         description="Set a minimum and maximum distance to ports from suitable areas.",
         priority=10,
+        source_url="https://data.humdata.org/dataset/global-ports",
         resource_defaults=[None, 50000],
     )
     f_anchorages: Optional[RangeFilter] = FilterField(
@@ -375,6 +383,7 @@ class Filters(BaseModel):
         energy_type=["offshore"],
         description="Set a minimum and maximum distance to anchorages from suitable areas.",
         priority=6,
+        source_url="https://data.humdata.org/dataset/global-ports",
         resource_defaults=[None, 50000],
     )
     f_roads: Optional[RangeFilter] = FilterField(
@@ -385,6 +394,7 @@ class Filters(BaseModel):
         description="Areas within a defined distance to roads.",
         energy_type=["solar", "wind"],
         priority=13,
+        source_url="https://www.globio.info/download-grip-dataset",
         resource_defaults=[0, 50000],
     )
     f_pp_whs: Optional[bool] = FilterField(
@@ -394,6 +404,7 @@ class Filters(BaseModel):
         description="Unselect this option to exclude protected areas from the analysis.",
         secondary_description="An area recognised, dedicated and managed, through legal or other effective means, to achieve the long term conservation of nature with associated ecosystem services and cultural value.",
         energy_type=["solar", "wind"],
+        source_url="https://www.protectedplanet.net/",
         priority=15,
     )
     f_unep_coral: Optional[bool] = FilterField(
@@ -404,6 +415,7 @@ class Filters(BaseModel):
         secondary_description="Areas containing underwater ecosystems characterized by reef-building corals.",
         energy_type=["offshore"],
         priority=18,
+        source_url="https://www.unep-wcmc.org/",
     )
     f_unesco: Optional[RangeFilter] = FilterField(
         title="UNESCO World Heritage Sites (Distance to)",
@@ -413,6 +425,7 @@ class Filters(BaseModel):
         description="Set a minimum distance to World Heritage Sites from suitable areas.",
         secondary_description="A landmark or area with legal protection by an international convention for having cultural, historical, scientific or other form of significance.",
         priority=20,
+        source_url="https://whc.unesco.org/en/syndication",
         resource_defaults=dict(
             solar=[1000, None], wind=[5000, None], offshore=[5000, None]
         ),
@@ -424,6 +437,7 @@ class Filters(BaseModel):
         description="Unselect this option to exclude RAMSAR sites from the analysis.",
         secondary_description="Wetland sites designated to be of international importance under the Ramsar Convention.",
         energy_type=["offshore"],
+        source_url="http://ihp-wins.unesco.org/layers/geonode:sites",
         priority=16,
     )
     f_wwf_glw_3: Optional[bool] = FilterField(
@@ -434,6 +448,7 @@ class Filters(BaseModel):
         secondary_description="Areas where water covers the soil, or is near the surface of the soil for all or part of the year, and supports both aquatic and terrestrial species.",
         energy_type=["offshore"],
         priority=17,
+        source_url="https://www.worldwildlife.org/pages/global-lakes-and-wetlands-database",
     )
     f_pp_marine_protected: Optional[bool] = FilterField(
         title="Protected Areas",
@@ -442,6 +457,7 @@ class Filters(BaseModel):
         description="Unselect this option to exclude protected areas from the analysis.",
         secondary_description="Areas in need of protection in open-ocean waters and deep-sea habitats as designated by the Conference of the Parties to the Convention on Biological Diversity (COP 9).",
         energy_type=["offshore"],
+        source_url="https://developers.google.com/earth-engine/datasets/catalog/JRC_GSW1_1_GlobalSurfaceWater",
         priority=15,
     )
     f_unep_tidal: Optional[bool] = FilterField(
@@ -451,6 +467,7 @@ class Filters(BaseModel):
         description="Unselect this option to exclude intertidal areas from the analysis.",
         secondary_description="Areas where the ocean meets the land between high and low tides.",
         energy_type=["offshore"],
+        source_url="https://www.unep.org/",
         priority=19,
     )
     # f_capacity_value: Optional[RangeFilter] = FilterField(
@@ -472,6 +489,7 @@ class Filters(BaseModel):
     #     energy_type=["solar"],
     #     description="The solar resource, or electromagnetic radiation, emitted by the sun in a geographic location.",
     #     priority=True,
+    #     url="https://globalsolaratlas.info/download",
     # )
     f_gsa_pvout: Optional[RangeFilter] = FilterField(
         title="Solar PVOut",
@@ -482,6 +500,7 @@ class Filters(BaseModel):
         description="Set mimumum and maximum solar generation potential to be included in the analysis.",
         secondary_description="The solar photovoltaic (PV) generation potential in a geographic location.",
         priority=1,
+        source_url="https://globalsolaratlas.info/download",
         resource_defaults=[1500, None],
     )
     f_srtm90: Optional[RangeFilter] = FilterField(
@@ -493,6 +512,7 @@ class Filters(BaseModel):
         description="Set minimum and maximum elevation to be included in the analysis.",
         secondary_description="The height above mean sea level (MSL).",
         priority=2,
+        source_url="https://bigdata.cgiar.org/srtm-90m-digital-elevation-database/",
         resource_defaults=dict(solar=[None, 2500], wind=[None, 3000]),
     )
     f_gebco: Optional[RangeFilter] = FilterField(
@@ -504,6 +524,7 @@ class Filters(BaseModel):
         description="Set minimum and maximum water depth for floating foundation technology. Floating foundations begin at below 50 meters.",
         secondary_description="A measurement of depth of water in oceans, seas, or lakes.",
         priority=2,
+        source_url="https://www.gebco.net/data_and_products/gridded_bathymetry_data/",
         resource_defaults=[None, -50],
     )
     f_waterbodies: Optional[bool] = FilterField(
@@ -514,6 +535,7 @@ class Filters(BaseModel):
         secondary_description="Natural or artificial water bodies with the presence of a water surface during most of the year, including both fresh and salt water resources.",
         energy_type=["solar", "wind"],
         priority=11,
+        source_url="https://www.worldwildlife.org/pages/global-lakes-and-wetlands-database",
     )
     f_gwa_speed_100: Optional[RangeFilter] = FilterField(
         title="Wind Speed at 100m",
@@ -524,6 +546,7 @@ class Filters(BaseModel):
         description="Set mimumum and maximum wind speed to be included in the analysis.",
         secondary_description="The wind resource, or wind energy, potential generated through wind turbines",
         priority=1,
+        source_url="https://globalwindatlas.info/downloads/gis-files",
         resource_defaults=[7, None],
     )
     # f_air_density: Optional[RangeFilter] = FilterField(
@@ -533,6 +556,7 @@ class Filters(BaseModel):
     #     unit="kg/m³",
     #     description="The density of air, or atmospheric density, is the mass per unit volume of Earth's atmosphere.",
     #     priority=True,
+    #     source_url="https://globalwindatlas.info/api/gis/global/air-density/200"
     # )
 
 
@@ -564,3 +588,5 @@ class ZoneResponse(BaseModel):
     )
     suitable_area: float = Field(..., title="Suitable area (m2)")
     cf: float = Field(..., title="Capacity Factor")
+    criterion_average: dict = Field(..., title="Weight average")
+    criterion_contribution: dict = Field(..., title="Weight contribution to score")

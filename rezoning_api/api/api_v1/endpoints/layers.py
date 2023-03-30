@@ -1,28 +1,111 @@
 """Filter endpoints."""
-from rezoning_api.db.country import get_country_geojson, get_country_min_max
-from fastapi import APIRouter
+from rezoning_api.db.country import get_country_geojson, get_country_min_max, get_region_geojson
+from fastapi import APIRouter, Depends, HTTPException
+from typing import Optional
+
 from rio_tiler.io import COGReader
 from rio_tiler.utils import render, linear_rescale, create_cutline
 from rio_tiler.colormap import cmap
 import numpy as np
+import xarray as xr
+import time
+
+from rio_tiler.errors import TileOutsideBounds
+
+from os.path import exists
 
 from rezoning_api.models.tiles import TileResponse
-from rezoning_api.models.zone import Filters
+from rezoning_api.models.zone import Filters, RangeFilter
 from rezoning_api.utils import (
     get_layer_location,
     flat_layers,
     get_min_max,
     s3_get,
     filter_to_layer_name,
+    _filter,
+    LAYERS,
+    read_dataset,
 )
-from rezoning_api.core.config import BUCKET
+from rezoning_api.core.config import BUCKET, IS_LOCAL_DEV, REZONING_LOCAL_DATA_PATH
 from rezoning_api.db.cf import get_capacity_factor_options
-from rezoning_api.db.country import match_gsa_dailies
+from rezoning_api.db.country import get_country_min_max, s3_get, get_country_geojson, get_region_geojson, match_gsa_dailies
 
 router = APIRouter()
 
 TILE_URL = "https://reztileserver.com/services/{layer}/tiles/{{z}}/{{x}}/{{y}}.pbf"
 
+# TODO: refactor creating the filter mask (share same code between filter and layers endpoints)
+def getFilterMask( 
+    z: int,
+    x: int,
+    y: int,
+    layer_id: Optional[str] = None,
+    country_id: Optional[str] = None,
+    filters: Optional[Filters] = Depends(),
+    offshore: bool = False,
+ ):
+    """Return filtered tile."""
+    # find the required datasets to open
+    print( [filter_to_layer_name(k) for k, v in filters.dict().items() if v is not None] )
+    sent_filters = [
+        filter_to_layer_name(k) for k, v in filters.dict().items() if v is not None and filter_to_layer_name(k) == layer_id
+    ]
+    datasets = [
+        k for k, v in LAYERS.items() if any([layer in sent_filters for layer in v])
+    ]
+    datasets_2 = [
+        v for k, v in LAYERS.items() if any([layer in sent_filters for layer in v])
+    ]
+
+    # potentially mask by country
+    geometry = None
+    if country_id:
+        # TODO: early return for tiles outside country bounds
+        if len(country_id) == 3:
+            feat = get_country_geojson(country_id, offshore)
+            geometry = feat.geometry.dict()
+        else:
+            feat = get_region_geojson(country_id, offshore)
+            geometry = feat.geometry.dict()
+
+    arrays = []
+    for dataset in datasets:
+        data, mask = read_dataset(
+            f"s3://{BUCKET}/{dataset}.tif",
+            LAYERS[dataset],
+            x=x,
+            y=y,
+            z=z,
+            geometry=geometry,
+        )
+        arrays.append(data)
+
+    if arrays:
+        arr = xr.concat(arrays, dim="layer")
+        tile, new_mask = _filter(arr, filters)
+    else:
+        # if we didn't have anything to read, read gebco so we can mask
+        # TODO: improve this
+        data, mask = read_dataset(
+            f"s3://{BUCKET}/raster/gebco/gebco_combined.tif",
+            ["gebco"],
+            x=x,
+            y=y,
+            z=z,
+            geometry=geometry,
+        )
+        arrays.append(data)
+        arr = xr.concat(arrays, dim="layer")
+        filters.f_gebco = RangeFilter("0,10000000")
+        tile, new_mask = _filter(arr, filters)
+
+    # mask everything offshore with gebco
+    if offshore:
+        gloc, gidx = get_layer_location("gebco")
+        with COGReader(gloc) as cog:
+            gdata, _gmask = cog.tile(x, y, z, tilesize=256, indexes=[gidx + 1])
+        mask = mask * (gdata <= 0).squeeze()
+    return mask.squeeze() * new_mask
 
 @router.get(  # noqa: C901
     "/layers/{id}/{z}/{x}/{y}.png",
@@ -43,25 +126,40 @@ def layers(
     z: int,
     x: int,
     y: int,
+    country_id: str,
     colormap: str,
-    country_id: str = None,
+    filters: Filters = Depends(),
     resource: str = None,
     offshore: bool = False,
 ):
     """Return a tile from a layer."""
+    print( "layers", id, z, x, y, colormap, country_id, resource, offshore, filters )
     loc, idx = get_layer_location(id)
     key = loc.replace(f"s3://{BUCKET}/", "").replace("tif", "vrt")
+
+    if IS_LOCAL_DEV:
+        local_loc = loc.replace(f"s3://{BUCKET}/", REZONING_LOCAL_DATA_PATH)
+        if exists(local_loc):
+            loc = local_loc
+        else:
+            print( "File", local_loc, "doesn't exist" )
 
     with COGReader(loc) as cog:
         vrt_options = None
         if country_id:
-            aoi = get_country_geojson(country_id, offshore)
+            if len(country_id) == 3:
+                aoi = get_country_geojson(country_id, offshore)
+            else:
+                aoi = get_region_geojson(country_id, offshore)
             cutline = create_cutline(cog.dataset, aoi.dict(), geometry_crs="epsg:4326")
             vrt_options = {"cutline": cutline}
 
-        data, mask = cog.tile(
-            x, y, z, tilesize=256, indexes=[idx + 1], vrt_options=vrt_options
-        )
+        try:
+            data, mask = cog.tile(
+                x, y, z, tilesize=256, indexes=[idx + 1], vrt_options=vrt_options
+            )
+        except TileOutsideBounds as err:
+            return TileResponse( content=bytes() )
 
     # mask everything offshore with gebco
     if offshore:
@@ -70,8 +168,9 @@ def layers(
             gdata, _gmask = cog.tile(x, y, z, tilesize=256, indexes=[gidx + 1])
         mask = mask * (gdata <= 0).squeeze()
 
+    is_country = country_id and len( country_id ) == 3
     try:
-        if country_id:
+        if is_country:
             minmax = get_country_min_max(country_id, resource)
             layer_min = minmax[id]["min"]
             layer_max = minmax[id]["max"]
@@ -83,13 +182,13 @@ def layers(
         layer_min = data.min()
         layer_max = data.max()
 
-    if not country_id and id == "worldpop":
+    if not is_country and id == "worldpop":
         layer_max = 1000
 
-    if not country_id and "gwa-speed" in id:
+    if not is_country and "gwa-speed" in id:
         layer_max /= 3
 
-    if not country_id and "gwa-power" in id:
+    if not is_country and "gwa-power" in id:
         layer_max /= 100
 
     if id == "gebco":
@@ -111,6 +210,14 @@ def layers(
         # annualize gsa layers to match min/max
         if country_id:
             data *= 365
+
+    # Mask data that is out of [layer_min, layer_max] range
+    mask = mask * (data >= layer_min).squeeze()
+    mask = mask * (data <= layer_max).squeeze()
+
+    if len( [kv for kv in filters.dict().items() if kv[1]] ) > 0:
+        filter_mask = getFilterMask(z, x, y, id, country_id, filters, offshore)
+        mask = mask * filter_mask
 
     if id != "land-cover":
         data = linear_rescale(
@@ -175,6 +282,7 @@ def get_layers():
             layer["title"] = mf.get("title", None)
             layer["energy_type"] = mf.get("energy_type", None)
             layer["units"] = mf.get("units", None)
+            layer["source_url"] = mf.get("source_url", None)
         elif lkey in cfo_ids:
             # remove excess capacity factor layers
             layers[lkey] = {}
