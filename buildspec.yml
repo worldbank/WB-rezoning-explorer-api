@@ -1,0 +1,25 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.8
+      nodejs: latest
+
+    commands:
+      - pip install .[deploy]
+      - npm install -g aws-cdk
+  
+  pre_build:
+    commands:
+      - aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 497760869739.dkr.ecr.us-east-2.amazonaws.com
+
+  build:
+    commands:
+      - docker build . -t export-queue-processing -f export/Dockerfile
+      - docker tag export-queue-processing 497760869739.dkr.ecr.us-east-2.amazonaws.com/export-queue-processing:latest
+  
+  post_build:
+    commands:
+      - STAGE=staging cdk deploy rezoning-api-lambda-staging --build
+      - docker push 497760869739.dkr.ecr.us-east-2.amazonaws.com/export-queue-processing
