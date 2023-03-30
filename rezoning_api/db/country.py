@@ -38,32 +38,22 @@ def match_gsa_dailies(id):
 
 def get_country_geojson(id, offshore=False):
     """get geojson for a single country or eez"""
-    filtered = []
-    if offshore:
-        filtered = [
-            feature
-            for feature in eez["features"]
-            if feature["properties"]["ISO_TER1"].lower() == id.lower()
-            or feature["properties"]["ISO_TER2"].lower() == id.lower()
-        ]
-    else:
-        filtered = [
-            feature
-            for feature in world["features"]
-            if feature["properties"]["GID_0"].lower() == id.lower()
-        ]
-    feature = None
-    try:
-        # If there is only one feature with the country id, no need to merge multiple features
-        if len(filtered) == 1:
-            return Feature(**filtered[0])
-        geom = unary_union([shape(f["geometry"]) for f in filtered])
-        feat = dict(properties={}, geometry=mapping(geom.convex_hull), type="Feature")
-        feature = Feature(**feat)
-    except:
-        print( "Failed to get country geometry:", id )
-    return feature
+    vector_data = eez if offshore else world
+    key = "ISO_TER1" if offshore else "GID_0"
 
+    filtered = [
+        feature
+        for feature in vector_data["features"]
+        if feature["properties"][key].lower() == id.lower()
+    ]
+    try:
+        if offshore:
+            geom = unary_union([shape(f["geometry"]) for f in filtered]).convex_hull
+            feat = dict(properties={}, geometry=mapping(geom), type="Feature")
+            return Feature(**feat)
+        return Feature(**filtered[0])
+    except Exception:
+        return None
 
 def get_region_geojson(id, offshore=False):
     """get geojson for a single region or eez"""
