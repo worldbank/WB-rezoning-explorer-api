@@ -64,10 +64,8 @@ def get_region_geojson(id, offshore=False):
     return Feature(**feat)
 
 
-def get_country_min_max(id, resource, customClient=None):
+def get_country_min_max(id, resource):
     """get minmax for country and resource"""
-    if not customClient:
-        customClient = s3
     if resource == "offshore":
         # fetch another JSON (there is probably a better way to handle this)
         try:
@@ -78,7 +76,7 @@ def get_country_min_max(id, resource, customClient=None):
                 mm = open( f"rezoning_api/db/api/minmax/{id}_offshore.json" )
                 mm_obj = json.load(mm)
             except Exception:
-                mm = open( f"rezoning_api/db/api/minmax/AFG_offshore.json" )
+                mm = open( f"rezoning_api/db/api/minmax/AFG.json" )
                 mm_obj = json.load(mm)
     else:
         try:
@@ -113,4 +111,23 @@ def get_country_min_max(id, resource, customClient=None):
     # replace lcoe object with hardcoded minmax
     mm_obj["lcoe"] = dict(min=80, max=300)
 
+    return mm_obj
+
+def get_region_min_max(id, resource):
+    regions = json.load( open( f"rezoning_api/db/regions.json" ) )
+    mm_obj = dict()
+    for reg in regions["regions"]:
+        if reg["id"] == id:
+            countries_minmax = [ get_country_min_max(country, resource) for country in reg["territories"] ]
+            grouped = dict()
+            for c in countries_minmax:
+                for k, v in c.items():
+                    if k not in grouped:
+                        grouped[k] = []
+                    grouped[k].append( v )            
+            for k, v in grouped.items():
+                mins = [obj["min"] for obj in v]
+                maxs = [obj["max"] for obj in v]
+                mm_obj[k] = {"min": min(mins), "max": max(maxs)}
+            break
     return mm_obj
