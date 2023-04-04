@@ -9,7 +9,7 @@ inst_reqs = [
     "jinja2==3.0.3",
     "geojson_pydantic==0.3.4",
     "shapely==2.0.1",
-    "xarray==0.18.2",
+    "xarray==2023.3.0",
     "aiofiles==0.7.0",
     "rio-tiler==3.0.0",
     "mercantile==1.2.1",
