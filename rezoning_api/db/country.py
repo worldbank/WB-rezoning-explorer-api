@@ -52,8 +52,6 @@ def get_country_geojson(id, offshore=False):
             shapes = [shape(f["geometry"]) for f in filtered]
             shapes = [make_valid(i) for i in shapes]
             geom = unary_union(shapes)
-            geom = simplify( geom, 0.1, preserve_topology=False )
-            geom = normalize(geom)
             feat = dict(properties={}, geometry=mapping(geom), type="Feature")
             return Feature(**feat)
         return Feature(**filtered[0])

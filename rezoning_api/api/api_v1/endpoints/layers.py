@@ -53,9 +53,6 @@ def getFilterMask(
     datasets = [
         k for k, v in LAYERS.items() if any([layer in sent_filters for layer in v])
     ]
-    datasets_2 = [
-        v for k, v in LAYERS.items() if any([layer in sent_filters for layer in v])
-    ]
 
     # potentially mask by country
     geometry = None

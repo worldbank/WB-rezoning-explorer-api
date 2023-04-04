@@ -11,7 +11,7 @@ inst_reqs = [
     "shapely==2.0.1",
     "xarray==0.21.1",
     "aiofiles==0.7.0",
-    "rio-tiler==3.0.0",
+    "rio-tiler==3.1.6",
     "mercantile==1.2.1",
     "rasterio==1.3.4",
     "requests",
