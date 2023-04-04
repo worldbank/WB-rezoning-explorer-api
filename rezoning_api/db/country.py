@@ -6,6 +6,7 @@ from geojson_pydantic.features import Feature
 import boto3
 from shapely.ops import unary_union
 from shapely.geometry import shape, mapping
+from shapely import make_valid, simplify, normalize
 
 from rezoning_api.core.config import BUCKET
 
@@ -48,7 +49,11 @@ def get_country_geojson(id, offshore=False):
     ]
     try:
         if offshore:
-            geom = unary_union([shape(f["geometry"]) for f in filtered]).convex_hull
+            shapes = [shape(f["geometry"]) for f in filtered]
+            shapes = [make_valid(i) for i in shapes]
+            geom = unary_union(shapes)
+            geom = simplify( geom, 0.1, preserve_topology=False )
+            geom = normalize(geom)
             feat = dict(properties={}, geometry=mapping(geom), type="Feature")
             return Feature(**feat)
         return Feature(**filtered[0])
