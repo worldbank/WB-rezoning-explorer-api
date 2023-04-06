@@ -225,7 +225,6 @@ def _filter(array, filters):
     if not any([True for filter in filters.dict().values() if filter is not None]):
         trues = np.prod(array.values, axis=0) > 0
         return (trues.astype(np.uint8), trues.astype(np.bool_))
-    print( xr.__version__ )
     np_filters = []
     for f_layer, filt in filters.dict().items():
         if filt is not None:
@@ -431,7 +430,8 @@ def calc_score(
                 lcoe_gen_scaled = np.clip(lcoe_gen_scaled, 0, 1)
 
                 criterion_average[weight_name] = float(ma.masked_array(lg, ~mask).mean())
-                criterion_contribution[weight_name] = weights.lcoe_gen * float(ma.masked_array(lcoe_gen_scaled, ~mask).mean())
+                criterion_contribution[weight_name] = weights.lcoe_gen * \
+                    float(ma.masked_array(lcoe_gen_scaled, ~mask).mean())
 
                 score_array += lcoe_gen_scaled * weights.lcoe_gen
             else:
@@ -463,8 +463,10 @@ def calc_score(
                     flip=flip,
                 )
 
-                criterion_average[weight_name] = float(ma.masked_array(data.sel(layer=layer).values, ~mask).mean())
-                criterion_contribution[weight_name] = weight_value * float(ma.masked_array(scaled_array, ~mask).mean())
+                criterion_average[weight_name] = float(
+                    ma.masked_array(data.sel(layer=layer).values, ~mask).mean())
+                criterion_contribution[weight_name] = weight_value * \
+                    float(ma.masked_array(scaled_array, ~mask).mean())
 
                 score_array += weight_value * scaled_array
 

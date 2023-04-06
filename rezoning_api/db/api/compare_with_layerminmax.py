@@ -59,30 +59,28 @@ print( "Parsing ", country_code, offshore )
 # print( json.dumps( minmax_json, indent=1 ) )
 
 for layer_id, minmax_dict in  minmax_json.items():
-    # print( layer_id )
-    if layer_id == "worldpop":
+    if "speed" not in layer_id:
         continue
+    if minmax_json[layer_id]["min"] > 0:
+        continue
+    print( "Layer", layer_id )
 
     loc, idx = get_layer_location(layer_id)
     if loc == None:
-        # print( "Failed for ", layer_id )
+        print( "Failed for ", layer_id )
         continue
     key = loc.replace(f"s3://{BUCKET}/", "").replace("tif", "vrt")
     # print( loc, idx, loc, key )
     try:
         layer_min_arr, layer_max_arr = get_min_max(s3_get(BUCKET, key))
     except:
+        print( "Error reading layer's minmax" )
         continue
-    # print( layer_min_arr[idx], layer_max_arr[idx], "vs", minmax_dict["min"], minmax_dict["max"] )
+
+    print( layer_min_arr[idx], layer_max_arr[idx], "vs", minmax_dict["min"], minmax_dict["max"] )
     if minmax_dict["min"] < layer_min_arr[idx]:
         print( "Updating min of ", layer_id, country_code, offshore )
         minmax_json[layer_id]["min"] = layer_min_arr[idx]
-    if minmax_dict["max"] > layer_max_arr[idx]:
-        print( "Updating max of ", layer_id, country_code, offshore )
-        minmax_json[layer_id]["max"] = layer_max_arr[idx]
 
 minmax_file_out = open( sys.argv[-1], "w" )
 json.dump( minmax_json, minmax_file_out )
-
-    # minmax[layer_id]["min"] = max( minmax_dict["min"], layer_min_arr[idx] )
-    # minmax[layer_id]["max"] = min( minmax_dict["max"], layer_max_arr[idx] )
