@@ -11,6 +11,10 @@ from rasterio.windows import from_bounds
 from rasterio.warp import transform_geom
 from rasterio.crs import CRS
 from rio_tiler.utils import linear_rescale
+import pyproj
+from rasterio.features import shapes
+from shapely.ops import unary_union, transform
+from shapely.geometry import shape, mapping
 
 from rezoning_api.utils import read_dataset
 from rezoning_api.core.config import BUCKET, LCOE_MAX, IS_LOCAL_DEV, REZONING_LOCAL_DATA_PATH
@@ -85,7 +89,7 @@ def refresh_country_extrema(partial=False, offshore=False):
 
 
 def single_country_lcoe(
-    dest_file: str, country_id, resource, lcoe=LCOE(), filters=Filters(), customClient=None
+    dest_file: str, country_id, resource, lcoe=LCOE(), filters=Filters()
 ):
     """calculate lcoe for single country"""
     t1 = time()
@@ -154,8 +158,7 @@ def single_country_score(
     resource,
     lcoe=LCOE(),
     filters=Filters(),
-    weights=Weights(),
-    customClien=None
+    weights=Weights()
 ):
     # TODO: DRY
     """calculate score for single country"""
@@ -200,3 +203,15 @@ def single_country_score(
             dst.write_mask(mask.astype(np.bool_))
 
     print(f"elapsed: {time() - t1} seconds")
+
+def convert_geotiff_to_geojson( lcoe_file_path: str, geojson_file_path: str ):
+    "Converts a LCOE geotiff to geojson"
+    with rasterio.open(lcoe_file_path) as src:
+        data = src.read(1, masked=True)    
+        raster_vectorized = unary_union([shape(s) for s, v in shapes(data, transform=src.transform)] )
+        project = pyproj.Transformer.from_crs( pyproj.CRS(src.profile["crs"]), pyproj.CRS('epsg:4326'), always_xy=True )
+        raster_vectorized = transform( project.transform, raster_vectorized )
+        raster_json = dict(properties={}, geometry=mapping(raster_vectorized), type="Feature")
+
+        print( f"saving to {geojson_file_path}" )
+        json.dump( raster_json, open( geojson_file_path, "w+" ) )

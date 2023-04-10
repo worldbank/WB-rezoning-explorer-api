@@ -8,7 +8,7 @@ import time
 import boto3
 from botocore.exceptions import ClientError
 
-from rezoning_api.db.calc import single_country_lcoe, single_country_score
+from rezoning_api.db.calc import single_country_lcoe, single_country_score, convert_geotiff_to_geojson
 from rezoning_api.models.zone import Filters, Weights, LCOE
 from rezoning_api.utils import s3_head
 from rezoning_api.core.config import EXPORT_BUCKET, IS_LOCAL_DEV, LOCALSTACK_ENDPOINT_URL
@@ -51,7 +51,7 @@ def process(message):
     except ClientError:
         pass
 
-    operations = ["lcoe", "score"]
+    operations = ["lcoe", "score", "suitable-areas"]
     if message["operation"] not in operations:
         logger.error(f"operation must be one of: {' '.join(operations)}")
         return
@@ -64,7 +64,7 @@ def process(message):
         single_country_lcoe(
             file_path, message["country_id"], message["resource"], lcoe, filters
         )
-    else:
+    elif message["operation"] == "score":
         single_country_score(
             file_path,
             message["country_id"],
@@ -73,6 +73,13 @@ def process(message):
             filters,
             weights,
         )
+    else:
+        lcoe_file_path = file_path.replace('suitable-areas', 'lcoe').replace('.geojson', '.tif')
+        single_country_lcoe(
+            lcoe_file_path, message["country_id"], message["resource"], lcoe, filters
+        )
+        convert_geotiff_to_geojson( lcoe_file_path, file_path )
+
 
     if IS_LOCAL_DEV:
         s3 = boto3.client("s3", endpoint_url=LOCALSTACK_ENDPOINT_URL)
