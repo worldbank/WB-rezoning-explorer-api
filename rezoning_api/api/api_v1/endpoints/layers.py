@@ -8,7 +8,6 @@ from rio_tiler.utils import render, linear_rescale, create_cutline
 from rio_tiler.colormap import cmap
 import numpy as np
 import xarray as xr
-import time
 
 from rio_tiler.errors import TileOutsideBounds
 
@@ -32,7 +31,10 @@ from rezoning_api.db.country import get_country_min_max, s3_get, get_country_geo
 
 router = APIRouter()
 
-TILE_URL = "https://reztileserver.com/services/{layer}/tiles/{{z}}/{{x}}/{{y}}.pbf"
+# TILE_URL = "https://reztileserver.com/services/{layer}/tiles/{{z}}/{{x}}/{{y}}.pbf"
+
+# Temporary fix: need to set the vector tiles server used by the production
+TILE_URL = "https://d3hkm6tx5mgudr.cloudfront.net/services/{layer}/tiles/{{z}}/{{x}}/{{y}}.pbf"
 
 # TODO: refactor creating the filter mask (share same code between filter and layers endpoints)
 def getFilterMask( 
@@ -325,29 +327,35 @@ def get_layers():
             layer["title"] = layer["title"].replace(" (Distance to)", "")
             layer["description"] = f"Location of {lkey.lower()}"
 
+    layers["grid_vector"] = layers["grid"].copy()
+    layers["anchorages_vector"] = layers["anchorages"].copy()
+    layers["airports_vector"] = layers["airports"].copy()
+    layers["ports_vector"] = layers["ports"].copy()
+    layers["roads_vector"] = layers["roads"].copy()
+
     # add some non-raster layers
-    layers["grid"]["tiles"] = TILE_URL.format(layer="grid")
-    layers["grid"]["type"] = "line"
-    layers["grid"]["color"] = "#FABE21"
+    layers["grid_vector"]["tiles"] = TILE_URL.format(layer="grid")
+    layers["grid_vector"]["type"] = "line"
+    layers["grid_vector"]["color"] = "#FABE21"
 
-    layers["anchorages"]["tiles"] = TILE_URL.format(layer="anchorages")
-    layers["anchorages"]["type"] = "symbol"
-    layers["anchorages"]["symbol"] = "harbor-15"
-    layers["anchorages"]["color"] = "#02577F"
+    layers["anchorages_vector"]["tiles"] = TILE_URL.format(layer="anchorages")
+    layers["anchorages_vector"]["type"] = "symbol"
+    layers["anchorages_vector"]["symbol"] = "harbor-15"
+    layers["anchorages_vector"]["color"] = "#02577F"
 
-    layers["airports"]["tiles"] = TILE_URL.format(layer="airports")
-    layers["airports"]["type"] = "symbol"
-    layers["airports"]["symbol"] = "airport-15"
-    layers["airports"]["color"] = "#E47B2F"
+    layers["airports_vector"]["tiles"] = TILE_URL.format(layer="airports")
+    layers["airports_vector"]["type"] = "symbol"
+    layers["airports_vector"]["symbol"] = "airport-15"
+    layers["airports_vector"]["color"] = "#E47B2F"
 
-    layers["ports"]["tiles"] = TILE_URL.format(layer="ports")
-    layers["ports"]["type"] = "symbol"
-    layers["ports"]["symbol"] = "ferry-15"
-    layers["ports"]["color"] = "#538CF1"
+    layers["ports_vector"]["tiles"] = TILE_URL.format(layer="ports")
+    layers["ports_vector"]["type"] = "symbol"
+    layers["ports_vector"]["symbol"] = "ferry-15"
+    layers["ports_vector"]["color"] = "#538CF1"
 
-    layers["roads"]["tiles"] = TILE_URL.format(layer="roads")
-    layers["roads"]["type"] = "line"
-    layers["roads"]["color"] = "#434343"
+    layers["roads_vector"]["tiles"] = TILE_URL.format(layer="roads")
+    layers["roads_vector"]["type"] = "line"
+    layers["roads_vector"]["color"] = "#434343"
 
     # for now, remove excess manually
     layers.pop("wwf-glw-1", None)
