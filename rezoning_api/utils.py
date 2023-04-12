@@ -65,7 +65,7 @@ def read_dataset(
         indexes = list(range(1, len(layers) + 1))
 
         # for tiles
-        if x:
+        if x is not None:
             if geometry:
                 cutline = create_cutline(
                     cog.dataset, geometry, geometry_crs="epsg:4326"
@@ -403,7 +403,7 @@ def calc_score(
     weights = Weights(**temp_weights)
 
     # zone score
-    shape = (256, 256) if x else cf.shape
+    shape = (256, 256) if x is not None else cf.shape
     score_array = np.zeros(shape)
 
     weight_count = 0
