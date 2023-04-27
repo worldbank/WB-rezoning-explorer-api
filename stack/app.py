@@ -189,6 +189,17 @@ class rezoningApiLambdaStack(core.Stack):
                 id=f"{id}-endpoint-http-lambda-integration",
                 handler=lambda_function
             ),
+            cors_preflight={
+                'allow_headers': [
+                    'Content-Type',
+                ],
+                'allow_methods': [apigw.CorsHttpMethod.GET,
+                                  apigw.CorsHttpMethod.HEAD,
+                                  apigw.CorsHttpMethod.OPTIONS,
+                                  apigw.CorsHttpMethod.POST],
+                'allow_origins': ['*'],
+                'max_age': core.Duration.days(1),
+            },
         )
 
     def create_package(self, code_dir: str) -> aws_lambda.Code:
