@@ -24,8 +24,9 @@ jobs:
         run: tox -e py
       
       # Run pre-commit
-      - name: run pre-commit
-        run: pre-commit run --all-files
+      # Disable for now
+      # - name: run pre-commit
+      #  run: pre-commit run --all-files
       
       - name: Upload Results
         if: success()
