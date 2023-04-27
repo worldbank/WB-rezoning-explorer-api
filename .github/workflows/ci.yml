@@ -7,10 +7,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Set up Python 3.7
+      - name: Set up Python 3.8
         uses: actions/setup-python@v2
         with:
-          python-version: 3.7
+          python-version: 3.8
       
       - name: Install dependencies
         run: |
@@ -41,10 +41,10 @@ jobs:
     if: contains(github.ref, 'tags')
     steps:
       - uses: actions/checkout@v2
-      - name: Set up Python 3.7
+      - name: Set up Python 3.8
         uses: actions/setup-python@v2
         with:
-          python-version: "3.7" 
+          python-version: "3.8" 
       - uses: actions/setup-node@v2-beta
         with:
           node-version: '16'
@@ -73,10 +73,10 @@ jobs:
     if: ${{ github.ref == 'refs/heads/dev' }}
     steps:
       - uses: actions/checkout@v2
-      - name: Set up Python 3.7
+      - name: Set up Python 3.8
         uses: actions/setup-python@v2
         with:
-          python-version: "3.7" 
+          python-version: "3.8" 
       - uses: actions/setup-node@v2-beta
         with:
           # 12 seems to hang. CDK 1.x seems to run with 16
