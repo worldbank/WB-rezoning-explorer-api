@@ -21,6 +21,7 @@ class Operation(str, Enum):
 
     LCOE = "lcoe"
     SCORE = "score"
+    SUITABLE_AREAS = "suitable-areas"
 
 
 @router.post(
@@ -52,8 +53,9 @@ def export(
         **lcoe.dict(),
         **filters.dict(),
     )
-    id = f"{country_id}-{operation}-{resource}-{hash}"
-    file_name = f"WBG-REZoning-{id}.tif"
+    file_extension = "geojson" if operation == "suitable-areas" else "tif"
+    id = f"{country_id}-{operation}-{resource}-{hash}.{file_extension}"
+    file_name = f"WBG-REZoning-{id}"
     print( f"Running export for file {file_name}" )
     print( "Is local dev?", IS_LOCAL_DEV )
 
@@ -89,7 +91,7 @@ def get_export_status(id: str, response: Response):
     ret = None
     s3 = boto3.client("s3", endpoint_url=(LOCALSTACK_ENDPOINT_URL if IS_LOCAL_DEV else None) )
     try:
-        key = f"export/WBG-REZoning-{id}.tif"
+        key = f"export/WBG-REZoning-{id}"
         s3.head_object(Bucket=EXPORT_BUCKET, Key=key)
         url = s3.generate_presigned_url(
             "get_object", Params={"Bucket": EXPORT_BUCKET, "Key": key}, ExpiresIn=300

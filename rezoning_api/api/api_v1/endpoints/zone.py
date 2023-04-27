@@ -74,6 +74,8 @@ def zone(
         suitable_area=suitable_area,
         criterion_average=criterion_average,
         criterion_contribution=criterion_contribution,
+        lcoe_min=lcoe_m.min(),
+        lcoe_max=lcoe_m.max(),
     )
 
 

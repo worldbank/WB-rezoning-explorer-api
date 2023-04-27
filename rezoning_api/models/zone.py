@@ -590,3 +590,5 @@ class ZoneResponse(BaseModel):
     cf: float = Field(..., title="Capacity Factor")
     criterion_average: dict = Field(..., title="Weight average")
     criterion_contribution: dict = Field(..., title="Weight contribution to score")
+    lcoe_min: float = Field(..., title="Minimum Levelized Cost of Electrification ($USD / GWh)")
+    lcoe_max: float = Field(..., title="Maximum Levelized Cost of Electrification ($USD / GWh)")
