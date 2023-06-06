@@ -9,6 +9,7 @@ from rezoning_api.api.api_v1.endpoints import (
     lcoe,
     score,
     export,
+    feedback,
 )
 
 api_router = APIRouter()
@@ -19,3 +20,4 @@ api_router.include_router(lcoe.router, tags=["lcoe"])
 api_router.include_router(score.router, tags=["score"])
 api_router.include_router(layers.router, tags=["layers"])
 api_router.include_router(export.router, tags=["export"])
+api_router.include_router(feedback.router, tags=["feedback"])
