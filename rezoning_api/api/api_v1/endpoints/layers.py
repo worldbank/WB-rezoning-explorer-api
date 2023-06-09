@@ -71,7 +71,7 @@ def getFilterMask(
     for dataset in datasets:
         data, mask = read_dataset(
             f"s3://{BUCKET}/{dataset}.tif",
-            [l for l in LAYERS[dataset] if l in sent_filters],
+            LAYERS[dataset],
             x=x,
             y=y,
             z=z,
