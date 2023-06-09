@@ -256,7 +256,9 @@ def _filter(array, filters):
             elif filter_type == "categorical_filter":
                 # multiply by ten to get land cover class
                 indices = [10 * int(option) for option in filt.split(",")]
-                tmp = np.isin(single_layer, indices)
+                arr = single_layer
+                arr_rounded = arr.astype(np.uint8)
+                tmp = np.isin(arr_rounded, indices)
             else:
                 # filter types without a pattern are boolean
                 # rasters are stored as binary so we convert input to integers
