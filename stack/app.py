@@ -161,6 +161,8 @@ class rezoningApiLambdaStack(core.Stack):
                 LOG_LEVEL="Trace",
                 QUEUE_URL=queue_processor.sqs_queue.queue_url,
                 AIRTABLE_KEY=os.environ["AIRTABLE_KEY"],
+                GITHUB_TOKEN=os.environ["GITHUB_TOKEN"],
+                FEEDBACK_URL=os.environ["FEEDBACK_URL"],
                 # MEMCACHE_HOST=cache.attr_configuration_endpoint_address,
                 # MEMCACHE_PORT=cache.attr_configuration_endpoint_port,
             )
