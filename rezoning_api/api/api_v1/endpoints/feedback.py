@@ -11,5 +11,10 @@ router = APIRouter()
 async def feedback(request: Request):
     """This api creates a ticket in github repo, when user submits a feedback form."""
     data = await request.json()
-    response = requests.post(FEEDBACK_URL, headers={'authorization': GITHUB_TOKEN}, json=data)
+    token = GITHUB_TOKEN
+    if not token.startswith('Bearer '):
+        # Prefix the token with 'Bearer ' if not already present,
+        # and remove any existing 'Bearer' to avoid duplication.
+        token = 'Bearer ' + token.replace('Bearer', '')
+    response = requests.post(FEEDBACK_URL, headers={'authorization': token}, json=data)
     return {"status": response.status_code}
