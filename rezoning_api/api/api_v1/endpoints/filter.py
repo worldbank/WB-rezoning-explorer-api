@@ -1,20 +1,57 @@
 """Filter endpoints."""
-
+import json
+import math
 from rezoning_api.utils import read_dataset
 from fastapi import APIRouter, Depends
+from fastapi.responses import JSONResponse
 from rio_tiler.io import COGReader
 from rio_tiler.utils import render
 import numpy as np
 import xarray as xr
-from typing import Optional
+from typing import Optional, Any
 
 from rezoning_api.core.config import BUCKET
 from rezoning_api.models.tiles import TileResponse
 from rezoning_api.models.zone import Filters, RangeFilter
-from rezoning_api.utils import _filter, LAYERS, filter_to_layer_name, get_layer_location
-from rezoning_api.db.country import get_country_min_max, get_country_geojson
+from rezoning_api.utils import _filter, LAYERS, filter_to_layer_name, get_layer_location, get_min_max
+from rezoning_api.db.country import get_country_min_max, get_region_min_max, s3_get, get_country_geojson, get_region_geojson
 
 router = APIRouter()
+
+
+def nan_to_none(obj):
+    if isinstance(obj, dict):
+        return {k: nan_to_none(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [nan_to_none(v) for v in obj]
+    elif isinstance(obj, float) and math.isnan(obj):
+        return None
+    return obj
+
+
+class CustomJSONEncoder(json.JSONEncoder):
+    def default(self, obj):
+        pass
+
+    def encode(self, obj):
+        obj = nan_to_none(obj)
+        return super().encode(obj)
+
+    def iterencode(self, obj, *args, **kwargs):
+        obj = nan_to_none(obj)
+        return super().iterencode(obj, *args, **kwargs)
+
+
+class CustomJSONResponse(JSONResponse):
+    def render(self, content: Any) -> bytes:
+        return json.dumps(
+            content,
+            ensure_ascii=False,
+            allow_nan=True,
+            indent=None,
+            separators=(",", ":"),
+            cls=CustomJSONEncoder,
+        ).encode("utf-8")
 
 
 @router.get(
@@ -57,8 +94,12 @@ def filter(
     geometry = None
     if country_id:
         # TODO: early return for tiles outside country bounds
-        feat = get_country_geojson(country_id, offshore)
-        geometry = feat.geometry.dict()
+        if len(country_id) == 3:
+            feat = get_country_geojson(country_id, offshore)
+            geometry = feat.geometry.dict()
+        else:
+            feat = get_region_geojson(country_id, offshore)
+            geometry = feat.geometry.dict()
 
     arrays = []
     for dataset in datasets:
@@ -115,10 +156,13 @@ def filter(
 @router.get("/filter/{country_id}/{resource}/layers")
 def get_country_layers(country_id: str, resource: str):
     """Return min/max for country layers"""
-    minmax = get_country_min_max(country_id, resource)
+    if len(country_id) == 3:
+        minmax = get_country_min_max(country_id, resource)
+    else:
+        minmax = get_region_min_max(country_id, resource)
     # keys = list(minmax.keys())
     # [minmax.pop(key) for key in keys if key.startswith(("gwa", "gsa"))]
-    return minmax
+    return CustomJSONResponse(content=minmax)
 
 
 @router.get("/filter/schema", name="filter_schema")

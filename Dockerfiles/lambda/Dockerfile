@@ -1,4 +1,4 @@
-FROM lambci/lambda:build-python3.7
+FROM 497760869739.dkr.ecr.us-east-2.amazonaws.com/lambci:lambda_build-python3.8
 
 WORKDIR /tmp
 
@@ -6,9 +6,9 @@ WORKDIR /tmp
 
 COPY README.md /app/README.md
 COPY rezoning_api/ /app/rezoning_api/
-COPY setup.py /app/setup.py
 
-RUN pip install /app/. "mangum>=0.9.0" -t /var/task --no-binary numpy
+COPY setup.py /app/setup.py 
+RUN pip install /app/. "mangum>=0.15.0" -t /var/task --no-binary numpy --no-binary pydantic
 
 # Reduce package size and remove useless files
 RUN cd /var/task && find . -type f -name '*.pyc' | while read f; do n=$(echo $f | sed 's/__pycache__\///' | sed 's/.cpython-[2-3][0-9]//'); cp $f $n; done;
@@ -20,6 +20,9 @@ RUN rm -rdf /var/task/stack
 
 # boto3 and botocore are installed on python lambda images, and botocore is gigantic (78M unzipped, 1/5 of size budget)
 RUN rm -rf /var/task/boto3* /var/task/botocore*
+RUN ls -alh /var/task/
+RUN du --summarize --human-readable /var/task/*
+RUN du --summarize --human-readable /var/task/
 
 RUN cd /var/task && zip -r9q /tmp/package.zip *
 

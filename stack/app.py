@@ -56,12 +56,14 @@ class rezoningApiLambdaStack(core.Stack):
         """Define stack."""
         super().__init__(scope, id, **kwargs)
 
+        print( "Creating stack for", id )
+
         # hardcoded VPC
         vpc = ec2.Vpc.from_lookup(self, f"{id}-vpc", vpc_id="vpc-dfff4bb4")
 
         # hardcode bucket (shared across env)
         bucket = s3.Bucket.from_bucket_name(
-            self, f"{id}-export-bucket", "rezoning-exports"
+            self, f"{id}-export-bucket", config.EXPORT_BUCKET
         )
 
         s3_access_policy = iam.PolicyStatement(
@@ -156,9 +158,11 @@ class rezoningApiLambdaStack(core.Stack):
                 MODULE_NAME="rezoning_api.main",
                 VARIABLE_NAME="app",
                 WORKERS_PER_CORE="1",
-                LOG_LEVEL="error",
+                LOG_LEVEL="Trace",
                 QUEUE_URL=queue_processor.sqs_queue.queue_url,
                 AIRTABLE_KEY=os.environ["AIRTABLE_KEY"],
+                GITHUB_TOKEN=os.environ["GITHUB_TOKEN"],
+                FEEDBACK_URL=os.environ["FEEDBACK_URL"],
                 # MEMCACHE_HOST=cache.attr_configuration_endpoint_address,
                 # MEMCACHE_PORT=cache.attr_configuration_endpoint_port,
             )
@@ -167,7 +171,7 @@ class rezoningApiLambdaStack(core.Stack):
         lambda_function = aws_lambda.Function(
             self,
             f"{id}-lambda",
-            runtime=aws_lambda.Runtime.PYTHON_3_7,
+            runtime=aws_lambda.Runtime.PYTHON_3_8,
             code=self.create_package(code_dir),
             handler="handler.handler",
             memory_size=memory,
@@ -183,9 +187,21 @@ class rezoningApiLambdaStack(core.Stack):
         apigw.HttpApi(
             self,
             f"{id}-endpoint",
-            default_integration=apigw_int.LambdaProxyIntegration(
+            default_integration=apigw_int.HttpLambdaIntegration(
+                id=f"{id}-endpoint-http-lambda-integration",
                 handler=lambda_function
             ),
+            cors_preflight={
+                'allow_headers': [
+                    'Content-Type',
+                ],
+                'allow_methods': [apigw.CorsHttpMethod.GET,
+                                  apigw.CorsHttpMethod.HEAD,
+                                  apigw.CorsHttpMethod.OPTIONS,
+                                  apigw.CorsHttpMethod.POST],
+                'allow_origins': ['*'],
+                'max_age': core.Duration.days(1),
+            },
         )
 
     def create_package(self, code_dir: str) -> aws_lambda.Code:
@@ -194,11 +210,15 @@ class rezoningApiLambdaStack(core.Stack):
         print(f"code dir: {code_dir}")
         client = docker.from_env()
         print("docker client up")
-        client.images.build(
-            path=code_dir,
-            dockerfile="Dockerfiles/lambda/Dockerfile",
-            tag="lambda:latest",
-        )
+        response = client.api.build( path=code_dir, dockerfile="Dockerfiles/lambda/Dockerfile", tag="lambda:latest", nocache=True )
+        print( "====================================" )
+        print( *response, sep='\n' )
+        print( "====================================" )
+        # client.images.build(
+        #     path=code_dir,
+        #     dockerfile="Dockerfiles/lambda/Dockerfile",
+        #     tag="lambda:latest",
+        # )
         print("docker image built")
         client.containers.run(
             image="lambda:latest",

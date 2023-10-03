@@ -21,7 +21,7 @@ from rezoning_api.utils import (
     get_distances,
     get_layer_location,
 )
-from rezoning_api.db.country import get_country_geojson
+from rezoning_api.db.country import get_country_geojson, get_region_geojson
 
 router = APIRouter()
 
@@ -48,6 +48,8 @@ def lcoe(
     filters: Filters = Depends(),
     lcoe: LCOE = Depends(),
     offshore: bool = False,
+    lcoe_min: Optional[float] = 80,
+    lcoe_max: Optional[float] = 300
 ):
     """Return LCOE tile."""
 
@@ -55,7 +57,10 @@ def lcoe(
     geometry = None
     if country_id:
         # TODO: early return for tiles outside country bounds
-        feat = get_country_geojson(country_id, offshore)
+        if len(country_id) == 3:
+            feat = get_country_geojson(country_id, offshore)
+        else:
+            feat = get_region_geojson(country_id, offshore)
         geometry = feat.geometry.dict()
 
     # calculate LCOE (from zone.py, TODO: DRY)
@@ -70,12 +75,10 @@ def lcoe(
     li = lcoe_interconnection(lcoe, cf, ds)
     lr = lcoe_road(lcoe, cf, dr)
     lcoe_total = lg + li + lr
-    # cap lcoe total
-    lcoe_total = np.clip(lcoe_total, None, LCOE_MAX)
 
-    # get country min max for scaling
-    country_min_max = get_country_min_max(country_id, resource)
-    lcoe_min_max = country_min_max["lcoe"]
+    mask = mask * (lcoe_total >= lcoe_min) * (lcoe_total <= lcoe_max)
+    # cap lcoe total
+    lcoe_total = np.clip(lcoe_total, lcoe_min, lcoe_max)
 
     # mask everything offshore with gebco
     if offshore:
@@ -86,7 +89,7 @@ def lcoe(
 
     tile = linear_rescale(
         lcoe_total.values,
-        in_range=[lcoe_min_max["min"], lcoe_min_max["max"]],
+        in_range=[lcoe_min, lcoe_max],
         out_range=[0, 255],
     ).astype(np.uint8)
 

@@ -8,10 +8,10 @@ import time
 import boto3
 from botocore.exceptions import ClientError
 
-from rezoning_api.db.calc import single_country_lcoe, single_country_score
+from rezoning_api.db.calc import single_country_lcoe, single_country_score, convert_geotiff_to_geojson
 from rezoning_api.models.zone import Filters, Weights, LCOE
 from rezoning_api.utils import s3_head
-from rezoning_api.core.config import EXPORT_BUCKET
+from rezoning_api.core.config import EXPORT_BUCKET, IS_LOCAL_DEV, LOCALSTACK_ENDPOINT_URL
 
 logger = logging.getLogger("exporter")
 logging.getLogger("botocore.credentials").disabled = True
@@ -51,7 +51,7 @@ def process(message):
     except ClientError:
         pass
 
-    operations = ["lcoe", "score"]
+    operations = ["lcoe", "score", "suitable-areas"]
     if message["operation"] not in operations:
         logger.error(f"operation must be one of: {' '.join(operations)}")
         return
@@ -64,7 +64,7 @@ def process(message):
         single_country_lcoe(
             file_path, message["country_id"], message["resource"], lcoe, filters
         )
-    else:
+    elif message["operation"] == "score":
         single_country_score(
             file_path,
             message["country_id"],
@@ -73,24 +73,39 @@ def process(message):
             filters,
             weights,
         )
+    else:
+        lcoe_file_path = file_path.replace('suitable-areas', 'lcoe').replace('.geojson', '.tif')
+        single_country_lcoe(
+            lcoe_file_path, message["country_id"], message["resource"], lcoe, filters
+        )
+        convert_geotiff_to_geojson( lcoe_file_path, file_path )
 
-    s3 = boto3.client("s3")
+
+    if IS_LOCAL_DEV:
+        s3 = boto3.client("s3", endpoint_url=LOCALSTACK_ENDPOINT_URL)
+    else:
+        s3 = boto3.client("s3")
 
     s3.upload_file(file_path, EXPORT_BUCKET, file_path)
 
 
 def main():
     """Pull Message and Process."""
-    region_name = os.environ["REGION"]
-    queue_name = os.environ["QUEUE_NAME"]
+    region_name = os.environ["REGION"] if "REGION" in os.environ else None
+    queue_name = os.environ["QUEUE_NAME"] if "QUEUE_NAME" in os.environ else None
 
-    sqs = boto3.resource("sqs", region_name=region_name)
+    sqs = None
+    if IS_LOCAL_DEV:
+        sqs = boto3.resource("sqs", endpoint_url=LOCALSTACK_ENDPOINT_URL)
+    else:
+        sqs = boto3.resource("sqs", region_name=region_name)
 
     # Get the queue
     try:
         queue = sqs.get_queue_by_name(QueueName=queue_name)
     except ClientError:
         logger.warning(f"SQS Queue '{queue_name}' ({region_name}) not found")
+        print(f"SQS Queue '{queue_name}' ({region_name}) not found")
         sys.exit(1)
 
     while True:
@@ -101,12 +116,15 @@ def main():
             t1 = time.time()
             process(m)
             logger.warning(f"processing time: {time.time() - t1} sec.")
+            print(f"processing time: {time.time() - t1} sec.")
 
             # Let the queue know that the message is processed
             message.delete()
-
+        logger.warning( f"Processing queue {queue_name}" )
+        print( f"Processing queue {queue_name}" )
         if not message:
-            # logger.warning("No message in Queue, will sleep for 3 seconds...")
+            logger.warning("No message in Queue, will sleep for 3 seconds...")
+            print( "No message in Queue, will sleep for 3 seconds..." )
             time.sleep(3)  # if no message, let's wait 60secs
 
 
