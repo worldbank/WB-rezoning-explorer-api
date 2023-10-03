@@ -31,9 +31,6 @@ from rezoning_api.db.country import get_country_min_max, s3_get, get_country_geo
 
 router = APIRouter()
 
-# TILE_URL = "https://reztileserver.com/services/{layer}/tiles/{{z}}/{{x}}/{{y}}.pbf"
-
-# Temporary fix: need to set the vector tiles server used by the production
 TILE_URL = "https://d3hkm6tx5mgudr.cloudfront.net/services/{layer}/tiles/{{z}}/{{x}}/{{y}}.pbf"
 
 # TODO: refactor creating the filter mask (share same code between filter and layers endpoints)
