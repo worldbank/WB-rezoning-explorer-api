@@ -99,3 +99,25 @@ docker push 497760869739.dkr.ecr.us-east-2.amazonaws.com/export-queue-processing
 ```
 - There is an additional vector tile server for certain infrastructure layers hosted by Development Seed. It is available at reztileserver.com
 - The production API endpoint is behind a manually configured CloudFront Origin for performance enhancement.
+
+### ReztileServer
+
+The reztileserver hosts certain vector tiles using https://github.com/consbio/mbtileserver. This is currently hosted in the AWS infra on Fargate, using EFS for the data files. There is a cloudfront distribution pointing to it: https://d3hkm6tx5mgudr.cloudfront.net for ssl termination and caching. 
+
+#### Data Preperation
+
+Sources:
+- airports: https://datacatalog.worldbank.org/search/dataset/0038117
+- anchorages: https://globalfishingwatch.org/data-download/
+- roads: https://www.globio.info/download-grip-dataset
+- ports: https://data.humdata.org/dataset/global-ports
+- grid: https://energydata.info/dataset/derived-map-global-electricity-transmission-and-distribution-lines/resource/ffff88b8-4d43-4a90-965a-c47e475371a1
+
+The data was prepared using `tippecanoe` :
+```
+    tippecanoe -f -z 15 -Z 3 -l airports -P -o airports.mbtiles airports.ndjson
+    tippecanoe -f -z 15 -Z 3 -l anchorages -P -o anchorages.mbtiles anchorages.ndjson
+    tippecanoe -f -z 15 -Z 3 -l ports -P -o ports.mbtiles ports.ndjson
+    tippecanoe -f -z 15 -Z 3 -l roads -P -o roads.mbtiles --drop-densest-as-needed roads.ndjson
+    tippecanoe -z 15 -Z 3 -l grid -P -o grid.mbtiles -f --drop-densest-as-needed grid_files/grid.ndgeojson
+```
