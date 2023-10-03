@@ -9,8 +9,7 @@ STAGE = os.environ.get("STAGE", "dev")
 BUCKET = "gre-processed-data"
 CLUSTER_NAME = "export-cluster"
 TASK_NAME = "export"
-# EXPORT_BUCKET = "rezoning-exports"
-EXPORT_BUCKET = "rezoning-exports-staging"
+EXPORT_BUCKET = "rezoning-exports"
 
 
 # Additional environement variable to set in the task/lambda
